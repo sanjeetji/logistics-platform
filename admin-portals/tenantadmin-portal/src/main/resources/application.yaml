@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: Tenant Admin Portal
+vaadin:
+  launch-browser: true

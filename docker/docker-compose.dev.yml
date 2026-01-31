@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    environment:
+      MYSQL_ROOT_PASSWORD: devpassword
+      MYSQL_DATABASE: logistics_dev
+    ports:
+      - "3307:3306"
+
+  platform-core:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev,docker
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    volumes:
+      - ../platform-core:/app
+
+  b2b-engine:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev,docker
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
+    ports:
+      - "8081:8081"
+      - "5006:5006"
+    volumes:
+      - ../b2b-engine:/app
+
+  b2c-engine:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev,docker
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5007"
+    ports:
+      - "8082:8082"
+      - "5007:5007"
+    volumes:
+      - ../b2c-engine:/app
+
+  # Development tools
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: logistics-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - logistics-network

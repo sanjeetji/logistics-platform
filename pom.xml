@@ -1,0 +1,501 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.logistics.platform</groupId>
+    <artifactId>logistics-platform</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Logistics Platform - Backend Services</name>
+    <description>Backend microservices for Hybrid Logistics Platform (Bringg B2B + Porter B2C)</description>
+
+    <!-- Spring Boot 4.0.x (stable, Java 21 ready) -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.2</version> <!-- or the latest 4.0.x -->
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Spring Cloud compatible with Spring Boot 4.x (2023.x line) -->
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
+
+        <!-- Database -->
+        <postgresql.version>42.7.3</postgresql.version>
+
+        <!-- Security -->
+        <jjwt.version>0.12.6</jjwt.version>
+        <bouncycastle.version>1.78.1</bouncycastle.version>
+
+        <!-- Utilities -->
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <lombok.version>1.18.36</lombok.version>
+        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+
+        <!-- Apache Commons -->
+        <commons-lang3.version>3.14.0</commons-lang3.version>
+        <commons-collections4.version>4.4</commons-collections4.version>
+        <commons-io.version>2.16.1</commons-io.version>
+
+        <!-- API Documentation -->
+        <springdoc.version>2.5.0</springdoc.version>
+
+        <!-- Testing -->
+        <testcontainers.version>1.19.8</testcontainers.version>
+
+        <!-- Caching -->
+        <caffeine.version>3.1.8</caffeine.version>
+
+        <!-- Messaging -->
+        <kafka.version>3.7.0</kafka.version>
+
+        <!-- Redis -->
+        <jedis.version>5.1.2</jedis.version>
+
+        <!-- Resilience4j -->
+        <resilience4j.version>2.2.0</resilience4j.version>
+
+        <!-- Liquibase -->
+        <liquibase.version>4.27.0</liquibase.version>
+
+        <!-- Monitoring -->
+        <micrometer-tracing.version>1.3.0</micrometer-tracing.version>
+
+        <!-- QR Code Generation -->
+        <zxing.version>3.5.3</zxing.version>
+
+        <!-- PDF Generation -->
+        <itext.version>7.2.6</itext.version>
+
+        <!-- Email -->
+        <jakarta-mail.version>2.1.3</jakarta-mail.version>
+
+        <!-- SMS -->
+        <twilio.version>10.2.0</twilio.version>
+
+        <!-- Maps & Geo -->
+        <google-maps.version>2.2.0</google-maps.version>
+
+        <!-- Security Audit -->
+        <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
+    </properties>
+
+    <!-- MODULES (unchanged) -->
+    <modules>
+        <!-- INFRASTRUCTURE SERVICES -->
+        <module>infrastructure/config-server</module>
+        <module>infrastructure/service-discovery</module>
+        <module>infrastructure/gateway-service</module>
+
+        <!-- SHARED LIBRARIES -->
+        <module>shared-lib/common-dto</module>
+        <module>shared-lib/common-utils</module>
+        <module>shared-lib/common-exceptions</module>
+        <module>shared-lib/api-clients</module>
+        <module>shared-lib/security-core</module>
+        <module>shared-lib/event-contracts</module>
+
+        <!-- PLATFORM CORE -->
+        <module>platform-core/auth-service</module>
+        <module>platform-core/user-service</module>
+        <module>platform-core/role-permission-service</module>
+        <module>platform-core/tenant-service</module>
+
+        <!-- B2B ENGINE -->
+        <module>b2b-engine/team-service</module>
+        <module>b2b-engine/dispatch-service</module>
+        <module>b2b-engine/order-service</module>
+        <module>b2b-engine/shipment-service</module>
+        <module>b2b-engine/warehouse-service</module>
+        <module>b2b-engine/inventory-service</module>
+        <module>b2b-engine/compliance-service</module>
+
+        <!-- B2C ENGINE -->
+        <module>b2c-engine/parcel-service</module>
+        <module>b2c-engine/quick-dispatch</module>
+
+        <!-- SHARED SERVICES -->
+        <module>shared-services/returns-service</module>
+        <module>shared-services/tracking-service</module>
+        <module>shared-services/payment-service</module>
+        <module>shared-services/notification-service</module>
+        <module>shared-services/billing-service</module>
+        <module>shared-services/document-service</module>
+        <module>shared-services/geo-service</module>
+        <module>shared-services/analytics-service</module>
+
+        <!-- ADMIN PORTALS -->
+        <!--<module>admin-portals/superadmin-portal</module>
+        <module>admin-portals/tenantadmin-portal</module>
+-->
+
+        <!-- MOBILE BACKENDS -->
+        <module>mobile-backend/driver-api-service</module>
+        <module>mobile-backend/customer-api-service</module>
+
+        <!-- CUSTOMER PORTALS -->
+        <module>web-backend/b2b-api-service</module>
+        <module>web-backend/b2c-api-service</module>
+    </modules>
+
+    <!-- DEPENDENCY MANAGEMENT -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- SPRING CLOUD -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- DATABASE -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-core</artifactId>
+                <version>${liquibase.version}</version>
+            </dependency>
+
+            <!-- SECURITY -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+
+            <!-- MAPSTRUCT & LOMBOK -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok-mapstruct-binding.version}</version>
+            </dependency>
+
+            <!-- APACHE COMMONS -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+
+            <!-- API DOCUMENTATION -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-common</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- TESTING -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- CACHING -->
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+
+            <!-- MESSAGING -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${kafka.version}</version>
+            </dependency>
+
+            <!-- REDIS -->
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>${jedis.version}</version>
+            </dependency>
+
+            <!-- RESILIENCE4J -->
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-bom</artifactId>
+                <version>${resilience4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- MONITORING -->
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing-bom</artifactId>
+                <version>${micrometer-tracing.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- QR CODE GENERATION -->
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>core</artifactId>
+                <version>${zxing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.zxing</groupId>
+                <artifactId>javase</artifactId>
+                <version>${zxing.version}</version>
+            </dependency>
+
+            <!-- PDF GENERATION -->
+            <dependency>
+                <groupId>com.itextpdf</groupId>
+                <artifactId>itext7-core</artifactId>
+                <version>${itext.version}</version>
+            </dependency>
+
+            <!-- EMAIL -->
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>jakarta.mail</artifactId>
+                <version>${jakarta-mail.version}</version>
+            </dependency>
+
+            <!-- SMS -->
+            <dependency>
+                <groupId>com.twilio.sdk</groupId>
+                <artifactId>twilio</artifactId>
+                <version>${twilio.version}</version>
+            </dependency>
+
+            <!-- MAPS & GEO -->
+            <dependency>
+                <groupId>com.google.maps</groupId>
+                <artifactId>google-maps-services</artifactId>
+                <version>${google-maps.version}</version>
+            </dependency>
+
+            <!-- RETRY -->
+            <dependency>
+                <groupId>org.springframework.retry</groupId>
+                <artifactId>spring-retry</artifactId>
+                <version>2.0.12</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- COMMON DEPENDENCIES FOR ALL MODULES -->
+    <dependencies>
+        <!-- Core Spring Boot -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Configuration metadata generation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Apache Commons Lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+    </dependencies>
+
+    <!-- BUILD CONFIGURATION -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Maven Compiler Plugin -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <!-- version is inherited from Boot parent -->
+                    <configuration>
+                        <release>${java.version}</release>
+                        <parameters>true</parameters>
+                        <annotationProcessorPaths>
+                            <!-- MapStruct -->
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                            <!-- Lombok -->
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <!-- Lombok MapStruct Binding -->
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok-mapstruct-binding</artifactId>
+                                <version>${lombok-mapstruct-binding.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+
+                <!-- Spring Boot Maven Plugin -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+
+                <!-- JaCoCo for Code Coverage -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <!-- Default plugins for all modules -->
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>11.1.0</version>
+                <configuration>
+                    <nvdApiKey>${nvd.api.key}</nvdApiKey>
+                    <nvdApiDelay>10000</nvdApiDelay>
+                    <failOnError>false</failOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- PROFILES -->
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <spring.profiles.active>dev</spring.profiles.active>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>test</id>
+            <properties>
+                <spring.profiles.active>test</spring.profiles.active>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>prod</id>
+            <properties>
+                <spring.profiles.active>prod</spring.profiles.active>
+            </properties>
+        </profile>
+    </profiles>
+</project>

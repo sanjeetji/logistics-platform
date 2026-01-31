@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: B2B Web Portal

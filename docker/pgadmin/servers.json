@@ -1,0 +1,52 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Logistics PostgreSQL",
+      "Group": "Logistics Platform",
+      "Host": "postgres-db",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "logistics_user",
+      "Password": "logistics_pass",
+      "SSLMode": "prefer",
+      "Comment": "Primary PostgreSQL database for Logistics Platform",
+      "PassFile": "/pgpass",
+      "UseSSHTunnel": 0,
+      "TunnelPort": "22",
+      "TunnelAuthentication": 0
+    },
+    "2": {
+      "Name": "Logistics Core DB",
+      "Group": "Logistics Platform",
+      "Host": "postgres-db",
+      "Port": 5432,
+      "MaintenanceDB": "logistics_core_pg",
+      "Username": "logistics_user",
+      "Password": "logistics_pass",
+      "SSLMode": "prefer",
+      "Comment": "Core service database"
+    },
+    "3": {
+      "Name": "Logistics B2B DB",
+      "Group": "Logistics Platform",
+      "Host": "postgres-db",
+      "Port": 5432,
+      "MaintenanceDB": "logistics_b2b_pg",
+      "Username": "logistics_user",
+      "Password": "logistics_pass",
+      "SSLMode": "prefer",
+      "Comment": "B2B service database"
+    },
+    "4": {
+      "Name": "Logistics B2C DB",
+      "Group": "Logistics Platform",
+      "Host": "postgres-db",
+      "Port": 5432,
+      "MaintenanceDB": "logistics_b2c_pg",
+      "Username": "logistics_user",
+      "Password": "logistics_pass",
+      "SSLMode": "prefer",
+      "Comment": "B2C service database"
+    }
+  }
+}

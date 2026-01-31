@@ -1,0 +1,274 @@
+services:
+  # Database Services
+  mysql-db:
+    image: mysql:8.0
+    container_name: logistics-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: logistics_db
+      MYSQL_USER: logistics_user
+      MYSQL_PASSWORD: logistics_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - logistics-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: logistics-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - logistics-network
+    command: redis-server --requirepass redispass
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: logistics-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - logistics-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  # Service Discovery
+  service-discovery:
+    build:
+      context: infrastructure/service-discovery
+      dockerfile: Dockerfile
+    container_name: logistics-service-discovery
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Config Server
+  config-server:
+    build:
+      context: infrastructure/config-server
+      dockerfile: Dockerfile
+    container_name: logistics-config-server
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: file:///configs
+      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: file:///configs
+    volumes:
+      - ./docker/configs:/configs
+    networks:
+      - logistics-network
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Infrastructure: Gateway Service
+  gateway-service:
+    build:
+      context: infrastructure/gateway-service
+      dockerfile: Dockerfile
+    container_name: logistics-gateway
+    restart: unless-stopped
+    ports:
+      - "80:8080" # Gateway usually exposes 80 or 8080
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
+    networks:
+      - logistics-network
+    depends_on:
+      - service-discovery
+      - config-server
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Platform Core Services
+  auth-service:
+    build:
+      context: platform-core/auth-service
+      dockerfile: ../Dockerfile
+    container_name: logistics-auth-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/logistics_core_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics_pass
+    networks:
+      - logistics-network
+    depends_on:
+      - mysql-db
+      - service-discovery
+      - config-server
+
+  user-service:
+    build:
+      context: platform-core/user-service
+      dockerfile: ../Dockerfile
+    container_name: logistics-user-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/logistics_core_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics_pass
+    networks:
+      - logistics-network
+    depends_on:
+      - mysql-db
+      - service-discovery
+      - config-server
+
+  # B2B Engine Services
+  order-service:
+    build:
+      context: b2b-engine/order-service
+      dockerfile: ../Dockerfile
+    container_name: logistics-order-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/logistics_b2b_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics_pass
+    networks:
+      - logistics-network
+    depends_on:
+      - mysql-db
+      - service-discovery
+      - config-server
+
+  # B2C Engine Services
+  parcel-service:
+    build:
+      context: b2c-engine/parcel-service
+      dockerfile: ../Dockerfile
+    container_name: logistics-parcel-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/logistics_b2c_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics_pass
+    networks:
+      - logistics-network
+    depends_on:
+      - mysql-db
+      - service-discovery
+      - config-server
+
+  # PostgreSQL Database
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: logistics-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: logistics_user
+      POSTGRES_PASSWORD: logistics_pass
+      POSTGRES_DB: logistics_postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - logistics-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U logistics_user" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin4 - PostgreSQL Management Tool
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: logistics-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@logistics.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'False'
+      PGADMIN_CONFIG_LOGIN_BANNER: "'Logistics Platform PostgreSQL'"
+      PGADMIN_CONFIG_LOG_FILE: "'/var/lib/pgadmin/pgadmin.log'"
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 10
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+      - ./docker/pgadmin/pgpass:/pgpass
+      - ./docker/pgadmin/pgadmin.config.py:/pgadmin4/config_local.py
+    networks:
+      - logistics-network
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  logistics-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  rabbitmq-data:
+  postgres-data:
+  pgadmin-data:

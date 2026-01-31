@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: b2c-engine
+
+  datasource:
+    url: jdbc:mysql://mysql-db:3306/logistics_b2c_db
+    username: logistics_user
+    password: logistics_pass
+
+server:
+  port: 8082

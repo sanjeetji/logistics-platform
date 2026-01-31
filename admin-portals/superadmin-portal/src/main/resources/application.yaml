@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: Super Admin Portal
