@@ -4,6 +4,40 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Security / Secrets ###
+.env
+.env.prod
+.env.dev
+.env.local
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.p12
+*.crt
+*.pfx
+id_rsa
+id_dsa
+*.keystore
+
+### Logs ###
+*.log
+logs/
+*.log.gz
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### OS Files ###
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 ### STS ###
 .apt_generated
 .classpath
@@ -31,3 +65,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Node / Javascript ###
+node_modules/
+dist/
+coverage/
