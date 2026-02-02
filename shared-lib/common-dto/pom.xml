@@ -38,19 +38,26 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <annotationProcessorPaths>
-                        <!-- Clear annotation processors for this module -->
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
                     </annotationProcessorPaths>
-                    <proc>none</proc>
                 </configuration>
             </plugin>
             <plugin>

@@ -5,6 +5,9 @@ CREATE DATABASE logistics_b2c_pg;
 CREATE DATABASE logistics_analytics_pg;
 CREATE DATABASE auth_db;
 CREATE DATABASE user_db;
+CREATE DATABASE fleet_db;
+CREATE DATABASE order_db;
+CREATE DATABASE dispatch_db;
 
 -- Create user with privileges
 \c logistics_core_pg;
@@ -103,6 +106,9 @@ GRANT CONNECT ON DATABASE logistics_b2c_pg TO logistics_app;
 GRANT CONNECT ON DATABASE logistics_analytics_pg TO logistics_app;
 GRANT CONNECT ON DATABASE auth_db TO logistics_app;
 GRANT CONNECT ON DATABASE user_db TO logistics_app;
+GRANT CONNECT ON DATABASE fleet_db TO logistics_app;
+GRANT CONNECT ON DATABASE order_db TO logistics_app;
+GRANT CONNECT ON DATABASE dispatch_db TO logistics_app;
 
 -- Grant privileges
 GRANT USAGE ON SCHEMA public TO logistics_app;

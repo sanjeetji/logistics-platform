@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres-db:5432/fleet_db
+    username: logistics_user
+    password: logistics_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            loggerLevel: BASIC

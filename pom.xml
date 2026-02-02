@@ -14,7 +14,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.2</version> <!-- or the latest 4.0.x -->
+        <version>3.2.5</version> <!-- or the latest 4.0.x -->
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -32,6 +32,7 @@
         <!-- Security -->
         <jjwt.version>0.12.6</jjwt.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>
+        <lombok.version>1.18.38</lombok.version>
 
         <!-- Utilities -->
         <mapstruct.version>1.6.3</mapstruct.version>
@@ -105,12 +106,12 @@
         <module>platform-core/user-service</module>
         <module>platform-core/role-permission-service</module>
         <module>platform-core/tenant-service</module>
+        <module>platform-core/fleet-service</module>
+        <module>platform-core/order-service</module>
+        <module>platform-core/dispatch-service</module>
 
         <!-- B2B ENGINE -->
         <module>b2b-engine/team-service</module>
-        <module>b2b-engine/dispatch-service</module>
-        <module>b2b-engine/fleet-service</module>
-        <module>b2b-engine/order-service</module>
         <module>b2b-engine/shipment-service</module>
         <module>b2b-engine/warehouse-service</module>
         <module>b2b-engine/inventory-service</module>
@@ -129,6 +130,7 @@
         <module>shared-services/document-service</module>
         <module>shared-services/geo-service</module>
         <module>shared-services/analytics-service</module>
+        <module>shared-services/pricing-service</module>
 
         <!-- MOBILE BACKENDS -->
         <module>mobile-backend/driver-api-service</module>
