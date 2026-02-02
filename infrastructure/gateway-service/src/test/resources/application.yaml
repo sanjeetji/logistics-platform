@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: API Gateway
+  cloud:
+    config:
+      enabled: false
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false

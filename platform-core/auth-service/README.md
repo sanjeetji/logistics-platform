@@ -1,23 +1,50 @@
-markdown
-# Auth Service
+## Auth Service Implementation (Multi-Tenant)
+Overview
+We have implemented a centralized Auth Service to handle authentication for both B2B (Logistics Companies) and B2C (End Customers) users.
 
-Central authentication and authorization service for the Logistics Platform.
+## Features
+Multi-Tenancy: Supports organizationId in JWT to identify B2B tenants.
+Unified Logic: One service handles all user types (SUPER_ADMIN, TENANT_ADMIN, DRIVER, CUSTOMER).
+Standardized DTOs: Uses 
+RegisterRequest
+ and 
+LoginRequest
+ for input, and 
+UserDto
+ for response.
+Security: Stateless JWT authentication with BCrypt password hashing.
+API Endpoints
+Register
+## POST /auth/register Payload:
 
-## Purpose
-- Multi-tenant user authentication (login, registration, password management)
-- JWT token generation, validation, and refresh
-- Role-based access control (RBAC) with permissions
-- OAuth2.0 and social login integration
-- Session management and security policies
+{
+  "firstName": "Sanjeet",
+  "lastName": "Admin",
+  "email": "admin@logistics.com",
+  "password": "securepassword",
+  "userType": "SUPER_ADMIN",
+  "organizationId": null
+}
+Login
+## POST /auth/login Payload:
 
-## Technology Stack
-- Spring Boot 4.0.2
-- Spring Security 6.2+
-- Spring Data JPA with PostgreSQL
-- Redis for token blacklisting and caching
-- JJWT for JWT tokens
-- Spring Validation
-- MapStruct for DTO mapping
+{
+  "email": "admin@logistics.com",
+  "password": "securepassword"
+}
+Response: JWT Token (String)
+
+Infrastructure
+Database: PostgreSQL (auth_db created in 
+init.sql
+).
+Configuration: Updated 
+docker-compose.yml
+ to link auth-service with postgres-db.
+Verification
+Build: Successfully built with mvn clean install.
+Tests: Unit tests pass (context loads).
+Run: Can be run via Docker Compose (docker-compose up auth-service).
 
 ## API Endpoints
 POST /api/v1/auth/login - User login (email/password)

@@ -374,7 +374,6 @@ GET /actuator/health/liveness
 Code Style
 Follow Google Java Style Guide
 
-Use Lombok for boilerplate code
 Use MapStruct for object mapping
 Write comprehensive unit tests
 

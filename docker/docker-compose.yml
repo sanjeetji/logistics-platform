@@ -87,6 +87,7 @@ services:
     ports:
       - "8888:8888"
     environment:
+      SERVER_PORT: 8888
       SPRING_PROFILES_ACTIVE: docker
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: file:///configs
       SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: file:///configs
@@ -138,13 +139,13 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
       CONFIG_SERVER_URL: http://config-server:8888
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/logistics_core_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/auth_db
       SPRING_DATASOURCE_USERNAME: logistics_user
       SPRING_DATASOURCE_PASSWORD: logistics_pass
     networks:
       - logistics-network
     depends_on:
-      - mysql-db
+      - postgres-db
       - service-discovery
       - config-server
 
@@ -158,13 +159,13 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
       CONFIG_SERVER_URL: http://config-server:8888
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/logistics_core_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/user_db
       SPRING_DATASOURCE_USERNAME: logistics_user
       SPRING_DATASOURCE_PASSWORD: logistics_pass
     networks:
       - logistics-network
     depends_on:
-      - mysql-db
+      - postgres-db
       - service-discovery
       - config-server
 
