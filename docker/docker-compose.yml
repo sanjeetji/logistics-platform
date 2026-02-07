@@ -614,6 +614,50 @@ services:
       service-discovery:
         condition: service_started
 
+  returns-service:
+    build:
+      context: ../shared-services/returns-service
+      dockerfile: ../Dockerfile
+    container_name: logistics-returns-service
+    restart: unless-stopped
+    ports:
+      - "8098:8098"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/returns_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics_pass
+    networks:
+      - logistics-network
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_started
+
+  payout-service:
+    build:
+      context: ../shared-services/payout-service
+      dockerfile: ../Dockerfile
+    container_name: logistics-payout-service
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/payouts_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics_pass
+    networks:
+      - logistics-network
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_started
+
 networks:
   logistics-network:
     driver: bridge
