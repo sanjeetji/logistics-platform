@@ -17,6 +17,7 @@ import java.util.List;
 public class RouteController {
 
     private final RoutePlanningService routePlanningService;
+    private final com.logistics.route.service.GreenRoutingService greenRoutingService;
 
     @PostMapping("/optimize")
     public ResponseEntity<ApiResponse<List<Route>>> optimizeRoutes(
@@ -41,5 +42,13 @@ public class RouteController {
     public ResponseEntity<ApiResponse<Route>> reoptimizeRoute(@PathVariable String routeId) {
         Route route = routePlanningService.reoptimizeRoute(routeId);
         return ResponseEntity.ok(ApiResponse.success(route, "Route re-optimized"));
+    }
+
+    @GetMapping("/co2")
+    public ResponseEntity<ApiResponse<java.math.BigDecimal>> calculateCO2(
+            @RequestParam double distance,
+            @RequestParam(required = false) String vehicleType) {
+        java.math.BigDecimal emissions = greenRoutingService.calculateCO2Emission(distance, vehicleType);
+        return ResponseEntity.ok(ApiResponse.success(emissions, "Calculated CO2 emissions (kg)"));
     }
 }

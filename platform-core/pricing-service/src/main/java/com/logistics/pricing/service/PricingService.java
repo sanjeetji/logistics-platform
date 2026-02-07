@@ -129,6 +129,49 @@ public class PricingService {
                 .currency("INR")
                 .validUntil(estimate.getValidUntil())
                 .build();
+
+        // 12. Handle Currency Conversion if requested
+        if (request.getTargetCurrency() != null && !request.getTargetCurrency().equalsIgnoreCase("INR")) {
+            return convertCurrency(response, request.getTargetCurrency());
+        }
+
+        return response;
+    }
+
+    private PriceEstimateResponse convertCurrency(PriceEstimateResponse original, String targetCurrency) {
+        BigDecimal rate = getExchangeRate(targetCurrency);
+        if (rate == null) {
+            log.warn("Exchange rate not found for currency: {}. Returning INR.", targetCurrency);
+            return original;
+        }
+
+        return PriceEstimateResponse.builder()
+                .estimateId(original.getEstimateId())
+                .vehicleType(original.getVehicleType())
+                .distance(original.getDistance())
+                .estimatedTime(original.getEstimatedTime())
+                .totalPrice(original.getTotalPrice().multiply(rate).setScale(2, RoundingMode.HALF_UP))
+                .currency(targetCurrency.toUpperCase())
+                .validUntil(original.getValidUntil())
+                .breakdown(PriceEstimateResponse.PriceBreakdown.builder()
+                        .baseFare(original.getBreakdown().getBaseFare().multiply(rate).setScale(2, RoundingMode.HALF_UP))
+                        .distanceFare(original.getBreakdown().getDistanceFare().multiply(rate).setScale(2, RoundingMode.HALF_UP))
+                        .timeFare(original.getBreakdown().getTimeFare().multiply(rate).setScale(2, RoundingMode.HALF_UP))
+                        .surgeFare(original.getBreakdown().getSurgeFare().multiply(rate).setScale(2, RoundingMode.HALF_UP))
+                        .serviceFee(original.getBreakdown().getServiceFee().multiply(rate).setScale(2, RoundingMode.HALF_UP))
+                        .build())
+                .build();
+    }
+
+    private BigDecimal getExchangeRate(String currency) {
+        // Mock Exchange Rates (Base: INR)
+        return switch (currency.toUpperCase()) {
+            case "USD" -> new BigDecimal("0.012");
+            case "EUR" -> new BigDecimal("0.011");
+            case "GBP" -> new BigDecimal("0.0095");
+            case "JPY" -> new BigDecimal("1.76");
+            default -> null;
+        };
     }
 
     /**

@@ -29,6 +29,8 @@ public class PriceEstimateRequest {
     @NotNull(message = "Vehicle type is required")
     private String vehicleType;
     
+    private String targetCurrency; // Optional, defaults to "INR" if null
+    
     private LocalDateTime scheduledTime; // Optional, for future bookings
     
     private String orderId; // Optional, if estimate is for existing order
