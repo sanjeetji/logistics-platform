@@ -19,7 +19,7 @@
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-        <avro.version>1.11.3</avro.version>
+        <avro.version>1.12.1</avro.version>
     </properties>
 
     <dependencies>
