@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll() // Allow generic auth endpoints
                         .requestMatchers("/api/auth/**").permitAll() // Allow specific API auth endpoints
+                        .requestMatchers("/api/v1/auth/**").permitAll() // Allow versioned API auth endpoints
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

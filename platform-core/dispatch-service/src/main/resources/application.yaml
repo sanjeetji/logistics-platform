@@ -2,4 +2,16 @@ spring:
   application:
     name: dispatch-service
   config:
-    import: "optional:configserver:http://config-server:8888/"
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888/}"
+
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
+  cloud:
+    function:
+      definition: dispatchEventConsumer
+    stream:
+      bindings:
+        dispatchEventConsumer-in-0:
+          destination: order-created-topic
+          group: dispatch-group

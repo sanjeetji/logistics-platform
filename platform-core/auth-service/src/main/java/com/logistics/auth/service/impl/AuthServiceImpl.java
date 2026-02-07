@@ -89,7 +89,8 @@ public class AuthServiceImpl implements AuthService {
                                 .email(savedUser.getEmail())
                                 .userType(savedUser.getUserType())
                                 .organizationId(req.getOrganizationId()) // Return what was requested
-                                .active(savedUser.isActive())
+                                .status(savedUser.isActive() ? com.logistics.platform.common.dto.enums.UserStatus.ACTIVE
+                                                : com.logistics.platform.common.dto.enums.UserStatus.INACTIVE)
                                 .build();
         }
 
@@ -145,7 +146,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
-        public UserDto getUserProfile(UUID userId) {
+        public UserDto getUserProfile(Long userId) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -162,7 +163,8 @@ public class AuthServiceImpl implements AuthService {
                                 .email(user.getEmail())
                                 .userType(user.getUserType())
                                 .organizationId(orgId)
-                                .active(user.isActive())
+                                .status(user.isActive() ? com.logistics.platform.common.dto.enums.UserStatus.ACTIVE
+                                                : com.logistics.platform.common.dto.enums.UserStatus.INACTIVE)
                                 .build();
         }
 
@@ -227,7 +229,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
-        public void changePassword(UUID userId, com.logistics.auth.dto.ChangePasswordRequest request) {
+        public void changePassword(Long userId, com.logistics.auth.dto.ChangePasswordRequest request) {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 

@@ -1,56 +1,57 @@
 package com.logistics.user.service.impl;
 
 import com.logistics.platform.common.dto.users.UserDto;
-import com.logistics.platform.common.exceptions.types.ResourceNotFoundException;
+import com.logistics.user.mapper.UserMapper;
 import com.logistics.user.model.User;
+import com.logistics.user.model.UserProfile;
 import com.logistics.user.repository.UserRepository;
 import com.logistics.user.service.UserService;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    public UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    @Override
+    public UserDto getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        return userMapper.toDto(user);
     }
 
     @Override
-    public UserDto getUserById(java.util.UUID id) {
+    @Transactional
+    public UserDto updateUser(Long id, UserDto userDto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-        return mapToDto(user);
-    }
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
-    @Override
-    public UserDto updateUser(java.util.UUID id, UserDto userDto) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
-        // Update fields (excluding ID and Email typically, or specific logic)
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
         user.setPhone(userDto.getPhone());
-        // user.setAddress(userDto.getAddress()); // Assuming DTO has this, if not
-        // ignore
 
-        User updatedUser = userRepository.save(user);
-        return mapToDto(updatedUser);
+        if (user.getProfile() == null) {
+            user.setProfile(new UserProfile());
+        }
+
+        user.getProfile().setAvatarUrl(userDto.getAvatarUrl());
+        user.getProfile().setPreferences(userDto.getPreferences());
+
+        return userMapper.toDto(userRepository.save(user));
     }
 
-    private UserDto mapToDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phone(user.getPhone())
-                .userType(user.getUserType())
-                // .organizationId() // User Service might not know this directly if valid for
-                // B2C, or it comes from UserTenant
-                .active(true) // Default
-                .build();
+    @Override
+    @Transactional
+    public void updateUserStatus(Long id, com.logistics.platform.common.dto.enums.UserStatus status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        user.setStatus(status);
+        userRepository.save(user);
     }
 }

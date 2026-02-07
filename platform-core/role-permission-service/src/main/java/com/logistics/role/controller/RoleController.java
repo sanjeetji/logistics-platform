@@ -1,5 +1,9 @@
 package com.logistics.role.controller;
 
+import com.logistics.platform.common.dto.response.ApiResponse;
+import com.logistics.role.dto.PermissionDto;
+import com.logistics.role.dto.RoleDto;
+import com.logistics.role.mapper.RoleMapper;
 import com.logistics.role.model.Permission;
 import com.logistics.role.model.Role;
 import com.logistics.role.service.RoleService;
@@ -16,24 +20,41 @@ import java.util.Set;
 public class RoleController {
 
     private final RoleService roleService;
+    private final RoleMapper roleMapper;
 
     @GetMapping
-    public ResponseEntity<List<Role>> getAllRoles() {
-        return ResponseEntity.ok(roleService.getAllRoles());
+    public ResponseEntity<ApiResponse<List<RoleDto>>> getAllRoles() {
+        return ResponseEntity.ok(ApiResponse.success(roleMapper.toDtoList(roleService.getAllRoles())));
     }
 
     @PostMapping
-    public ResponseEntity<Role> createRole(@RequestBody Role role) {
-        return ResponseEntity.ok(roleService.createRole(role));
+    public ResponseEntity<ApiResponse<RoleDto>> createRole(@RequestBody RoleDto roleDto) {
+        Role role = roleMapper.toEntity(roleDto);
+        return ResponseEntity
+                .ok(ApiResponse.success(roleMapper.toDto(roleService.createRole(role)), "Role created successfully"));
     }
 
     @PostMapping("/permissions")
-    public ResponseEntity<Permission> createPermission(@RequestBody Permission permission) {
-        return ResponseEntity.ok(roleService.createPermission(permission));
+    public ResponseEntity<ApiResponse<PermissionDto>> createPermission(@RequestBody PermissionDto permissionDto) {
+        Permission permission = roleMapper.toEntity(permissionDto);
+        return ResponseEntity
+                .ok(ApiResponse.success(roleMapper.toDto(roleService.createPermission(permission)),
+                        "Permission created successfully"));
     }
 
     @PostMapping("/{roleId}/permissions")
-    public ResponseEntity<Role> assignPermissions(@PathVariable Long roleId, @RequestBody Set<Long> permissionIds) {
-        return ResponseEntity.ok(roleService.assignPermissionsToRole(roleId, permissionIds));
+    public ResponseEntity<ApiResponse<RoleDto>> assignPermissions(@PathVariable Long roleId,
+            @RequestBody Set<Long> permissionIds) {
+        return ResponseEntity
+                .ok(ApiResponse.success(roleMapper.toDto(roleService.assignPermissionsToRole(roleId, permissionIds)),
+                        "Permissions assigned successfully"));
+    }
+
+    @PutMapping("/{roleId}/parent/{parentRoleId}")
+    public ResponseEntity<ApiResponse<RoleDto>> assignParentRole(@PathVariable Long roleId,
+            @PathVariable Long parentRoleId) {
+        return ResponseEntity
+                .ok(ApiResponse.success(roleMapper.toDto(roleService.assignParentRole(roleId, parentRoleId)),
+                        "Parent role assigned successfully"));
     }
 }

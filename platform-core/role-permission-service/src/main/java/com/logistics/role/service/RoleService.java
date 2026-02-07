@@ -49,4 +49,19 @@ public class RoleService {
         role.setPermissions(new HashSet<>(permissions));
         return roleRepository.save(role);
     }
+
+    @Transactional
+    public Role assignParentRole(Long roleId, Long parentRoleId) {
+        Role role = getRoleById(roleId);
+        Role parentRole = getRoleById(parentRoleId);
+
+        if (role.getId().equals(parentRole.getId())) {
+            throw new RuntimeException("Cannot assign role as its own parent");
+        }
+
+        // Basic cycle detection could be added here
+
+        role.setParentRole(parentRole);
+        return roleRepository.save(role);
+    }
 }

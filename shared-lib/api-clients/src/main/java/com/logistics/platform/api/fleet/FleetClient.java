@@ -19,4 +19,10 @@ public interface FleetClient {
 
     @GetMapping("/vehicles/{id}")
     VehicleDto getVehicleById(@PathVariable("id") Long id);
+
+    @GetMapping("/drivers/available")
+    List<DriverDto> getAvailableDrivers();
+
+    @GetMapping("/vehicles/active")
+    List<VehicleDto> getActiveVehicles();
 }

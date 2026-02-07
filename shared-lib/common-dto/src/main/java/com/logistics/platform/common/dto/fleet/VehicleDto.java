@@ -17,4 +17,5 @@ public class VehicleDto {
     private Double capacityKg;
     private Double volumeCubicMeter;
     private boolean active;
+    private Long currentDriverId;
 }

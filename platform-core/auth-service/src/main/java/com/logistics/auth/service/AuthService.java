@@ -7,7 +7,6 @@ import com.logistics.auth.dto.TokenRefreshResponse;
 import com.logistics.auth.dto.PasswordResetRequest;
 import com.logistics.auth.dto.NewPasswordRequest;
 import com.logistics.platform.common.dto.users.UserDto;
-import java.util.UUID;
 
 public interface AuthService {
     UserDto register(RegisterRequest registerRequest);
@@ -19,7 +18,7 @@ public interface AuthService {
 
     void logout(String token);
 
-    UserDto getUserProfile(UUID userId);
+    UserDto getUserProfile(Long userId);
 
     void forgotPassword(PasswordResetRequest request);
 
@@ -27,5 +26,5 @@ public interface AuthService {
 
     String switchTenant(com.logistics.auth.dto.SwitchTenantRequest request);
 
-    void changePassword(UUID userId, com.logistics.auth.dto.ChangePasswordRequest request);
+    void changePassword(Long userId, com.logistics.auth.dto.ChangePasswordRequest request);
 }

@@ -3,16 +3,10 @@ spring:
     name: platform-core
 
   datasource:
-    url: jdbc:mysql://mysql-db:3306/logistics_core_db
+    url: jdbc:postgresql://postgres-db:5432/logistics_core_pg
     username: logistics_user
     password: logistics_pass
+    driver-class-name: org.postgresql.Driver
 
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-
-server:
-  port: 8080
-
-logging:
-  level:
-    com.logistics.platform: DEBUG
+    database-platform: org.hibernate.dialect.PostgreSQLDialect

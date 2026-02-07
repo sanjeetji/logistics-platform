@@ -1,26 +1,24 @@
 package com.logistics.tenant.model;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
+import com.logistics.platform.utils.model.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "tenants")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Tenant {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@SQLDelete(sql = "UPDATE tenants SET deleted = true WHERE id=?")
+@SQLRestriction("deleted=false")
+public class Tenant extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -32,16 +30,16 @@ public class Tenant {
     private String industryType; // RETAIL, PHARMA, FMCG
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @Column(name = "subscription_plan")
     private String subscriptionPlan; // FREE, PREMIUM, ENTERPRISE
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Embedded
+    private TenantConfig config;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
 }

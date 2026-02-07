@@ -1,5 +1,6 @@
 package com.logistics.pricing.controller;
 
+import com.logistics.platform.common.dto.response.ApiResponse;
 import com.logistics.pricing.dto.PricingDTOs.CalculatedPrice;
 import com.logistics.pricing.dto.PricingDTOs.PriceRequest;
 import com.logistics.pricing.service.PricingService;
@@ -18,7 +19,7 @@ public class PricingController {
     private final PricingService pricingService;
 
     @PostMapping("/calculate")
-    public ResponseEntity<CalculatedPrice> calculatePrice(@RequestBody PriceRequest request) {
-        return ResponseEntity.ok(pricingService.calculatePrice(request));
+    public ResponseEntity<ApiResponse<CalculatedPrice>> calculatePrice(@RequestBody PriceRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(pricingService.calculatePrice(request)));
     }
 }

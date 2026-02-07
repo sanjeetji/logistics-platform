@@ -1,13 +1,13 @@
 package com.logistics.pricing.model;
 
+import com.logistics.platform.utils.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "rate_cards")
@@ -15,11 +15,8 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RateCard {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+@EqualsAndHashCode(callSuper = true)
+public class RateCard extends BaseEntity {
 
     @Column(nullable = false)
     private String name;
@@ -45,23 +42,8 @@ public class RateCard {
 
     @Column(name = "minimum_price")
     private BigDecimal minimumPrice;
-    
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-    
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-    
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-    
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+
+    // createdAt and updatedAt are now handled by BaseEntity
 
     public enum PricingType {
         STANDARD, CONTRACT, SURGE

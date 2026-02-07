@@ -1,11 +1,12 @@
 package com.logistics.fleet.model;
 
+import com.logistics.platform.utils.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "drivers")
@@ -13,10 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Driver {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class Driver extends BaseEntity {
 
     @Column(nullable = false)
     private String name;
@@ -41,16 +40,14 @@ public class Driver {
     private Double currentLatitude;
     private Double currentLongitude;
 
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
-    
-    @Builder.Default
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    // Current assignment
+    private String currentOrderId; // Current order assigned to this driver
+    private Long currentVehicleId; // Current vehicle assigned to this driver
 
-    @PreUpdate
-    public void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    private java.time.LocalDateTime lastLocationUpdate;
+
+    @Column(columnDefinition = "text")
+    private String notes;
+
+    // createdAt and updatedAt are handled by BaseEntity
 }
-
-

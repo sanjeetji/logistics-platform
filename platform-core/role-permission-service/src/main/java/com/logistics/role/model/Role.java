@@ -1,10 +1,13 @@
 package com.logistics.role.model;
 
+import com.logistics.platform.utils.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,7 +18,9 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Role {
+@EqualsAndHashCode(callSuper = true, exclude = { "permissions", "parentRole", "childRoles" })
+@ToString(exclude = { "permissions", "parentRole", "childRoles" })
+public class Role extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,10 +31,15 @@ public class Role {
 
     private String description;
 
-    // Roles can be scoped to a specific tenant type or global logic if needed
-    // For now keeping it simple as a definition of capabilities
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_role_id")
+    private Role parentRole;
+
+    @OneToMany(mappedBy = "parentRole", fetch = FetchType.LAZY)
+    private Set<Role> childRoles = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "role_permissions", joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    @Builder.Default
     private Set<Permission> permissions = new HashSet<>();
 }

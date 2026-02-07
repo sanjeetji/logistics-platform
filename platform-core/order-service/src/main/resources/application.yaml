@@ -2,4 +2,15 @@ spring:
   application:
     name: order-service
   config:
-    import: "optional:configserver:http://config-server:8888/"
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888/}"
+
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
+  cloud:
+    function:
+      definition: orderCreatedSupplier
+    stream:
+      bindings:
+        orderCreatedSupplier-out-0:
+          destination: order-created-topic

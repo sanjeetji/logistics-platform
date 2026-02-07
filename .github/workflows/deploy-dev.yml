@@ -1,0 +1,61 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Dev Environment
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+      
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DEV_SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to development server
+        run: |
+          ssh ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }} << 'EOF'
+            cd /opt/logistics-platform
+            git pull origin develop
+            docker compose -f docker/docker-compose.yml pull
+            docker compose -f docker/docker-compose.yml up -d
+            docker compose -f docker/docker-compose.yml ps
+          EOF
+      
+      - name: Wait for services to be healthy
+        run: |
+          ssh ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }} << 'EOF'
+            echo "Waiting for services to be healthy..."
+            sleep 30
+            docker compose -f /opt/logistics-platform/docker/docker-compose.yml ps
+          EOF
+      
+      - name: Run smoke tests
+        run: |
+          ssh ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }} << 'EOF'
+            cd /opt/logistics-platform
+            curl -f http://localhost/actuator/health || exit 1
+            echo "Smoke tests passed!"
+          EOF
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment to development successful"
+          else
+            echo "❌ Deployment to development failed"
+          fi
