@@ -67,7 +67,7 @@
         <micrometer-tracing.version>1.3.0</micrometer-tracing.version>
 
         <!-- QR Code Generation -->
-        <zxing.version>3.5.3</zxing.version>
+        <zxing.version>3.5.4</zxing.version>
 
         <!-- PDF Generation -->
         <itext.version>7.2.6</itext.version>
