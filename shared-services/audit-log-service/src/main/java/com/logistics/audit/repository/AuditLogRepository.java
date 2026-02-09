@@ -9,8 +9,9 @@ import java.util.List;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
-    List<AuditLog> findByUserIdOrderByTimestampDesc(String userId);
-    List<AuditLog> findByActionOrderByTimestampDesc(String action);
-    List<AuditLog> findByTimestampBetweenOrderByTimestampDesc(LocalDateTime start, LocalDateTime end);
-    List<AuditLog> findByResourceAndResourceIdOrderByTimestampDesc(String resource, String resourceId);
+    List<AuditLog> findByEntityId(String entityId);
+    List<AuditLog> findByChangedBy(String changedBy);
+    List<AuditLog> findByAction(String action);
+    List<AuditLog> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
+    List<AuditLog> findByEntityIdAndEntityType(String entityId, String entityType);
 }

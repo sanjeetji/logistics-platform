@@ -30,8 +30,16 @@ public class JwtAuthenticationWebFilter implements WebFilter {
             @org.springframework.lang.NonNull WebFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
 
-        // Skip authentication for auth endpoints
-        if (path.startsWith("/auth-service/api/v1/auth/")) {
+        // Whitelisted endpoints that do NOT require authentication
+        List<String> publicEndpoints = List.of(
+                "/auth-service/api/v1/auth/login",
+                "/auth-service/api/v1/auth/register",
+                "/auth-service/api/v1/auth/refresh",
+                "/auth-service/api/v1/auth/forgot-password",
+                "/auth-service/api/v1/auth/reset-password");
+
+        // Check if path matches any public endpoint
+        if (publicEndpoints.stream().anyMatch(path::startsWith)) {
             return chain.filter(exchange);
         }
 

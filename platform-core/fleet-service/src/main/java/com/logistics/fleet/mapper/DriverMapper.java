@@ -1,8 +1,5 @@
 package com.logistics.fleet.mapper;
 
-import com.logistics.fleet.model.Driver;
-import com.logistics.fleet.model.DriverStatus;
-import com.logistics.fleet.model.VerificationStatus;
 import com.logistics.platform.common.dto.fleet.DriverDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

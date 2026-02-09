@@ -22,7 +22,12 @@ public class GatewaySecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/auth-service/api/v1/auth/**").permitAll()
+                        .pathMatchers("/auth-service/api/v1/auth/login",
+                                "/auth-service/api/v1/auth/register",
+                                "/auth-service/api/v1/auth/refresh",
+                                "/auth-service/api/v1/auth/forgot-password",
+                                "/auth-service/api/v1/auth/reset-password")
+                        .permitAll()
                         .pathMatchers("/actuator/**").permitAll()
                         .anyExchange().authenticated())
                 .addFilterAt(jwtAuthenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

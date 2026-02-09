@@ -131,6 +131,11 @@
         <module>shared-services/geo-service</module>
         <module>shared-services/analytics-service</module>
         <module>shared-services/pricing-service</module>
+        <module>shared-services/audit-log-service</module>
+        <module>shared-services/chat-service</module>
+        <module>shared-services/integration-service</module>
+        <module>shared-services/master-data-service</module>
+        <module>shared-services/payout-service</module>
 
         <!-- MOBILE BACKENDS -->
         <module>mobile-backend/driver-api-service</module>
@@ -398,6 +403,11 @@
                                 <groupId>org.projectlombok</groupId>
                                 <artifactId>lombok</artifactId>
                                 <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok-mapstruct-binding</artifactId>
+                                <version>0.2.0</version>
                             </path>
                             <path>
                                 <groupId>org.mapstruct</groupId>
