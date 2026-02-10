@@ -109,6 +109,7 @@
         <module>platform-core/fleet-service</module>
         <module>platform-core/order-service</module>
         <module>platform-core/dispatch-service</module>
+        <module>platform-core/pricing-service</module>
 
         <!-- B2B ENGINE -->
         <module>b2b-engine/team-service</module>
@@ -130,7 +131,6 @@
         <module>shared-services/document-service</module>
         <module>shared-services/geo-service</module>
         <module>shared-services/analytics-service</module>
-        <module>shared-services/pricing-service</module>
         <module>shared-services/audit-log-service</module>
         <module>shared-services/chat-service</module>
         <module>shared-services/integration-service</module>
@@ -140,10 +140,6 @@
         <!-- MOBILE BACKENDS -->
         <module>mobile-backend/driver-api-service</module>
         <module>mobile-backend/customer-api-service</module>
-
-        <!-- CUSTOMER PORTALS -->
-        <module>web-backend/b2b-api-service</module>
-        <module>web-backend/b2c-api-service</module>
     </modules>
 
     <!-- DEPENDENCY MANAGEMENT -->
