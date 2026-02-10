@@ -140,6 +140,11 @@
         <!-- MOBILE BACKENDS -->
         <module>mobile-backend/driver-api-service</module>
         <module>mobile-backend/customer-api-service</module>
+
+        <!-- BFF (Backend for Frontend) -->
+        <module>bff/b2b-bff-service</module>
+        <module>bff/b2c-bff-service</module>
+        <module>bff/mobile-bff-service</module>
     </modules>
 
     <!-- DEPENDENCY MANAGEMENT -->

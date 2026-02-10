@@ -7,8 +7,9 @@
 
     <parent>
         <groupId>com.logistics.platform</groupId>
-        <artifactId>platform-core</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <artifactId>logistics-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <groupId>com.logistics.pricing</groupId>
