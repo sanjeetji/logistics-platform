@@ -3,6 +3,9 @@ package com.logistics.audit.service;
 import com.logistics.audit.model.AuditLog;
 import com.logistics.audit.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +19,8 @@ public class AuditLogService {
     private final AuditLogRepository auditLogRepository;
 
     @Transactional
-    public void recordAudit(String entityId, String entityType, String action, String changedBy, String tenantId, String oldValue, String newValue) {
+    public void recordAudit(String entityId, String entityType, String action, String changedBy, String tenantId,
+            String oldValue, String newValue) {
         AuditLog log = AuditLog.builder()
                 .entityId(entityId)
                 .entityType(entityType)
@@ -55,5 +59,36 @@ public class AuditLogService {
 
     public List<AuditLog> getLogsByResource(String resourceType, String resourceId) {
         return auditLogRepository.findByEntityIdAndEntityType(resourceId, resourceType);
+    }
+
+    public Page<AuditLog> searchAuditLogs(String userId, String tenantId, String action,
+            String entityType, String status,
+            LocalDateTime startDate, LocalDateTime endDate,
+            Pageable pageable) {
+        Specification<AuditLog> spec = Specification.where(null);
+
+        if (userId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("userId"), userId));
+        }
+        if (tenantId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("tenantId"), tenantId));
+        }
+        if (action != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("action"), action));
+        }
+        if (entityType != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("entityType"), entityType));
+        }
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        if (startDate != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("timestamp"), startDate));
+        }
+        if (endDate != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), endDate));
+        }
+
+        return auditLogRepository.findAll(spec, pageable);
     }
 }

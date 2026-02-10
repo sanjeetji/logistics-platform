@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: document-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: 8096
+
+aws:
+  s3:
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    region: us-east-1
+
+document:
+  storage:
+    bucket-name: logistics-documents
+    base-url: http://localhost:9000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+
+logging:
+  level:
+    com.logistics.document: DEBUG

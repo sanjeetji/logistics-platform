@@ -14,3 +14,5 @@ spring:
       bindings:
         orderCreatedSupplier-out-0:
           destination: order-created-topic
+        auditLogSupplier-out-0:
+          destination: audit-logs

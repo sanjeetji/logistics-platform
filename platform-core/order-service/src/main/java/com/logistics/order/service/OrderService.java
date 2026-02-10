@@ -5,7 +5,7 @@ import com.logistics.order.model.OrderStatus;
 import com.logistics.order.repository.OrderRepository;
 import com.logistics.order.event.OrderEventProducer;
 import com.logistics.order.mappers.OrderMapper;
-import com.logistics.platform.common.dto.event.OrderCreatedEvent;
+import com.logistics.platform.event.dto.OrderCreatedEvent;
 import com.logistics.platform.common.dto.order.TransportOrderDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +76,19 @@ public class OrderService {
                     .timestamp(LocalDateTime.now())
                     .build();
             orderEventProducer.publishOrderCreated(event);
+
+            // Publish Audit Log
+            com.logistics.platform.event.dto.AuditLogEvent auditEvent = com.logistics.platform.event.dto.AuditLogEvent
+                    .builder()
+                    .entityId(savedOrder.getOrderId())
+                    .entityType("ORDER")
+                    .action("CREATE")
+                    .changedBy("SYSTEM") // Should be from SecurityContext
+                    .tenantId(savedOrder.getTenantId())
+                    .newValue("Order Created")
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            orderEventProducer.publishAuditLog(auditEvent);
         } catch (Exception e) {
             log.error("Failed to publish OrderCreatedEvent for order {}: {}", savedOrder.getOrderId(), e.getMessage());
         }

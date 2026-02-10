@@ -1,7 +1,7 @@
 package com.logistics.audit.listener;
 
 import com.logistics.audit.service.AuditLogService;
-import com.logistics.platform.common.dto.event.AuditLogEvent;
+import com.logistics.platform.event.dto.AuditLogEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,14 +19,13 @@ public class KafkaAuditListener {
         log.info("Received audit log event: {}", event);
         try {
             auditLogService.recordAudit(
-                event.getEntityId(),
-                event.getEntityType(),
-                event.getAction(),
-                event.getChangedBy(),
-                event.getTenantId(),
-                event.getOldValue(),
-                event.getNewValue()
-            );
+                    event.getEntityId(),
+                    event.getEntityType(),
+                    event.getAction(),
+                    event.getChangedBy(),
+                    event.getTenantId(),
+                    event.getOldValue(),
+                    event.getNewValue());
             log.debug("Saved audit log for entity: {}", event.getEntityId());
         } catch (Exception e) {
             log.error("Failed to save audit log: {}", event, e);

@@ -1,5 +1,7 @@
 package com.logistics.masterdata.service;
 
+import com.logistics.masterdata.dto.BulkUploadRequest;
+import com.logistics.masterdata.dto.BulkUploadResponse;
 import com.logistics.masterdata.model.City;
 import com.logistics.masterdata.model.ServiceZone;
 import com.logistics.masterdata.model.VehicleType;
@@ -8,6 +10,7 @@ import com.logistics.masterdata.repository.ServiceZoneRepository;
 import com.logistics.masterdata.repository.VehicleTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,5 +69,76 @@ public class MasterDataService {
     @Transactional
     public VehicleType createVehicleType(VehicleType vehicleType) {
         return vehicleTypeRepository.save(vehicleType);
+    }
+
+    // Bulk Upload Methods
+    @Transactional
+    @CacheEvict(value = "cities", allEntries = true)
+    public BulkUploadResponse bulkUploadCities(BulkUploadRequest<City> request) {
+        log.info("Starting bulk upload of {} cities", request.getData().size());
+
+        if (request.isClearExisting()) {
+            cityRepository.deleteAll();
+            log.warn("Cleared all existing cities");
+        }
+
+        int success = 0, failure = 0, skipped = 0;
+
+        for (City city : request.getData()) {
+            try {
+                if (request.isSkipDuplicates()
+                        && cityRepository.findByNameAndCountry(city.getName(), city.getCountry()).isPresent()) {
+                    skipped++;
+                    continue;
+                }
+                cityRepository.save(city);
+                success++;
+            } catch (Exception e) {
+                log.error("Failed to save city: {}", city.getName(), e);
+                failure++;
+            }
+        }
+
+        return BulkUploadResponse.builder()
+                .totalRecords(request.getData().size())
+                .successCount(success)
+                .failureCount(failure)
+                .skippedCount(skipped)
+                .message(String.format("Uploaded %d cities successfully", success))
+                .build();
+    }
+
+    @Transactional
+    @CacheEvict(value = "vehicleTypes", allEntries = true)
+    public BulkUploadResponse bulkUploadVehicleTypes(BulkUploadRequest<VehicleType> request) {
+        log.info("Starting bulk upload of {} vehicle types", request.getData().size());
+
+        if (request.isClearExisting()) {
+            vehicleTypeRepository.deleteAll();
+        }
+
+        int success = 0, failure = 0;
+
+        for (VehicleType type : request.getData()) {
+            try {
+                vehicleTypeRepository.save(type);
+                success++;
+            } catch (Exception e) {
+                log.error("Failed to save vehicle type: {}", type.getName(), e);
+                failure++;
+            }
+        }
+
+        return BulkUploadResponse.builder()
+                .totalRecords(request.getData().size())
+                .successCount(success)
+                .failureCount(failure)
+                .message(String.format("Uploaded %d vehicle types successfully", success))
+                .build();
+    }
+
+    @CacheEvict(value = { "cities", "zones", "vehicleTypes" }, allEntries = true)
+    public void clearAllCaches() {
+        log.info("Cleared all master data caches");
     }
 }

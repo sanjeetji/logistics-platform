@@ -7,8 +7,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Service
-@Slf4j
 public class GreenRoutingService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GreenRoutingService.class);
 
     // CO2 Emission Factors (kg per km)
     private static final double FACTOR_TRUCK_DIESEL = 0.95;

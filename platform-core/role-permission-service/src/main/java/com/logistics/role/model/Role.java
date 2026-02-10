@@ -36,6 +36,7 @@ public class Role extends BaseEntity {
     private Role parentRole;
 
     @OneToMany(mappedBy = "parentRole", fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Role> childRoles = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)

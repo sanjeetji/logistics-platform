@@ -6,6 +6,7 @@ import com.logistics.route.model.Route;
 import com.logistics.route.model.Waypoint;
 import com.logistics.route.model.WaypointType;
 import com.logistics.route.repository.RouteRepository;
+import com.logistics.route.repository.WaypointRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,13 +19,24 @@ import java.util.*;
  * Service for route planning and management
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class RoutePlanningService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RoutePlanningService.class);
+
     private final RouteRepository routeRepository;
+    private final WaypointRepository waypointRepository;
     private final RouteOptimizationService optimizationService;
     private final DistanceMatrixService distanceMatrixService;
+
+    public RoutePlanningService(RouteRepository routeRepository, 
+                                WaypointRepository waypointRepository, 
+                                RouteOptimizationService optimizationService, 
+                                DistanceMatrixService distanceMatrixService) {
+        this.routeRepository = routeRepository;
+        this.waypointRepository = waypointRepository;
+        this.optimizationService = optimizationService;
+        this.distanceMatrixService = distanceMatrixService;
+    }
 
     /**
      * Create optimized routes for multiple vehicles
@@ -215,13 +227,25 @@ public class RoutePlanningService {
         return locations;
     }
 
-    @lombok.Data
-    @lombok.AllArgsConstructor
     private static class OrderLocation {
         private String orderId;
         private double pickupLat;
         private double pickupLon;
         private double deliveryLat;
         private double deliveryLon;
+
+        public OrderLocation(String orderId, double pickupLat, double pickupLon, double deliveryLat, double deliveryLon) {
+            this.orderId = orderId;
+            this.pickupLat = pickupLat;
+            this.pickupLon = pickupLon;
+            this.deliveryLat = deliveryLat;
+            this.deliveryLon = deliveryLon;
+        }
+
+        public String getOrderId() { return orderId; }
+        public double getPickupLat() { return pickupLat; }
+        public double getPickupLon() { return pickupLon; }
+        public double getDeliveryLat() { return deliveryLat; }
+        public double getDeliveryLon() { return deliveryLon; }
     }
 }

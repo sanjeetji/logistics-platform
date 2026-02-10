@@ -3,7 +3,7 @@ package com.logistics.route.service;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.job.Service;
+
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
 import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
@@ -24,8 +24,9 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class RouteOptimizationService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RouteOptimizationService.class);
 
     private final DistanceMatrixService distanceMatrixService;
 
@@ -63,7 +64,7 @@ public class RouteOptimizationService {
         for (int i = 0; i < distanceMatrix.length; i++) {
             if (i == startIndex) continue;
 
-            Service service = Service.Builder.newInstance("service_" + i)
+            com.graphhopper.jsprit.core.problem.job.Service service = com.graphhopper.jsprit.core.problem.job.Service.Builder.newInstance("service_" + i)
                     .addSizeDimension(0, 10) // Assume each stop takes 10 units of capacity
                     .setLocation(com.graphhopper.jsprit.core.problem.Location.newInstance(i, 0))
                     .build();
@@ -74,22 +75,27 @@ public class RouteOptimizationService {
         problemBuilder.setRoutingCost(new com.graphhopper.jsprit.core.problem.cost.VehicleRoutingTransportCosts() {
             @Override
             public double getBackwardTransportCost(com.graphhopper.jsprit.core.problem.Location from, com.graphhopper.jsprit.core.problem.Location to, double departureTime, com.graphhopper.jsprit.core.problem.driver.Driver driver, com.graphhopper.jsprit.core.problem.vehicle.Vehicle vehicle) {
-                return getDistance(from, to, distanceMatrix, departureTime, vehicle);
+                return calculateTransportDistance(from, to, distanceMatrix);
             }
 
             @Override
             public double getBackwardTransportTime(com.graphhopper.jsprit.core.problem.Location from, com.graphhopper.jsprit.core.problem.Location to, double departureTime, com.graphhopper.jsprit.core.problem.driver.Driver driver, com.graphhopper.jsprit.core.problem.vehicle.Vehicle vehicle) {
-                return getDistance(from, to, distanceMatrix, departureTime, vehicle); // Assuming 1m/s for simplicity if time not critical yet
+                return calculateTransportDistance(from, to, distanceMatrix); 
             }
 
             @Override
             public double getTransportCost(com.graphhopper.jsprit.core.problem.Location from, com.graphhopper.jsprit.core.problem.Location to, double departureTime, com.graphhopper.jsprit.core.problem.driver.Driver driver, com.graphhopper.jsprit.core.problem.vehicle.Vehicle vehicle) {
-                return getDistance(from, to, distanceMatrix, departureTime, vehicle);
+                return calculateTransportDistance(from, to, distanceMatrix);
             }
 
             @Override
             public double getTransportTime(com.graphhopper.jsprit.core.problem.Location from, com.graphhopper.jsprit.core.problem.Location to, double departureTime, com.graphhopper.jsprit.core.problem.driver.Driver driver, com.graphhopper.jsprit.core.problem.vehicle.Vehicle vehicle) {
-                return getDistance(from, to, distanceMatrix, departureTime, vehicle);
+                return calculateTransportDistance(from, to, distanceMatrix);
+            }
+
+            @Override
+            public double getDistance(com.graphhopper.jsprit.core.problem.Location from, com.graphhopper.jsprit.core.problem.Location to, double departureTime, com.graphhopper.jsprit.core.problem.vehicle.Vehicle vehicle) {
+                return calculateTransportDistance(from, to, distanceMatrix);
             }
         });
 
@@ -108,13 +114,6 @@ public class RouteOptimizationService {
             log.info("Best solution cost: {}", bestSolution.getCost());
             for (VehicleRoute vr : bestSolution.getRoutes()) {
                 for (com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity activity : vr.getActivities()) {
-                     // Location index is stored in the Location object's index (if coordinate based) or id
-                     // Here we used index as the x-coordinate in newInstance(i, 0) - waiting for better ID mapping
-                     // But actually newInstance(x,y) stores coords.
-                     // The Location ID is usually null unless set.
-                     // Let's use the coordinate trick or ID parsing if we set ID as index.
-                     // In loop above: Service.Builder.newInstance("service_" + i)
-                     // Validation:
                      String jobId = ((com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity.JobActivity) activity).getJob().getId();
                      int index = Integer.parseInt(jobId.replace("service_", ""));
                      route.add(index);
@@ -126,9 +125,7 @@ public class RouteOptimizationService {
         return route;
     }
 
-    private double getDistance(com.graphhopper.jsprit.core.problem.Location from, com.graphhopper.jsprit.core.problem.Location to, double[][] matrix, double time, com.graphhopper.jsprit.core.problem.vehicle.Vehicle vehicle) {
-        // We hacked the location construction: newInstance(index, 0)
-        // So x coordinate is the index.
+    private double calculateTransportDistance(com.graphhopper.jsprit.core.problem.Location from, com.graphhopper.jsprit.core.problem.Location to, double[][] matrix) {
         int fromIndex = (int) from.getCoordinate().getX();
         int toIndex = (int) to.getCoordinate().getX();
         return matrix[fromIndex][toIndex];

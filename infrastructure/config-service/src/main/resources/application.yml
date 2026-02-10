@@ -1,0 +1,38 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-service
+  cloud:
+    config:
+      server:
+        git:
+          uri: file://${user.home}/logistics-config-repo
+          default-label: main
+          clone-on-start: true
+        # Alternative: Use native filesystem
+        # native:
+        #   search-locations: classpath:/configs,file:./configs
+  security:
+    user:
+      name: config-admin
+      password: ${CONFIG_PASSWORD:changeme}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh
+  endpoint:
+    health:
+      show-details: always

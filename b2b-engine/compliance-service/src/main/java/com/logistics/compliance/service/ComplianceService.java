@@ -1,5 +1,6 @@
 package com.logistics.compliance.service;
 
+import com.logistics.compliance.engine.ComplianceRule;
 import com.logistics.compliance.model.ComplianceRecord;
 import com.logistics.compliance.model.ComplianceStatus;
 import com.logistics.compliance.repository.ComplianceRecordRepository;
@@ -22,6 +23,8 @@ public class ComplianceService {
 
     private final ComplianceRecordRepository complianceRepository;
 
+    private final List<ComplianceRule> complianceRules;
+
     /**
      * Create compliance record
      */
@@ -40,6 +43,17 @@ public class ComplianceService {
                 .build();
 
         return complianceRepository.save(record);
+    }
+
+    /**
+     * Evaluate compliance against rules
+     */
+    public List<ComplianceRule.RuleResult> evaluateCompliance(String entityId, String entityType) {
+        log.info("Running compliance rules for {} (Type: {})", entityId, entityType);
+        return complianceRules.stream()
+                .filter(rule -> rule.supports(entityType))
+                .map(rule -> rule.evaluate(entityId, null))
+                .toList();
     }
 
     /**

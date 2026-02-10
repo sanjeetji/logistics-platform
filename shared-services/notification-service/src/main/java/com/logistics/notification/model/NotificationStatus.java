@@ -1,5 +1,9 @@
 package com.logistics.notification.model;
 
 public enum NotificationStatus {
-    PENDING, SENT, FAILED
+    PENDING,
+    SENT,
+    DELIVERED,
+    FAILED,
+    RETRY
 }

@@ -1,5 +1,6 @@
 package com.logistics.compliance.controller;
 
+import com.logistics.compliance.engine.ComplianceRule;
 import com.logistics.compliance.model.ComplianceRecord;
 import com.logistics.compliance.model.ComplianceStatus;
 import com.logistics.compliance.service.ComplianceService;
@@ -48,5 +49,13 @@ public class ComplianceController {
     public ResponseEntity<ApiResponse<List<ComplianceRecord>>> getPendingReviews() {
         List<ComplianceRecord> records = complianceService.getPendingReviews();
         return ResponseEntity.ok(ApiResponse.success(records));
+    }
+
+    @PostMapping("/evaluate")
+    public ResponseEntity<ApiResponse<List<ComplianceRule.RuleResult>>> evaluateCompliance(
+            @RequestParam String entityId,
+            @RequestParam String entityType) {
+        List<ComplianceRule.RuleResult> results = complianceService.evaluateCompliance(entityId, entityType);
+        return ResponseEntity.ok(ApiResponse.success(results));
     }
 }

@@ -1,6 +1,6 @@
 package com.logistics.order.event;
 
-import com.logistics.platform.common.dto.event.OrderCreatedEvent;
+import com.logistics.platform.event.dto.OrderCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -16,5 +16,10 @@ public class OrderEventProducer {
     public void publishOrderCreated(OrderCreatedEvent event) {
         log.info("Publishing OrderCreatedEvent: {}", event.getOrderId());
         streamBridge.send("orderCreatedSupplier-out-0", event);
+    }
+
+    public void publishAuditLog(com.logistics.platform.event.dto.AuditLogEvent event) {
+        log.info("Publishing AuditLogEvent for entity: {}", event.getEntityId());
+        streamBridge.send("auditLogSupplier-out-0", event);
     }
 }

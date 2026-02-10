@@ -10,12 +10,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "routes")
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class Route extends BaseEntity {
 
     @Column(nullable = false, unique = true)
@@ -31,7 +25,6 @@ public class Route extends BaseEntity {
 
     @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("waypointSequence ASC")
-    @Builder.Default
     private List<Waypoint> waypoints = new ArrayList<>();
 
     @Column(nullable = false)
@@ -41,7 +34,6 @@ public class Route extends BaseEntity {
     private Integer estimatedDuration; // in minutes
 
     @Enumerated(EnumType.STRING)
-    @Builder.Default
     @Column(nullable = false)
     private RouteStatus status = RouteStatus.PLANNED;
 
@@ -49,6 +41,83 @@ public class Route extends BaseEntity {
 
     @Column(columnDefinition = "text")
     private String notes;
+
+    public Route() {}
+
+    public Route(String routeId, Long vehicleId, Long driverId, LocalDate routeDate, List<Waypoint> waypoints, Double totalDistance, Integer estimatedDuration, RouteStatus status, Double optimizationScore, String notes) {
+        this.routeId = routeId;
+        this.vehicleId = vehicleId;
+        this.driverId = driverId;
+        this.routeDate = routeDate;
+        this.waypoints = waypoints != null ? waypoints : new ArrayList<>();
+        this.totalDistance = totalDistance;
+        this.estimatedDuration = estimatedDuration;
+        this.status = status != null ? status : RouteStatus.PLANNED;
+        this.optimizationScore = optimizationScore;
+        this.notes = notes;
+    }
+
+    public static RouteBuilder builder() {
+        return new RouteBuilder();
+    }
+
+    public String getRouteId() { return routeId; }
+    public void setRouteId(String routeId) { this.routeId = routeId; }
+
+    public Long getVehicleId() { return vehicleId; }
+    public void setVehicleId(Long vehicleId) { this.vehicleId = vehicleId; }
+
+    public Long getDriverId() { return driverId; }
+    public void setDriverId(Long driverId) { this.driverId = driverId; }
+
+    public LocalDate getRouteDate() { return routeDate; }
+    public void setRouteDate(LocalDate routeDate) { this.routeDate = routeDate; }
+
+    public List<Waypoint> getWaypoints() { return waypoints; }
+    public void setWaypoints(List<Waypoint> waypoints) { this.waypoints = waypoints; }
+
+    public Double getTotalDistance() { return totalDistance; }
+    public void setTotalDistance(Double totalDistance) { this.totalDistance = totalDistance; }
+
+    public Integer getEstimatedDuration() { return estimatedDuration; }
+    public void setEstimatedDuration(Integer estimatedDuration) { this.estimatedDuration = estimatedDuration; }
+
+    public RouteStatus getStatus() { return status; }
+    public void setStatus(RouteStatus status) { this.status = status; }
+
+    public Double getOptimizationScore() { return optimizationScore; }
+    public void setOptimizationScore(Double optimizationScore) { this.optimizationScore = optimizationScore; }
+
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
+
+    public static class RouteBuilder {
+        private String routeId;
+        private Long vehicleId;
+        private Long driverId;
+        private LocalDate routeDate;
+        private List<Waypoint> waypoints = new ArrayList<>();
+        private Double totalDistance;
+        private Integer estimatedDuration;
+        private RouteStatus status = RouteStatus.PLANNED;
+        private Double optimizationScore;
+        private String notes;
+
+        public RouteBuilder routeId(String routeId) { this.routeId = routeId; return this; }
+        public RouteBuilder vehicleId(Long vehicleId) { this.vehicleId = vehicleId; return this; }
+        public RouteBuilder driverId(Long driverId) { this.driverId = driverId; return this; }
+        public RouteBuilder routeDate(LocalDate routeDate) { this.routeDate = routeDate; return this; }
+        public RouteBuilder waypoints(List<Waypoint> waypoints) { this.waypoints = waypoints; return this; }
+        public RouteBuilder totalDistance(Double totalDistance) { this.totalDistance = totalDistance; return this; }
+        public RouteBuilder estimatedDuration(Integer estimatedDuration) { this.estimatedDuration = estimatedDuration; return this; }
+        public RouteBuilder status(RouteStatus status) { this.status = status; return this; }
+        public RouteBuilder optimizationScore(Double optimizationScore) { this.optimizationScore = optimizationScore; return this; }
+        public RouteBuilder notes(String notes) { this.notes = notes; return this; }
+
+        public Route build() {
+            return new Route(routeId, vehicleId, driverId, routeDate, waypoints, totalDistance, estimatedDuration, status, optimizationScore, notes);
+        }
+    }
 
     // Helper method to add waypoint
     public void addWaypoint(Waypoint waypoint) {

@@ -15,14 +15,18 @@ import java.util.Map;
  * Client for ML Service integration
  */
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class MLServiceClient {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MLServiceClient.class);
 
     private final RestTemplate restTemplate;
     
     @Value("${ml.service.url:http://localhost:8092}")
     private String mlServiceUrl;
+
+    public MLServiceClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     /**
      * Predict delivery time using ML service
