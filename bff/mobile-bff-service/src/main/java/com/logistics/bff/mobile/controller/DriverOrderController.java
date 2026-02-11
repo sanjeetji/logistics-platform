@@ -2,7 +2,6 @@ package com.logistics.bff.mobile.controller;
 
 import com.logistics.bff.mobile.client.OrderServiceClient;
 import com.logistics.bff.mobile.service.MobileOrderService;
-import com.logistics.platform.dto.order.CreateOrderRequest;
 import com.logistics.platform.dto.order.OrderDTO;
 import com.logistics.platform.dto.order.UpdateOrderRequest;
 import io.swagger.v3.oas.annotations.Operation;

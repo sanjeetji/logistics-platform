@@ -33,8 +33,9 @@ public class Tenant extends BaseEntity {
     @Builder.Default
     private boolean active = true;
 
-    @Column(name = "subscription_plan")
-    private String subscriptionPlan; // FREE, PREMIUM, ENTERPRISE
+    @Column(name = "subscription_tier")
+    @Builder.Default
+    private SubscriptionTier subscriptionTier = SubscriptionTier.FREE;
 
     @Embedded
     private TenantConfig config;

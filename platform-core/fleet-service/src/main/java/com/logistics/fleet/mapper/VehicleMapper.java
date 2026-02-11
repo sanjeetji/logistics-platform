@@ -1,7 +1,6 @@
 package com.logistics.fleet.mapper;
 
 import com.logistics.fleet.model.Vehicle;
-import com.logistics.fleet.model.VehicleType;
 import com.logistics.platform.common.dto.fleet.VehicleDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

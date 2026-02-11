@@ -32,14 +32,23 @@ public class VehicleService {
     }
 
     public Optional<Vehicle> getVehicleById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Vehicle ID must not be null");
+        }
         return vehicleRepository.findById(id);
     }
 
     public Optional<Vehicle> getVehicleByLicensePlate(String licensePlate) {
+        if (licensePlate == null) {
+            throw new IllegalArgumentException("License plate must not be null");
+        }
         return vehicleRepository.findByLicensePlate(licensePlate);
     }
 
     public Vehicle createVehicle(Vehicle vehicle) {
+        if (vehicle == null) {
+            throw new IllegalArgumentException("Vehicle must not be null");
+        }
         if (vehicleRepository.findByLicensePlate(vehicle.getLicensePlate()).isPresent()) {
             throw new IllegalArgumentException("Vehicle with this license plate already exists");
         }
@@ -50,6 +59,9 @@ public class VehicleService {
     }
 
     public Vehicle updateVehicleStatus(Long id, VehicleStatus status) {
+        if (id == null) {
+            throw new IllegalArgumentException("Vehicle ID must not be null");
+        }
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
         vehicle.setStatus(status);
@@ -57,6 +69,9 @@ public class VehicleService {
     }
 
     public Vehicle assignVehicleToDriver(Long vehicleId, Long driverId) {
+        if (vehicleId == null) {
+            throw new IllegalArgumentException("Vehicle ID must not be null");
+        }
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
@@ -69,6 +84,9 @@ public class VehicleService {
     }
 
     public Vehicle assignVehicleToOrder(Long vehicleId, String orderId) {
+        if (vehicleId == null) {
+            throw new IllegalArgumentException("Vehicle ID must not be null");
+        }
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
@@ -78,6 +96,9 @@ public class VehicleService {
     }
 
     public Vehicle releaseVehicle(Long vehicleId) {
+        if (vehicleId == null) {
+            throw new IllegalArgumentException("Vehicle ID must not be null");
+        }
         Vehicle vehicle = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
@@ -87,6 +108,9 @@ public class VehicleService {
     }
 
     public Vehicle updateVehicle(Long id, Vehicle vehicleDetails) {
+        if (id == null) {
+            throw new IllegalArgumentException("Vehicle ID must not be null");
+        }
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
 
@@ -101,6 +125,9 @@ public class VehicleService {
     }
 
     public void deleteVehicle(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Vehicle ID must not be null");
+        }
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
         vehicle.setActive(false);

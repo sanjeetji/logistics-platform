@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -75,7 +76,8 @@ public class DocumentService {
                 .uploadedAt(LocalDateTime.now())
                 .build();
 
-        return documentRepository.save(document);
+        return Objects
+                .requireNonNull(documentRepository.save(Objects.requireNonNull(document, "Document must not be null")));
     }
 
     /**
@@ -102,7 +104,7 @@ public class DocumentService {
         document.setStatus(DocumentStatus.VERIFIED);
         document.setVerifiedBy(verifiedBy);
         document.setVerifiedAt(LocalDateTime.now());
-        return documentRepository.save(document);
+        return Objects.requireNonNull(documentRepository.save(document));
     }
 
     /**
@@ -115,7 +117,7 @@ public class DocumentService {
         document.setRejectionReason(reason);
         document.setVerifiedBy(verifiedBy);
         document.setVerifiedAt(LocalDateTime.now());
-        return documentRepository.save(document);
+        return Objects.requireNonNull(documentRepository.save(document));
     }
 
     /**

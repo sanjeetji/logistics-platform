@@ -13,6 +13,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -22,9 +23,9 @@ public class DynamicPricingEngine {
     private final RateCardRepository rateCardRepository;
     private final SurgePricingRuleRepository surgePricingRuleRepository;
 
-    public BigDecimal calculateDynamicPrice(Double distanceKm, Integer estimatedMinutes, 
-                                            String vehicleType, Integer currentDemand) {
-        
+    public BigDecimal calculateDynamicPrice(Double distanceKm, Integer estimatedMinutes,
+            String vehicleType, Integer currentDemand) {
+
         // Get active rate card
         RateCard rateCard = rateCardRepository.findCurrentActiveRateCard(LocalDateTime.now())
                 .orElseGet(() -> rateCardRepository.findByIsDefaultTrue()
@@ -47,8 +48,8 @@ public class DynamicPricingEngine {
         return finalPrice;
     }
 
-    private BigDecimal calculateBasePrice(RateCard rateCard, Double distanceKm, 
-                                          Integer estimatedMinutes, String vehicleType) {
+    private BigDecimal calculateBasePrice(RateCard rateCard, Double distanceKm,
+            Integer estimatedMinutes, String vehicleType) {
         BigDecimal price = rateCard.getBaseRate();
 
         // Add distance cost
@@ -112,6 +113,6 @@ public class DynamicPricingEngine {
     }
 
     public SurgePricingRule createSurgeRule(SurgePricingRule rule) {
-        return surgePricingRuleRepository.save(rule);
+        return surgePricingRuleRepository.save(Objects.requireNonNull(rule, "Surge rule must not be null"));
     }
 }

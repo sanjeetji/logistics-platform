@@ -32,6 +32,9 @@ public class RefreshTokenService {
 
     public RefreshToken createRefreshToken(Long userId) {
         RefreshToken refreshToken = new RefreshToken();
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID must not be null");
+        }
 
         refreshToken.setUser(userRepository.findById(userId).get());
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
@@ -50,6 +53,9 @@ public class RefreshTokenService {
 
     @Transactional
     public int deleteByUserId(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID must not be null");
+        }
         return refreshTokenRepository.deleteByUser(userRepository.findById(userId).get());
     }
 }

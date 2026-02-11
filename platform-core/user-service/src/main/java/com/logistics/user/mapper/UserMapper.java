@@ -2,7 +2,6 @@ package com.logistics.user.mapper;
 
 import com.logistics.platform.common.dto.users.UserDto;
 import com.logistics.user.model.User;
-import com.logistics.user.model.UserProfile;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;

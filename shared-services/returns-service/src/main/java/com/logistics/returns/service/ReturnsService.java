@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -49,7 +50,7 @@ public class ReturnsService {
             log.info("Auto-approved return: {}", request.getReturnId());
         }
 
-        return repository.save(request);
+        return repository.save(Objects.requireNonNull(request, "Return request must not be null"));
     }
 
     public ReturnRequest getReturnById(String returnId) {

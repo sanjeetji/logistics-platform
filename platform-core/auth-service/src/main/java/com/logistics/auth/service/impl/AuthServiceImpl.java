@@ -20,6 +20,7 @@ import com.logistics.auth.model.PasswordResetToken;
 import com.logistics.auth.service.RefreshTokenService;
 import com.logistics.auth.service.TokenBlacklistService;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.logistics.auth.dto.RegisterRequest;
@@ -55,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         @Override
+        @SuppressWarnings("null")
         public UserDto register(RegisterRequest req) {
                 if (userRepository.existsByEmail(req.getEmail())) {
                         throw new RuntimeException("Email already in use");
@@ -70,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
                                 .active(true)
                                 .build();
 
-                User savedUser = userRepository.save(user);
+                User savedUser = Objects.requireNonNull(userRepository.save(user));
 
                 // Create UserTenant if organizationId is present
                 if (req.getOrganizationId() != null) {
@@ -147,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         public UserDto getUserProfile(Long userId) {
-                User user = userRepository.findById(userId)
+                User user = userRepository.findById(Objects.requireNonNull(userId, "User ID must not be null"))
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 // MVP: Populate with first tenant ID
@@ -201,7 +203,7 @@ public class AuthServiceImpl implements AuthService {
 
                 User user = resetToken.getUser();
                 user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-                userRepository.save(user);
+                Objects.requireNonNull(userRepository.save(user));
 
                 passwordResetTokenRepository.delete(resetToken);
         }
@@ -230,7 +232,7 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         public void changePassword(Long userId, com.logistics.auth.dto.ChangePasswordRequest request) {
-                User user = userRepository.findById(userId)
+                User user = userRepository.findById(Objects.requireNonNull(userId, "User ID must not be null"))
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
@@ -238,6 +240,6 @@ public class AuthServiceImpl implements AuthService {
                 }
 
                 user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-                userRepository.save(user);
+                Objects.requireNonNull(userRepository.save(user));
         }
 }

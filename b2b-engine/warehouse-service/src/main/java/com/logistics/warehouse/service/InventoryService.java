@@ -35,8 +35,8 @@ public class InventoryService {
         InventoryItem item = inventoryItemRepository.findByWarehouseIdAndSku(warehouseId, sku)
                 .orElseThrow(() -> new RuntimeException("Inventory item not found"));
 
-        Integer quantityBefore = item.getQuantity();
-        item.setQuantity(item.getQuantity() + quantity);
+        Integer quantityBefore = item.getQuantity() != null ? item.getQuantity() : 0;
+        item.setQuantity(quantityBefore + quantity);
         item.setLastRestocked(LocalDateTime.now());
 
         // Record transaction
@@ -61,8 +61,8 @@ public class InventoryService {
             throw new RuntimeException("Insufficient stock. Available: " + item.getAvailableQuantity());
         }
 
-        Integer quantityBefore = item.getQuantity();
-        item.setQuantity(item.getQuantity() - quantity);
+        Integer quantityBefore = item.getQuantity() != null ? item.getQuantity() : 0;
+        item.setQuantity(quantityBefore - quantity);
 
         // Record transaction
         recordTransaction(warehouseId, item.getId(), TransactionType.OUT, quantity,
@@ -151,6 +151,9 @@ public class InventoryService {
                 .performedBy(performedBy)
                 .build();
 
+        if (transaction == null) {
+            throw new RuntimeException("Transaction cannot be null");
+        }
         transactionRepository.save(transaction);
     }
 }

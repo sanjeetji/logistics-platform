@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -46,8 +47,8 @@ public class MetricsAggregationService {
     }
 
     private void aggregateOrderCount(LocalDateTime start, LocalDateTime end) {
-        Long orderCount = eventRepository.countByEventTypeAndTimestampBetween(
-                EventType.ORDER_CREATED, start, end);
+        Long orderCount = Optional.ofNullable(eventRepository.countByEventTypeAndTimestampBetween(
+                EventType.ORDER_CREATED, start, end)).orElse(0L);
 
         DashboardMetric metric = DashboardMetric.builder()
                 .metricId("METRIC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
@@ -64,11 +65,11 @@ public class MetricsAggregationService {
     }
 
     private void aggregateSLACompliance(LocalDateTime start, LocalDateTime end) {
-        Long totalOrders = eventRepository.countByEventTypeAndTimestampBetween(
-                EventType.ORDER_DELIVERED, start, end);
-        
-        Long slaBreached = eventRepository.countByEventTypeAndTimestampBetween(
-                EventType.SLA_BREACHED, start, end);
+        Long totalOrders = Optional.ofNullable(eventRepository.countByEventTypeAndTimestampBetween(
+                EventType.ORDER_DELIVERED, start, end)).orElse(0L);
+
+        Long slaBreached = Optional.ofNullable(eventRepository.countByEventTypeAndTimestampBetween(
+                EventType.SLA_BREACHED, start, end)).orElse(0L);
 
         if (totalOrders > 0) {
             double complianceRate = ((totalOrders - slaBreached) / (double) totalOrders) * 100;

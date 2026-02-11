@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -81,7 +82,8 @@ public class DispatchService {
                 .acceptedAt(LocalDateTime.now())
                 .build();
 
-        DispatchAssignment saved = assignmentRepository.save(assignment);
+        DispatchAssignment saved = assignmentRepository
+                .save(Objects.requireNonNull(assignment, "DispatchAssignment must not be null"));
 
         // Call order-service to update order with driver assignment
         try {

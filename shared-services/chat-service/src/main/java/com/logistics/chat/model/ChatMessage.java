@@ -24,6 +24,7 @@ public class ChatMessage {
 
     private String senderId;
     private String senderRole; // DRIVER, CUSTOMER, SUPPORT
+    private String recipientId; // Optional: for direct messages
 
     @Column(columnDefinition = "TEXT")
     private String content;

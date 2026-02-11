@@ -5,8 +5,6 @@ import com.logistics.compliance.model.ComplianceStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-
 @Component
 @Slf4j
 public class InsuranceExpiryRule implements ComplianceRule {

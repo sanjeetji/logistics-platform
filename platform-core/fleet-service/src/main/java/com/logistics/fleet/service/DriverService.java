@@ -27,6 +27,9 @@ public class DriverService {
     }
 
     public Optional<Driver> getDriverById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Driver ID must not be null");
+        }
         return driverRepository.findById(id);
     }
 
@@ -41,6 +44,9 @@ public class DriverService {
     }
 
     public Driver updateDriver(Long id, Driver driverDetails) {
+        if (id == null) {
+            throw new IllegalArgumentException("Driver ID must not be null");
+        }
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
@@ -53,6 +59,9 @@ public class DriverService {
     }
 
     public Driver updateDriverStatus(Long id, DriverStatus status) {
+        if (id == null) {
+            throw new IllegalArgumentException("Driver ID must not be null");
+        }
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
         driver.setStatus(status);
@@ -60,6 +69,9 @@ public class DriverService {
     }
 
     public Driver updateDriverLocation(Long id, Double latitude, Double longitude) {
+        if (id == null) {
+            throw new IllegalArgumentException("Driver ID must not be null");
+        }
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
         driver.setCurrentLatitude(latitude);
@@ -69,6 +81,9 @@ public class DriverService {
     }
 
     public Driver assignDriverToOrder(Long driverId, String orderId, Long vehicleId) {
+        if (driverId == null) {
+            throw new IllegalArgumentException("Driver ID must not be null");
+        }
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
@@ -83,6 +98,9 @@ public class DriverService {
     }
 
     public Driver releaseDriver(Long driverId) {
+        if (driverId == null) {
+            throw new IllegalArgumentException("Driver ID must not be null");
+        }
         Driver driver = driverRepository.findById(driverId)
                 .orElseThrow(() -> new RuntimeException("Driver not found"));
 
@@ -93,6 +111,9 @@ public class DriverService {
     }
 
     public void deleteDriver(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Driver ID must not be null");
+        }
         driverRepository.deleteById(id);
     }
 }

@@ -47,7 +47,7 @@ public class TenantService {
         tenant.setName(details.getName());
         tenant.setDomain(details.getDomain());
         tenant.setIndustryType(details.getIndustryType());
-        tenant.setSubscriptionPlan(details.getSubscriptionPlan());
+        tenant.setSubscriptionTier(details.getSubscriptionTier());
         tenant.setActive(details.isActive());
 
         if (details.getConfig() != null) {

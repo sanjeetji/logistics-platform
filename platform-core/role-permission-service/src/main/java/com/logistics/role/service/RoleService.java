@@ -24,6 +24,9 @@ public class RoleService {
     }
 
     public Role getRoleById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Role ID must not be null");
+        }
         return roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
     }
@@ -45,6 +48,9 @@ public class RoleService {
     @Transactional
     public Role assignPermissionsToRole(Long roleId, Set<Long> permissionIds) {
         Role role = getRoleById(roleId);
+        if (permissionIds == null) {
+            throw new IllegalArgumentException("Permission IDs must not be null");
+        }
         List<Permission> permissions = permissionRepository.findAllById(permissionIds);
         role.setPermissions(new HashSet<>(permissions));
         return roleRepository.save(role);

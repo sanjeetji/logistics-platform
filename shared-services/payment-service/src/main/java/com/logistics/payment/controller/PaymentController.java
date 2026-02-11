@@ -2,7 +2,7 @@ package com.logistics.payment.controller;
 
 import com.logistics.payment.dto.PaymentDtos;
 import com.logistics.payment.entity.Transaction;
-import com.logistics.payment.entity.Wallet;
+import com.logistics.payment.model.Wallet;
 import com.logistics.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +18,12 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/wallet")
-    public ResponseEntity<Wallet> createWallet(@RequestParam String userId) {
+    public ResponseEntity<Wallet> createWallet(@RequestParam Long userId) {
         return ResponseEntity.ok(paymentService.createWallet(userId));
     }
 
     @GetMapping("/wallet/{userId}")
-    public ResponseEntity<Wallet> getWallet(@PathVariable String userId) {
+    public ResponseEntity<Wallet> getWallet(@PathVariable Long userId) {
         return ResponseEntity.ok(paymentService.getWallet(userId));
     }
 
@@ -39,7 +39,7 @@ public class PaymentController {
     }
 
     @GetMapping("/history/{userId}")
-    public ResponseEntity<List<Transaction>> getHistory(@PathVariable String userId) {
+    public ResponseEntity<List<Transaction>> getHistory(@PathVariable Long userId) {
         return ResponseEntity.ok(paymentService.getHistory(userId));
     }
 }

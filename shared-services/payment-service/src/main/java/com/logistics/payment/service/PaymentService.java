@@ -2,7 +2,7 @@ package com.logistics.payment.service;
 
 import com.logistics.payment.dto.PaymentDtos;
 import com.logistics.payment.entity.Transaction;
-import com.logistics.payment.entity.Wallet;
+import com.logistics.payment.model.Wallet;
 import com.logistics.payment.repository.TransactionRepository;
 import com.logistics.payment.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -22,19 +21,18 @@ public class PaymentService {
     private final TransactionRepository transactionRepository;
 
     @Transactional
-    public Wallet createWallet(String userId) {
+    public Wallet createWallet(Long userId) {
         if (walletRepository.findByUserId(userId).isPresent()) {
             throw new RuntimeException("Wallet already exists for user: " + userId);
         }
         Wallet wallet = Wallet.builder()
                 .userId(userId)
-                .balance(BigDecimal.ZERO)
-                .currency("USD")
+                .walletType(Wallet.WalletType.CUSTOMER)
                 .build();
         return walletRepository.save(wallet);
     }
 
-    public Wallet getWallet(String userId) {
+    public Wallet getWallet(Long userId) {
         return walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Wallet not found for user: " + userId));
     }
@@ -85,7 +83,7 @@ public class PaymentService {
         log.info("Processed payment of {} for order {}", request.getAmount(), request.getOrderId());
     }
 
-    public List<Transaction> getHistory(String userId) {
+    public List<Transaction> getHistory(Long userId) {
         Wallet wallet = getWallet(userId);
         return transactionRepository.findByWalletId(wallet.getId());
     }

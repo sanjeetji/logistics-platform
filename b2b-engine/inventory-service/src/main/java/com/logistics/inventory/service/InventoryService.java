@@ -9,9 +9,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -39,6 +37,7 @@ public class InventoryService {
             "  return 0 " +
             "end";
 
+    @SuppressWarnings("null")
     @Transactional
     public InventoryItem initializeStock(String sku, String productId, String warehouseId, int quantity,
             String location) {
@@ -97,14 +96,14 @@ public class InventoryService {
         Optional<InventoryItem> itemOpt = inventoryRepository.findBySku(sku);
         if (itemOpt.isPresent()) {
             InventoryItem item = itemOpt.get();
-            if (item.getQuantity() >= quantity) {
+            if (item.getQuantity() != null && item.getQuantity() >= quantity) {
                 item.setQuantity(item.getQuantity() - quantity);
                 item.setReservedQuantity(item.getReservedQuantity() + quantity);
                 inventoryRepository.save(item);
 
                 // Re-populate Redis
                 String key = INVENTORY_KEY_PREFIX + sku;
-                redisTemplate.opsForValue().set(key, String.valueOf(item.getQuantity()));
+                redisTemplate.opsForValue().set(key, String.valueOf(item.getQuantity().intValue()));
 
                 return true;
             }

@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/pricing")
@@ -23,16 +22,15 @@ public class DynamicPricingController {
     @PostMapping("/calculate")
     public ResponseEntity<ApiResponse<PriceCalculationResponse>> calculatePrice(
             @RequestBody PriceCalculationRequest request) {
-        
+
         // TODO: Get current demand from order service
         Integer currentDemand = 10; // Placeholder
-        
+
         BigDecimal finalPrice = pricingEngine.calculateDynamicPrice(
                 request.getDistanceKm(),
                 request.getEstimatedMinutes(),
                 request.getVehicleType(),
-                currentDemand
-        );
+                currentDemand);
 
         PriceCalculationResponse response = PriceCalculationResponse.builder()
                 .finalPrice(finalPrice)

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -49,11 +50,17 @@ public class PayoutGenerationService {
 
         // TODO: Link orders to payout
 
-        return payoutRepository.save(payout);
+        return payoutRepository.save(Objects.requireNonNull(payout, "Payout must not be null"));
     }
 
     @Transactional
     public void approvePayout(Long payoutId, String approvedBy) {
+        if (payoutId == null) {
+            throw new IllegalArgumentException("Payout ID must not be null");
+        }
+        if (approvedBy == null) {
+            throw new IllegalArgumentException("Approved by must not be null");
+        }
         Payout payout = payoutRepository.findById(payoutId)
                 .orElseThrow(() -> new RuntimeException("Payout not found"));
 
@@ -67,6 +74,9 @@ public class PayoutGenerationService {
 
     @Transactional
     public void processPayout(Long payoutId) {
+        if (payoutId == null) {
+            throw new IllegalArgumentException("Payout ID must not be null");
+        }
         Payout payout = payoutRepository.findById(payoutId)
                 .orElseThrow(() -> new RuntimeException("Payout not found"));
 

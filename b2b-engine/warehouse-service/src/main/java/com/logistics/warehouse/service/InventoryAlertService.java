@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class InventoryAlertService {
     public void checkLowStockAlerts() {
         log.info("Running low stock alert check");
 
-        List<InventoryItem> lowStockItems = inventoryItemRepository.findLowStockItems();
+        List<InventoryItem> lowStockItems = inventoryItemRepository.findAllLowStockItems();
 
         for (InventoryItem item : lowStockItems) {
             // Check if alert already exists
@@ -47,7 +48,7 @@ public class InventoryAlertService {
                         .thresholdQuantity(item.getReorderLevel())
                         .build();
 
-                inventoryAlertRepository.save(alert);
+                inventoryAlertRepository.save(Objects.requireNonNull(alert, "Alert must not be null"));
                 log.warn("Low stock alert created for SKU: {}, Current: {}, Threshold: {}",
                         item.getSku(), item.getQuantity(), item.getReorderLevel());
             }
@@ -60,6 +61,9 @@ public class InventoryAlertService {
 
     @Transactional
     public void acknowledgeAlert(Long alertId, String acknowledgedBy) {
+        if (alertId == null) {
+            throw new IllegalArgumentException("Alert ID must not be null");
+        }
         InventoryAlert alert = inventoryAlertRepository.findById(alertId)
                 .orElseThrow(() -> new RuntimeException("Alert not found"));
 

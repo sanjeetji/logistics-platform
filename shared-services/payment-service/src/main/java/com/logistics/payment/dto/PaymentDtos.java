@@ -10,14 +10,14 @@ public class PaymentDtos {
     @Data
     @Builder
     public static class TopUpRequest {
-        private String userId;
+        private Long userId;
         private BigDecimal amount;
     }
 
     @Data
     @Builder
     public static class PaymentRequest {
-        private String userId;
+        private Long userId;
         private BigDecimal amount;
         private String orderId;
         private String description;
@@ -26,9 +26,8 @@ public class PaymentDtos {
     @Data
     @Builder
     public static class WalletResponse {
-        private String id;
-        private String userId;
+        private Long id;
+        private Long userId;
         private BigDecimal balance;
-        private String currency;
     }
 }

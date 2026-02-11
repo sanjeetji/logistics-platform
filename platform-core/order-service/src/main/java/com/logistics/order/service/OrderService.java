@@ -208,8 +208,8 @@ public class OrderService {
                 OrderStatus.PICKED_UP,
                 "SYSTEM",
                 "Order picked up",
-                order.getPickupLocation().getLatitude(),
-                order.getPickupLocation().getLongitude());
+                order.getPickupLocation() != null ? order.getPickupLocation().getLatitude() : null,
+                order.getPickupLocation() != null ? order.getPickupLocation().getLongitude() : null);
 
         log.info("Order {} marked as picked up", orderId);
         return savedOrder;
@@ -263,8 +263,8 @@ public class OrderService {
                 OrderStatus.DELIVERED,
                 "SYSTEM",
                 "Order delivered",
-                order.getDropLocation().getLatitude(),
-                order.getDropLocation().getLongitude());
+                order.getDropLocation() != null ? order.getDropLocation().getLatitude() : null,
+                order.getDropLocation() != null ? order.getDropLocation().getLongitude() : null);
 
         log.info("Order {} marked as delivered", orderId);
         return savedOrder;

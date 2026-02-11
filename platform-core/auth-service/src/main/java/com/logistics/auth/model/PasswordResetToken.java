@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.springframework.lang.NonNull;
 
 @Entity
 @Table(name = "password_reset_tokens")
@@ -98,6 +99,7 @@ public class PasswordResetToken {
             return this;
         }
 
+        @NonNull
         public PasswordResetToken build() {
             return new PasswordResetToken(id, token, user, expiryDate);
         }

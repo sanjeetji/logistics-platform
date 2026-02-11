@@ -49,11 +49,15 @@ public class InventoryItem extends BaseEntity {
 
     // Calculate available quantity
     public Integer getAvailableQuantity() {
-        return quantity - reservedQuantity;
+        int qty = quantity != null ? quantity : 0;
+        int reserved = reservedQuantity != null ? reservedQuantity : 0;
+        return qty - reserved;
     }
 
     // Check if low stock
     public Boolean isLowStock() {
-        return quantity <= reorderLevel;
+        int qty = quantity != null ? quantity : 0;
+        int level = reorderLevel != null ? reorderLevel : 0;
+        return qty <= level;
     }
 }

@@ -28,6 +28,7 @@ public class ComplianceService {
     /**
      * Create compliance record
      */
+    @SuppressWarnings("null")
     @Transactional
     public ComplianceRecord createComplianceRecord(String orderId, String complianceType,
             String requirements, String evidence) {
@@ -62,6 +63,8 @@ public class ComplianceService {
     @Transactional
     public ComplianceRecord reviewCompliance(String recordId, ComplianceStatus status,
             String reviewedBy, String notes) {
+        java.util.Objects.requireNonNull(recordId, "Record ID must not be null");
+        java.util.Objects.requireNonNull(status, "Status must not be null");
         ComplianceRecord record = complianceRepository.findByRecordId(recordId)
                 .orElseThrow(() -> new RuntimeException("Compliance record not found: " + recordId));
 

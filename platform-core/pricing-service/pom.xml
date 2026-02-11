@@ -44,14 +44,14 @@
         <dependency>
             <groupId>com.logistics.platform</groupId>
             <artifactId>common-utils</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Common DTOs -->
         <dependency>
             <groupId>com.logistics.platform</groupId>
             <artifactId>common-dto</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Lombok -->

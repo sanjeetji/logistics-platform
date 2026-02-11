@@ -15,11 +15,18 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AuditLog extends BaseEntity {
 
+    private String userId;
     private String entityId;
     private String entityType;
     private String action;
     private String changedBy;
     private String tenantId;
+    private String ipAddress;
+    private String userAgent;
+    private String status;
+
+    @Column(columnDefinition = "TEXT")
+    private String errorMessage;
 
     @Column(columnDefinition = "TEXT")
     private String oldValue;

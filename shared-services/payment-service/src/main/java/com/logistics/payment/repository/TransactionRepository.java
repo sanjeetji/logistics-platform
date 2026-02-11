@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface TransactionRepository extends JpaRepository<Transaction, String> {
-    List<Transaction> findByWalletId(String walletId);
+public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    List<Transaction> findByWalletId(Long walletId);
 }

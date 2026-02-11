@@ -45,9 +45,14 @@ public class CustomerOrderService {
         CustomerAddress dropAddress = customerService.getAddressById(request.getDropAddressId());
 
         // 3. Get price estimate from pricing service
+        double pickupLat = pickupAddress.getLatitude() != null ? pickupAddress.getLatitude() : 0.0;
+        double pickupLon = pickupAddress.getLongitude() != null ? pickupAddress.getLongitude() : 0.0;
+        double dropLat = dropAddress.getLatitude() != null ? dropAddress.getLatitude() : 0.0;
+        double dropLon = dropAddress.getLongitude() != null ? dropAddress.getLongitude() : 0.0;
+
         Map<String, Object> priceEstimate = getPriceEstimate(
-                pickupAddress.getLatitude(), pickupAddress.getLongitude(),
-                dropAddress.getLatitude(), dropAddress.getLongitude(),
+                pickupLat, pickupLon,
+                dropLat, dropLon,
                 request.getVehicleType()
         );
 

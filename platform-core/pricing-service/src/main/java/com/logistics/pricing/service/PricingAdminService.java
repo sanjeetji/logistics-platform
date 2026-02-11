@@ -32,6 +32,9 @@ public class PricingAdminService {
 
     @Transactional
     public PricingRule updatePricingRule(Long id, PricingRule updatedRule) {
+        if (id == null) {
+            throw new IllegalArgumentException("Pricing rule ID must not be null");
+        }
         PricingRule existing = pricingRuleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pricing rule not found: " + id));
 
@@ -57,12 +60,18 @@ public class PricingAdminService {
     }
 
     public PricingRule getPricingRuleById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Pricing rule ID must not be null");
+        }
         return pricingRuleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pricing rule not found: " + id));
     }
 
     @Transactional
     public void deletePricingRule(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Pricing rule ID must not be null");
+        }
         pricingRuleRepository.deleteById(id);
         log.info("Deleted pricing rule: {}", id);
     }
@@ -77,6 +86,9 @@ public class PricingAdminService {
 
     @Transactional
     public SurgeZone updateSurgeZone(Long id, SurgeZone updatedZone) {
+        if (id == null) {
+            throw new IllegalArgumentException("Surge zone ID must not be null");
+        }
         SurgeZone existing = surgeZoneRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Surge zone not found: " + id));
 
@@ -102,12 +114,18 @@ public class PricingAdminService {
     }
 
     public SurgeZone getSurgeZoneById(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Surge zone ID must not be null");
+        }
         return surgeZoneRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Surge zone not found: " + id));
     }
 
     @Transactional
     public void deleteSurgeZone(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Surge zone ID must not be null");
+        }
         surgeZoneRepository.deleteById(id);
         log.info("Deleted surge zone: {}", id);
     }

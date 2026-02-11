@@ -1,7 +1,6 @@
 package com.logistics.bff.b2c.controller;
 
 import com.logistics.bff.b2c.client.OrderServiceClient;
-import com.logistics.bff.b2c.client.PricingServiceClient;
 import com.logistics.bff.b2c.service.B2COrderService;
 import com.logistics.platform.dto.order.CreateOrderRequest;
 import com.logistics.platform.dto.order.OrderDTO;
@@ -43,8 +42,7 @@ public class B2COrderController {
     }
 
     @PostMapping
-    @Operation(summary = "Create order with pricing", 
-               description = "Create a new order with automatic pricing calculation")
+    @Operation(summary = "Create order with pricing", description = "Create a new order with automatic pricing calculation")
     public ResponseEntity<OrderDTO> createOrder(@RequestBody CreateOrderRequest request) {
         log.info("Creating B2C order for customer: {}", request.getCustomerId());
         return ResponseEntity.ok(orderService.createOrderWithPricing(request));

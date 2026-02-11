@@ -15,10 +15,16 @@ public class TokenBlacklistService {
     }
 
     public void blacklistToken(String token, long durationMs) {
+        if (token == null) {
+            throw new IllegalArgumentException("Token must not be null");
+        }
         redisTemplate.opsForValue().set(token, "blacklisted", durationMs, TimeUnit.MILLISECONDS);
     }
 
     public boolean isBlacklisted(String token) {
+        if (token == null) {
+            throw new IllegalArgumentException("Token must not be null");
+        }
         return Boolean.TRUE.equals(redisTemplate.hasKey(token));
     }
 }

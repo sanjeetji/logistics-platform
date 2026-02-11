@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ public class PayoutService {
     @Transactional
     public void addEarning(PayoutDTOs.EarningRequest request) {
         Wallet wallet = getOrCreateWallet(request.getDriverId());
-        
+
         log.info("Adding earning of {} to driver {}", request.getAmount(), request.getDriverId());
 
         // Update Balance
@@ -54,7 +55,7 @@ public class PayoutService {
                 .description(request.getDescription())
                 .referenceId(request.getOrderId())
                 .build();
-        transactionRepository.save(transaction);
+        transactionRepository.save(Objects.requireNonNull(transaction, "Transaction must not be null"));
     }
 
     @Transactional
@@ -78,7 +79,7 @@ public class PayoutService {
                 .type(Transaction.TransactionType.DEBIT)
                 .description("Payout Request")
                 .build();
-        transactionRepository.save(transaction);
+        transactionRepository.save(Objects.requireNonNull(transaction, "Transaction must not be null"));
 
         // Create Payout Request
         PayoutRequest payout = PayoutRequest.builder()
@@ -87,28 +88,30 @@ public class PayoutService {
                 .amount(request.getAmount())
                 .status(PayoutRequest.PayoutStatus.PENDING)
                 .build();
-        
+
         // Auto-Approve small amounts (Mock Banking integration)
         if (request.getAmount().compareTo(new BigDecimal("500")) < 0) {
             payout.setStatus(PayoutRequest.PayoutStatus.APPROVED);
         }
 
-        return payoutRequestRepository.save(payout);
+        return payoutRequestRepository.save(Objects.requireNonNull(payout, "Payout must not be null"));
     }
-    
+
     public PayoutDTOs.WalletDTO getWalletDetails(String driverId) {
         Wallet wallet = getOrCreateWallet(driverId);
         List<Transaction> transactions = transactionRepository.findByWalletIdOrderByCreatedAtDesc(driverId);
-        
-        List<PayoutDTOs.TransactionDTO> transactionDTOs = transactions.stream().map(t -> PayoutDTOs.TransactionDTO.builder()
-                .id(String.valueOf(t.getId()))
-                .amount(t.getAmount())
-                .type(t.getType())
-                .description(t.getDescription())
-                .referenceId(t.getReferenceId())
-                .createdAt(t.getCreatedAt())
-                .build()).collect(Collectors.toList());
-        
+
+        List<PayoutDTOs.TransactionDTO> transactionDTOs = transactions.stream()
+                .map(t -> PayoutDTOs.TransactionDTO.builder()
+                        .id(String.valueOf(t.getId()))
+                        .amount(t.getAmount())
+                        .type(t.getType())
+                        .description(t.getDescription())
+                        .referenceId(t.getReferenceId())
+                        .createdAt(t.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
         return PayoutDTOs.WalletDTO.builder()
                 .driverId(wallet.getDriverId())
                 .balance(wallet.getBalance())

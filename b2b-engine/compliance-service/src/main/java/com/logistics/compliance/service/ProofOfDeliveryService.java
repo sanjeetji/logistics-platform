@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -42,7 +43,7 @@ public class ProofOfDeliveryService {
                 .verified(false)
                 .build();
 
-        return podRepository.save(pod);
+        return podRepository.save(Objects.requireNonNull(pod, "Pod must not be null"));
     }
 
     /**
