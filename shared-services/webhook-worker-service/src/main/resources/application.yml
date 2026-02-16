@@ -2,10 +2,11 @@ spring:
   application:
     name: webhook-worker-service
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/webhook_db?createDatabaseIfNotExist=true
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/webhook_db?createDatabaseIfNotExist=true
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update

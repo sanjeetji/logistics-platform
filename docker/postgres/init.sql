@@ -19,3 +19,20 @@ CREATE DATABASE audit_log_db; GRANT ALL PRIVILEGES ON DATABASE audit_log_db TO l
 
 CREATE DATABASE master_data_db; GRANT ALL PRIVILEGES ON DATABASE master_data_db TO logistics_user;
 
+
+-- Phase 10: Shared & Advanced Services
+CREATE DATABASE analytics_db; GRANT ALL PRIVILEGES ON DATABASE analytics_db TO logistics_user;
+CREATE DATABASE notifications_db; GRANT ALL PRIVILEGES ON DATABASE notifications_db TO logistics_user;
+CREATE DATABASE ml_db; GRANT ALL PRIVILEGES ON DATABASE ml_db TO logistics_user;
+CREATE DATABASE geo_db; GRANT ALL PRIVILEGES ON DATABASE geo_db TO logistics_user;
+CREATE DATABASE pricing_db; GRANT ALL PRIVILEGES ON DATABASE pricing_db TO logistics_user;
+CREATE DATABASE payment_db; GRANT ALL PRIVILEGES ON DATABASE payment_db TO logistics_user;
+CREATE DATABASE logistics_routing; GRANT ALL PRIVILEGES ON DATABASE logistics_routing TO logistics_user;
+CREATE DATABASE billing_db; GRANT ALL PRIVILEGES ON DATABASE billing_db TO logistics_user;
+CREATE DATABASE returns_db; GRANT ALL PRIVILEGES ON DATABASE returns_db TO logistics_user;
+CREATE DATABASE payouts_db; GRANT ALL PRIVILEGES ON DATABASE payouts_db TO logistics_user;
+
+-- Phase 11: Migrated from MySQL
+CREATE DATABASE logistics_b2c_db; GRANT ALL PRIVILEGES ON DATABASE logistics_b2c_db TO logistics_user;
+CREATE DATABASE logistics_b2b_db; GRANT ALL PRIVILEGES ON DATABASE logistics_b2b_db TO logistics_user;
+CREATE DATABASE webhook_db; GRANT ALL PRIVILEGES ON DATABASE webhook_db TO logistics_user;

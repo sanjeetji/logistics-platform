@@ -1,26 +1,6 @@
 services:
   # Database Services
-  mysql-db:
-    image: mysql:8.0
-    container_name: logistics-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: logistics_db
-      MYSQL_USER: logistics_user
-      MYSQL_PASSWORD: logistics_pass
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - logistics-network
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+
 
   redis:
     image: redis:7-alpine
@@ -383,10 +363,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/logistics_b2c_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/logistics_b2c_db
       SPRING_DATASOURCE_USERNAME: logistics_user
       SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka
       MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
       MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
@@ -394,7 +373,7 @@ services:
     networks:
       - logistics-network
     depends_on:
-      - mysql-db
+      - postgres-db
       - service-discovery
       - config-server
 

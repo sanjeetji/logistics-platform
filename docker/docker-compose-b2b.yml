@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # ==================== B2B Engine ====================
+  b2b-order-service:
+    build: ../b2b-engine/b2b-order-service
+    image: logistics/b2b-order-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  compliance-service:
+    build: ../b2b-engine/compliance-service
+    image: logistics/compliance-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  erp-integration-service:
+    build: ../b2b-engine/erp-integration-service
+    image: logistics/erp-integration-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  inventory-service:
+    build: ../b2b-engine/inventory-service
+    image: logistics/inventory-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, redis ]
+    networks: [ logistics-network ]
+
+  shipment-service:
+    build: ../b2b-engine/shipment-service
+    image: logistics/shipment-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  team-service:
+    build: ../b2b-engine/team-service
+    image: logistics/team-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  warehouse-service:
+    build: ../b2b-engine/warehouse-service
+    image: logistics/warehouse-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+networks:
+  logistics-network:
+    external: true

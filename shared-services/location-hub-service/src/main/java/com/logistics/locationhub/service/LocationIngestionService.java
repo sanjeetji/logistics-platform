@@ -93,17 +93,10 @@ public class LocationIngestionService {
         try {
             DriverLocationUpdatedEvent event = DriverLocationUpdatedEvent.builder()
                     .driverId(update.getDriverId())
-                    .orderId(update.getOrderId())
                     .latitude(update.getLatitude())
                     .longitude(update.getLongitude())
-                    .accuracy(update.getAccuracy())
-                    .speed(update.getSpeed())
-                    .heading(update.getBearing())
+                    .timestamp(update.getTimestamp())
                     .build();
-            // Timestamp is now set in BaseEvent constructor or can be set explicitly if
-            // needed, but BaseEvent defaults to now()
-            // If we want to preserve the exact timestamp from the update:
-            event.setTimestamp(update.getTimestamp());
 
             kafkaTemplate.send("driver-location-updates", update.getDriverId(), event);
         } catch (Exception e) {

@@ -50,6 +50,7 @@ public class Payout {
         PENDING,
         APPROVED,
         PAID,
-        REJECTED
+        REJECTED,
+        FAILED
     }
 }

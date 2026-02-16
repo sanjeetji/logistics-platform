@@ -2,9 +2,11 @@ package com.logistics.payment;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-class PaymentServiceApplicationTests {
+@ActiveProfiles("test")
+public class PaymentServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

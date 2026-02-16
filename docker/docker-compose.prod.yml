@@ -1,15 +1,6 @@
 version: '3.8'
 
 services:
-  mysql-db:
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-StrongP@ssw0rd!}
-      MYSQL_DATABASE: ${DB_NAME:-logistics_prod}
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.0'
 
   platform-core:
     environment:

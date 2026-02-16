@@ -1,0 +1,130 @@
+spring:
+  application:
+    name: route-optimization-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/route_optimization_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: route-optimization-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+  
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=30m
+
+server:
+  port: 8095
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+# Route Optimization Configuration
+routing:
+  optimization:
+    # OR-Tools Configuration
+    ortools:
+      time-limit-seconds: 30
+      solution-limit: 100
+      first-solution-strategy: PATH_CHEAPEST_ARC
+      local-search-metaheuristic: GUIDED_LOCAL_SEARCH
+    
+    # Traffic Integration
+    traffic:
+      enabled: true
+      update-interval-minutes: 5
+      cache-ttl-minutes: 10
+    
+    # ML ETA Prediction
+    ml:
+      enabled: true
+      model-version: v1.0
+      confidence-threshold: 0.85
+    
+    # Re-routing Triggers
+    rerouting:
+      enabled: true
+      triggers:
+        - TRAFFIC_INCIDENT
+        - DRIVER_DELAY
+        - NEW_URGENT_ORDER
+        - DELIVERY_FAILURE
+        - DRIVER_BREAK
+        - WEATHER_ALERT
+    
+    # Multi-Objective Weights
+    objectives:
+      cost-weight: 0.4
+      speed-weight: 0.3
+      green-weight: 0.2
+      driver-satisfaction-weight: 0.1
+
+    # ML ETA Prediction
+    ml:
+      enabled: true
+      model-version: v1.0
+      confidence-threshold: 0.85
+
+# ML Service Configuration
+ml:
+  service:
+    url: ${ML_SERVICE_URL:http://localhost:8099}
+
+# Google Maps API
+google:
+  maps:
+    api-key: ${GOOGLE_MAPS_API_KEY:your-api-key-here}
+    distance-matrix:
+      max-elements: 100
+      cache-ttl-hours: 24
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.logistics.routing: DEBUG
+    com.google.ortools: INFO

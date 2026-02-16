@@ -1,120 +1,350 @@
-# Logistics Platform (Global SaaS Edition)
+# Logistics Platform - Enterprise Microservices System
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2.5-green.svg) ![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)
+**Version**: 1.0.0-SNAPSHOT  
+**Last Updated**: February 16, 2026  
+**Total Services**: 44 microservices
 
-A comprehensive, microservices-based logistics platform designed for global scale. This platform combines the best features of **B2B Logistics (Bringg model)** and **B2C Last-Mile Delivery (Porter/Uber model)** into a single unified ecosystem.
+## 📋 Table of Contents
 
-## 🌍 Global SaaS Ready
-This repository represents the **Global Expansion** phase of the project, including:
--   **Multi-Currency Pricing**: Dynamic currency conversion (USD, EUR, INR) in `pricing-service`.
--   **Localization (i18n)**: Backend support for multiple languages in `driver-api`.
--   **GDPR Compliance**: Data residency strategy and PII protection readiness.
--   **Green Logistics**: CO2 emission calculation and EV-routing readiness.
--   **E-Commerce Integration**: Webhook receivers for Shopify, WooCommerce, and a Generic API for custom platforms.
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Services](#services)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Deployment](#deployment)
+- [API Documentation](#api-documentation)
+- [Monitoring](#monitoring)
+- [Contributing](#contributing)
 
-## 🔌 Multi-Channel Integration
+---
 
-The platform provides a unified interface to ingest orders from various sources (`order-service`).
+## 🎯 Overview
 
-### 1. Standard API (Custom Platforms)
-Use this endpoint to push orders from any custom system (ERP, POS, etc).
-`POST /api/v1/integration/orders`
-```json
-{
-  "platform": "CUSTOM_ERP",
-  "externalOrderId": "ORDER_999",
-  "customerEmail": "client@company.com",
-  "items": [...],
-  "totalPrice": 150.00
-}
+The Logistics Platform is a comprehensive enterprise-grade microservices system designed for end-to-end logistics and supply chain management. It supports B2C, B2B, and parcel delivery operations with advanced features including real-time tracking, route optimization, automated billing, and streaming analytics.
+
+### Key Features
+
+- **Multi-Tenant Architecture**: Support for multiple organizations
+- **Real-Time Tracking**: WebSocket-based live location updates
+- **Advanced Route Optimization**: ML-powered ETA prediction, multi-objective optimization
+- **Dynamic Re-Routing**: 6 trigger types for adaptive routing
+- **Automated Billing**: Subscription-based and usage-based billing
+- **Streaming Analytics**: Real-time metrics and dashboards
+- **Event-Driven**: Kafka-based event streaming
+- **API Gateway**: Centralized routing with rate limiting
+- **Service Discovery**: Eureka-based service registry
+- **Distributed Tracing**: End-to-end request tracing
+
+---
+
+## 🏗️ Architecture
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        API Gateway (8080)                        │
+│                     (Rate Limiting, Routing)                     │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+┌───────▼────────┐  ┌────────▼────────┐  ┌───────▼────────┐
+│  Platform Core │  │  Shared Services │  │   B2B Engine   │
+│   (8 services) │  │   (28 services)  │  │  (4 services)  │
+└────────────────┘  └──────────────────┘  └────────────────┘
+        │                    │                    │
+        └────────────────────┼────────────────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+┌───────▼────────┐  ┌────────▼────────┐  ┌───────▼────────┐
+│   PostgreSQL   │  │     Kafka       │  │     Redis      │
+│   (Database)   │  │  (Event Stream) │  │    (Cache)     │
+└────────────────┘  └──────────────────┘  └────────────────┘
 ```
 
-### 2. Shopify Webhook
-Configure your Shopify Store to send `orders/create` webhooks to:
-`POST /api/v1/integration/shopify/webhook`
+### Technology Stack
 
-### 3. WooCommerce Webhook
-Configure WooCommerce to send `Order Created` webhooks to:
-`POST /api/v1/integration/woocommerce/webhook`
+| Component | Technology |
+|-----------|------------|
+| **Framework** | Spring Boot 3.3.5, Spring Cloud 2023.0.3 |
+| **Language** | Java 21 |
+| **Build Tool** | Maven 3.9+ |
+| **Database** | PostgreSQL 15+ |
+| **Message Broker** | Apache Kafka 3.5+ |
+| **Cache** | Redis 7.0+ |
+| **Service Discovery** | Netflix Eureka |
+| **API Gateway** | Spring Cloud Gateway |
+| **Config Server** | Spring Cloud Config |
+| **Monitoring** | Micrometer, Prometheus |
+| **Logging** | SLF4J, Logback |
+| **Documentation** | Swagger/OpenAPI 3.0 |
 
-## 🏗 Architecture
+---
 
-The platform follows a **Domain-Driven Design (DDD)** microservices architecture:
+## 📦 Services
 
-### Core Layer (`platform-core`)
--   **Auth Service**: OAuth2/OIDC authentication using `jjwt`.
--   **User Service**: User profile and identity management.
--   **Order Service**: Centralized order lifecycle management.
--   **Fleet Service**: Driver and vehicle management.
--   **Pricing Service**: Dynamic pricing engine with surge and multi-currency support.
+### Infrastructure Services (4)
 
-### B2B Engine (`b2b-engine`)
--   **Route Service**: Route optimization and planning.
--   **Warehouse Service**: Inventory and fulfillment logic.
--   **Compliance Service**: POD (Proof of Delivery) and document management.
+| Service | Port | Description |
+|---------|------|-------------|
+| **config-server** | 8888 | Centralized configuration management |
+| **service-discovery** | 8761 | Eureka service registry |
+| **api-gateway** | 8080 | API gateway with routing and rate limiting |
+| **configuration-service** | 8084 | Dynamic configuration management |
 
-### B2C Engine (`b2c-engine`)
--   **Parcel Service**: On-demand package delivery.
--   **Quick Dispatch**: Instant driver matching algorithms.
+### Platform Core (8)
 
-### Shared Services (`shared-services`)
--   **Tracking Service**: Real-time location tracking via WebSockets and Redis Geo.
--   **Notification Service**: SMS (Twilio), Email (SendGrid), and Push notifications.
--   **Billing Service**: Invoicing and payment processing.
--   **Analytics Service**: Data aggregation and BI dashboards.
+| Service | Port | Description |
+|---------|------|-------------|
+| **auth-service** | 8081 | Authentication and authorization |
+| **tenant-service** | 8082 | Multi-tenant management |
+| **fleet-service** | 8083 | Fleet and vehicle management |
+| **order-service** | 8085 | Order management and lifecycle |
+| **dispatch-service** | 8086 | Order dispatch and assignment |
+| **pricing-service** | 8087 | Dynamic pricing and quotes |
+| **customer-service** | 8088 | Customer management |
+| **driver-app-service** | 8089 | Driver mobile app backend |
 
-## 🚀 Getting Started
+### Shared Services (28)
 
-### Prerequisites
--   Java 21
--   Maven 3.9+
--   Docker & Docker Compose
+| Service | Port | Description |
+|---------|------|-------------|
+| **orchestration-service** | 8090 | Workflow orchestration |
+| **wallet-service** | 8091 | Digital wallet management |
+| **promo-code-service** | 8092 | Promotions and discounts |
+| **loyalty-service** | 8093 | Loyalty program management |
+| **team-service** | 8094 | Team and role management |
+| **tracking-service** | 8095 | Real-time location tracking |
+| **payment-service** | 8096 | Payment processing |
+| **notification-service** | 8097 | Multi-channel notifications |
+| **billing-service** | 8098 | Automated billing |
+| **document-service** | 8099 | Document management |
+| **geo-service** | 8100 | Geocoding and geofencing |
+| **audit-log-service** | 8101 | Audit trail and compliance |
+| **chat-service** | 8102 | In-app messaging |
+| **integration-service** | 8103 | Third-party integrations |
+| **master-data-service** | 8104 | Master data management |
+| **payout-service** | 8105 | Driver payouts |
+| **rating-service** | 8106 | Ratings and reviews |
+| **search-service** | 8107 | Elasticsearch-based search |
+| **streaming-analytics-service** | 8108 | Real-time analytics |
+| **user-management-service** | 8109 | User management |
+| **route-optimization-service** | 8110 | Advanced route optimization |
+| **tenant-onboarding-service** | 8111 | Tenant onboarding automation |
+| **shift-management-service** | 8112 | Driver shift management |
+| **edi-integration-service** | 8113 | EDI integrations |
+| **sla-service** | 8114 | SLA monitoring |
+| **exception-management-service** | 8115 | Exception handling |
+| **location-hub-service** | 8116 | Location data aggregation |
+| **control-tower-service** | 8117 | Operations dashboard |
 
-### Fast Start (Docker)
-1.  **Build all services**:
-    ```bash
-    ./run-platform.sh build
-    ```
-2.  **Start the platform**:
-    ```bash
-    ./run-platform.sh start
-    ```
-    This will spin up Zookeeper, Kafka, Redis, Postgres, and all 20+ microservices.
+### B2B Engine (4)
 
-3.  **Access the API**:
-    -   API Gateway: `http://localhost:8080`
-    -   Service Discovery (Eureka): `http://localhost:8761`
-    -   Zipkin Tracing: `http://localhost:9411`
+| Service | Port | Description |
+|---------|------|-------------|
+| **shipment-service** | 8118 | B2B shipment management |
+| **warehouse-service** | 8119 | Warehouse operations |
+| **inventory-service** | 8120 | Inventory management |
+| **compliance-service** | 8121 | Regulatory compliance |
 
-## 🛠 Key Features
+### Additional Services (4)
 
-### 1. Advanced Pricing Engine
--   Calculates base fare, distance fare, time fare, and surge pricing.
--   Supports multi-currency estimates via `POST /api/v1/pricing/estimate`.
+| Service | Port | Description |
+|---------|------|-------------|
+| **b2b-order-service** | 8122 | B2B order processing |
+| **parcel-service** | 8123 | Parcel tracking |
+| **returns-service** | 8124 | Returns management |
+| **webhook-worker-service** | 8125 | Webhook processing |
 
-### 2. Real-Time Tracking
--   WebSocket-based live tracking.
--   Redis Geo for efficient "nearby driver" queries.
+### BFF Services (3)
 
-### 3. Green Logistics
--   CO2 emission calculation per trip.
--   EV-aware routing logic.
+| Service | Port | Description |
+|---------|------|-------------|
+| **driver-app-bff** | 8126 | Driver app BFF |
+| **customer-app-bff** | 8127 | Customer app BFF |
+| **unified-bff-service** | 8128 | Unified BFF |
 
-### 4. Global Compliance
--   GDPR-ready architecture (Tenant-based sharding strategy).
--   PII protection patterns.
+### Rules Engine (1)
 
-## 🧪 Testing
+| Service | Port | Description |
+|---------|------|-------------|
+| **rules-engine-service** | 8129 | Business rules engine |
 
-Run integration tests using the provided script:
+---
+
+## 🔧 Prerequisites
+
+### Required Software
+
+- **Java 21** or higher
+- **Maven 3.9+**
+- **PostgreSQL 15+**
+- **Apache Kafka 3.5+**
+- **Redis 7.0+**
+- **Docker** (optional, for containerized deployment)
+- **Docker Compose** (optional)
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
 ```bash
-./run-integration-test.sh
+# Database
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=logistics
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+# Kafka
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Google Maps API
+GOOGLE_MAPS_API_KEY=your_api_key_here
+
+# ML Service
+ML_SERVICE_URL=http://localhost:5000
+
+# SMTP
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
 ```
 
-## 📚 Documentation
--   [API Documentation (Postman)](./postman_collection.json)
--   [Global Expansion Strategy](./docs/global_expansion_strategy.md)
--   [GDPR Audit Report](./docs/gdpr_audit_report.md)
+---
+
+## 🚀 Quick Start
+
+### Option 1: Run Without Docker
+
+#### 1. Start Infrastructure Services
+
+```bash
+# Start PostgreSQL
+brew services start postgresql@15
+
+# Start Kafka (with Zookeeper)
+brew services start zookeeper
+brew services start kafka
+
+# Start Redis
+brew services start redis
+```
+
+#### 2. Build All Services
+
+```bash
+cd logistics-platform
+mvn clean install -DskipTests
+```
+
+#### 3. Start Services in Order
+
+See [ImportantCommands.md](./ImportantCommands.md) for detailed startup sequence.
+
+### Option 2: Run With Docker Compose
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Or start in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+---
+
+## ⚙️ Configuration
+
+### Application Profiles
+
+- **default**: Local development
+- **dev**: Development environment
+- **staging**: Staging environment
+- **prod**: Production environment
+
+### Config Server
+
+All service configurations are managed centrally via `config-server` (port 8888).
+
+Configuration files are located in: `infrastructure/config-server/src/main/resources/config/`
+
+---
+
+## 📚 API Documentation
+
+### Swagger UI
+
+Access Swagger UI for each service:
+
+```
+http://localhost:{port}/swagger-ui.html
+```
+
+Example:
+- API Gateway: http://localhost:8080/swagger-ui.html
+- Order Service: http://localhost:8085/swagger-ui.html
+- Route Optimization: http://localhost:8110/swagger-ui.html
+
+### API Endpoints
+
+See [API_DOCUMENTATION.md](./docs/API_DOCUMENTATION.md) for complete API reference.
+
+---
+
+## 📊 Monitoring
+
+### Health Checks
+
+```bash
+# Check service health
+curl http://localhost:{port}/actuator/health
+
+# Check all registered services
+curl http://localhost:8761/eureka/apps
+```
+
+### Metrics
+
+Metrics are exposed via Micrometer:
+
+```
+http://localhost:{port}/actuator/metrics
+http://localhost:{port}/actuator/prometheus
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+---
 
 ## 📄 License
-This project is licensed under the MIT License.
+
+Copyright © 2026 Logistics Platform. All rights reserved.
+
+---
+
+## 📞 Support
+
+For support, email support@logistics-platform.com or create an issue in the repository.

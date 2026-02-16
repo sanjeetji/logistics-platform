@@ -18,7 +18,7 @@ public class TenantUsage extends BaseEntity {
     @Column(nullable = false)
     private String tenantId;
 
-    @Column(nullable = false)
+    @Column(name = "usage_month", nullable = false)
     private LocalDate month; // First day of the month
 
     @Builder.Default

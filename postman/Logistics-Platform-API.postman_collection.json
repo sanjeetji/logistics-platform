@@ -1,0 +1,476 @@
+{
+  "info": {
+    "name": "Logistics Platform API",
+    "_postman_id": "logistics-platform-v1",
+    "description": "Complete API collection for Logistics Platform - B2C and B2B flows",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tracking_number",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('user_id', jsonData.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"+1234567890\",\n  \"userType\": \"CUSTOMER\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('auth_token', jsonData.accessToken);",
+                  "    pm.environment.set('refresh_token', jsonData.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. B2C - Customer Journey",
+      "item": [
+        {
+          "name": "Get Price Estimate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('estimate_id', jsonData.estimateId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickupLocation\": {\n    \"latitude\": 37.7749,\n    \"longitude\": -122.4194,\n    \"address\": \"123 Market St, San Francisco, CA 94103\"\n  },\n  \"dropoffLocation\": {\n    \"latitude\": 37.8044,\n    \"longitude\": -122.2712,\n    \"address\": \"456 Broadway, Oakland, CA 94607\"\n  },\n  \"packageDetails\": {\n    \"weight\": 5.5,\n    \"dimensions\": {\n      \"length\": 30,\n      \"width\": 20,\n      \"height\": 15\n    },\n    \"category\": \"ELECTRONICS\"\n  },\n  \"serviceType\": \"SAME_DAY\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pricing/estimate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pricing", "estimate"]
+            }
+          }
+        },
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('order_id', jsonData.orderId);",
+                  "    pm.environment.set('tracking_number', jsonData.trackingNumber);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estimateId\": \"{{estimate_id}}\",\n  \"pickupLocation\": {\n    \"latitude\": 37.7749,\n    \"longitude\": -122.4194,\n    \"address\": \"123 Market St, San Francisco, CA 94103\",\n    \"contactName\": \"John Doe\",\n    \"contactPhone\": \"+1234567890\",\n    \"instructions\": \"Ring doorbell\"\n  },\n  \"dropoffLocation\": {\n    \"latitude\": 37.8044,\n    \"longitude\": -122.2712,\n    \"address\": \"456 Broadway, Oakland, CA 94607\",\n    \"contactName\": \"Jane Smith\",\n    \"contactPhone\": \"+0987654321\",\n    \"instructions\": \"Leave at reception\"\n  },\n  \"packageDetails\": {\n    \"weight\": 5.5,\n    \"dimensions\": {\n      \"length\": 30,\n      \"width\": 20,\n      \"height\": 15\n    },\n    \"category\": \"ELECTRONICS\",\n    \"description\": \"Laptop\",\n    \"value\": 1200.00\n  },\n  \"serviceType\": \"SAME_DAY\",\n  \"paymentMethod\": \"CARD\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Track Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tracking/{{tracking_number}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tracking", "{{tracking_number}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Confirm Delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryCode\": \"1234\",\n  \"signature\": \"base64_encoded_signature\",\n  \"photo\": \"base64_encoded_photo\",\n  \"notes\": \"Package delivered successfully\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/confirm-delivery",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "confirm-delivery"]
+            }
+          }
+        },
+        {
+          "name": "Submit Rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"driverId\": \"drv_456789\",\n  \"rating\": 5,\n  \"review\": \"Excellent service!\",\n  \"categories\": {\n    \"timeliness\": 5,\n    \"communication\": 5,\n    \"packageHandling\": 5\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ratings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ratings"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. B2B - Enterprise Journey",
+      "item": [
+        {
+          "name": "Register Enterprise",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('tenant_id', jsonData.tenantId);",
+                  "    pm.environment.set('api_key', jsonData.apiKey);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Acme Corporation\",\n  \"businessType\": \"E_COMMERCE\",\n  \"contactPerson\": {\n    \"firstName\": \"Sarah\",\n    \"lastName\": \"Williams\",\n    \"email\": \"sarah@acme.com\",\n    \"phone\": \"+1234567890\"\n  },\n  \"businessAddress\": {\n    \"street\": \"789 Enterprise Blvd\",\n    \"city\": \"San Francisco\",\n    \"state\": \"CA\",\n    \"zipCode\": \"94105\",\n    \"country\": \"USA\"\n  },\n  \"taxId\": \"12-3456789\",\n  \"estimatedMonthlyVolume\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tenant/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tenant", "register"]
+            }
+          }
+        },
+        {
+          "name": "Create Bulk Shipment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipmentBatch\": {\n    \"batchId\": \"BATCH-001\",\n    \"warehouseId\": \"wh_sf_001\",\n    \"shipments\": [\n      {\n        \"referenceId\": \"ORDER-001\",\n        \"recipient\": {\n          \"name\": \"Customer A\",\n          \"phone\": \"+1111111111\",\n          \"address\": \"100 Main St, Oakland, CA\"\n        },\n        \"package\": {\n          \"weight\": 2.5,\n          \"value\": 150.00\n        }\n      }\n    ]\n  },\n  \"routeOptimization\": {\n    \"enabled\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/b2b/shipments/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "b2b", "shipments", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Get Optimized Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/route-optimization/{{optimization_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "route-optimization", "{{optimization_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Track Batch Shipments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/b2b/shipments/batch/{{batch_id}}/tracking",
+              "host": ["{{base_url}}"],
+              "path": ["api", "b2b", "shipments", "batch", "{{batch_id}}", "tracking"]
+            }
+          }
+        },
+        {
+          "name": "Get Analytics Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/dashboard?tenantId={{tenant_id}}&startDate=2026-02-01&endDate=2026-02-16",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "dashboard"],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "{{tenant_id}}"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-02-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-02-16"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Route Optimization",
+      "item": [
+        {
+          "name": "Optimize Routes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stops\": [\n    {\n      \"latitude\": 37.7749,\n      \"longitude\": -122.4194,\n      \"serviceTime\": 10\n    },\n    {\n      \"latitude\": 37.8044,\n      \"longitude\": -122.2712,\n      \"serviceTime\": 10\n    }\n  ],\n  \"vehicles\": [\n    {\n      \"vehicleId\": \"veh_001\",\n      \"capacity\": 500,\n      \"startLocation\": {\n        \"latitude\": 37.7749,\n        \"longitude\": -122.4194\n      }\n    }\n  ],\n  \"objectives\": [\"MINIMIZE_DISTANCE\", \"MINIMIZE_TIME\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/route-optimization/optimize",
+              "host": ["{{base_url}}"],
+              "path": ["api", "route-optimization", "optimize"]
+            }
+          }
+        },
+        {
+          "name": "What-If Analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"baseRouteId\": \"route_001\",\n  \"scenarios\": [\n    {\n      \"name\": \"Add Extra Stop\",\n      \"changes\": {\n        \"additionalStops\": [\n          {\n            \"latitude\": 37.7897,\n            \"longitude\": -122.3972\n          }\n        ]\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/route-optimization/what-if",
+              "host": ["{{base_url}}"],
+              "path": ["api", "route-optimization", "what-if"]
+            }
+          }
+        },
+        {
+          "name": "Route Simulation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"route_001\",\n  \"simulationParams\": {\n    \"averageSpeed\": 40,\n    \"trafficFactor\": 1.2\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/route-optimization/simulate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "route-optimization", "simulate"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

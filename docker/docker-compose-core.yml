@@ -1,0 +1,361 @@
+version: '3.8'
+
+services:
+  # ==================== Platform Core ====================
+  auth-service:
+    build: ../platform-core/auth-service
+    image: logistics/auth-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka, redis ]
+    networks: [ logistics-network ]
+
+  tenant-service:
+    build: ../platform-core/tenant-service
+    image: logistics/tenant-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, redis ]
+    networks: [ logistics-network ]
+
+  user-service:
+    build: ../platform-core/user-service
+    image: logistics/user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  fleet-service:
+    build: ../platform-core/fleet-service
+    image: logistics/fleet-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  order-service:
+    build: ../platform-core/order-service
+    image: logistics/order-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  dispatch-service:
+    build: ../platform-core/dispatch-service
+    image: logistics/dispatch-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  pricing-service:
+    build: ../platform-core/pricing-service
+    image: logistics/pricing-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  customer-service:
+    build: ../platform-core/customer-service
+    image: logistics/customer-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  role-permission-service:
+    build: ../platform-core/role-permission-service
+    image: logistics/role-permission-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  driver-app-service:
+    build: ../platform-core/driver-app-service
+    image: logistics/driver-app-service-core
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  loyalty-service:
+    build: ../platform-core/loyalty-service
+    image: logistics/loyalty-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  orchestration-service:
+    build: ../platform-core/orchestration-service
+    image: logistics/orchestration-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, kafka ]
+    networks: [ logistics-network ]
+
+  promo-code-service:
+    build: ../platform-core/promo-code-service
+    image: logistics/promo-code-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  tracking-service-core:
+    build: ../platform-core/tracking-service
+    image: logistics/tracking-service-core
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka, redis ]
+    networks: [ logistics-network ]
+
+  wallet-service:
+    build: ../platform-core/wallet-service
+    image: logistics/wallet-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  # ==================== Shared Services ====================
+  audit-log-service:
+    build: ../shared-services/audit-log-service
+    image: logistics/audit-log-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  billing-service:
+    build: ../shared-services/billing-service
+    image: logistics/billing-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  chat-service:
+    build: ../shared-services/chat-service
+    image: logistics/chat-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  control-tower-service:
+    build: ../shared-services/control-tower-service
+    image: logistics/control-tower-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  document-service:
+    build: ../shared-services/document-service
+    image: logistics/document-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  edi-service:
+    build: ../shared-services/edi-service
+    image: logistics/edi-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  exception-management-service:
+    build: ../shared-services/exception-management-service
+    image: logistics/exception-management-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  geo-service:
+    build: ../shared-services/geo-service
+    image: logistics/geo-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  integration-service:
+    build: ../shared-services/integration-service
+    image: logistics/integration-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  location-hub-service:
+    build: ../shared-services/location-hub-service
+    image: logistics/location-hub-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, redis ]
+    networks: [ logistics-network ]
+
+  master-data-service:
+    build: ../shared-services/master-data-service
+    image: logistics/master-data-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  notification-service:
+    build: ../shared-services/notification-service
+    image: logistics/notification-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  payment-service:
+    build: ../shared-services/payment-service
+    image: logistics/payment-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  payout-service:
+    build: ../shared-services/payout-service
+    image: logistics/payout-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  rating-service:
+    build: ../shared-services/rating-service
+    image: logistics/rating-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  returns-service:
+    build: ../shared-services/returns-service
+    image: logistics/returns-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  route-optimization-service:
+    build: ../shared-services/route-optimization-service
+    image: logistics/route-optimization-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  search-service:
+    build: ../shared-services/search-service
+    image: logistics/search-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  shift-management-service:
+    build: ../shared-services/shift-management-service
+    image: logistics/shift-management-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  sla-service:
+    build: ../shared-services/sla-service
+    image: logistics/sla-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  streaming-analytics-service:
+    build: ../shared-services/streaming-analytics-service
+    image: logistics/streaming-analytics-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  tenant-onboarding-service:
+    build: ../shared-services/tenant-onboarding-service
+    image: logistics/tenant-onboarding-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  tracking-service:
+    build: ../shared-services/tracking-service
+    image: logistics/tracking-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka, redis ]
+    networks: [ logistics-network ]
+
+  user-management-service:
+    build: ../shared-services/user-management-service
+    image: logistics/user-management-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  user-preferences-service:
+    build: ../shared-services/user-preferences-service
+    image: logistics/user-preferences-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres ]
+    networks: [ logistics-network ]
+
+  webhook-worker-service:
+    build: ../shared-services/webhook-worker-service
+    image: logistics/webhook-worker-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+  # ==================== Infrastructure Services ====================
+  # Note: Config Server and Eureka are in the main docker-compose.yml
+  # Gateway is also there, but if you want to rebuild it explicitly:
+  # gateway-service:
+  #   build: ../infrastructure/api-gateway
+  #   ...
+
+  # ==================== Advanced Services ====================
+  ml-service:
+    build: ../ml-service
+    image: logistics/ml-service
+    environment:
+      FLASK_ENV: docker
+    ports: [ "5000:5000" ]
+    depends_on: [ postgres, redis ]
+    networks: [ logistics-network ]
+
+  rules-engine-service:
+    build: ../rules-engine-service
+    image: logistics/rules-engine-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on: [ config-server, service-discovery, postgres, kafka ]
+    networks: [ logistics-network ]
+
+networks:
+  logistics-network:
+    external: true

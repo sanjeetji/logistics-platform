@@ -1,12 +1,6 @@
 version: '3.8'
 
 services:
-  mysql-db:
-    environment:
-      MYSQL_ROOT_PASSWORD: devpassword
-      MYSQL_DATABASE: logistics_dev
-    ports:
-      - "3307:3306"
 
   platform-core:
     environment:

@@ -32,7 +32,7 @@ public class FeatureFlag extends BaseEntity {
 
     // Tenant-specific overrides: { "tenant-123": true, "tenant-456": false }
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "json")
     @Builder.Default
     private Map<String, Boolean> tenantOverrides = new HashMap<>();
 

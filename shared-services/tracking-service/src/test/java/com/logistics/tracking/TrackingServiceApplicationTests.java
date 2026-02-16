@@ -2,9 +2,11 @@ package com.logistics.tracking;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-class TrackingServiceApplicationTests {
+@ActiveProfiles("test")
+public class TrackingServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

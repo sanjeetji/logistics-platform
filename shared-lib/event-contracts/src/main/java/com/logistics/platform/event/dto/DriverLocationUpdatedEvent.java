@@ -1,10 +1,13 @@
 package com.logistics.platform.event.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.time.LocalDateTime;
 
 @Data
 @SuperBuilder
@@ -13,17 +16,8 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class DriverLocationUpdatedEvent extends BaseEvent {
     private String driverId;
+    private String orderId;
     private Double latitude;
     private Double longitude;
-    private Double speed;
-    private Double heading;
-
-    public static DriverLocationUpdatedEvent create(String driverId, Double lat, Double lon) {
-        return DriverLocationUpdatedEvent.builder()
-                .driverId(driverId)
-                .latitude(lat)
-                .longitude(lon)
-                .eventType("DRIVER_LOCATION_UPDATED")
-                .build();
-    }
+    private LocalDateTime timestamp;
 }

@@ -106,8 +106,6 @@
 
         <!-- PLATFORM CORE -->
         <module>platform-core/auth-service</module>
-        <module>platform-core/user-service</module>
-        <module>platform-core/role-permission-service</module>
         <module>platform-core/tenant-service</module>
         <module>platform-core/fleet-service</module>
         <module>platform-core/order-service</module>
@@ -139,9 +137,7 @@
         <module>shared-services/notification-service</module>
         <module>shared-services/billing-service</module>
         <module>shared-services/document-service</module>
-        <module>shared-services/intelligent-routing-service</module>
         <module>shared-services/geo-service</module>
-        <module>shared-services/analytics-service</module>
         <module>shared-services/audit-log-service</module>
         <module>shared-services/chat-service</module>
         <module>shared-services/integration-service</module>
@@ -150,7 +146,8 @@
         <module>shared-services/rating-service</module>
         <module>shared-services/search-service</module>
         <module>shared-services/streaming-analytics-service</module>
-        <module>shared-services/user-preferences-service</module>
+        <module>shared-services/user-management-service</module>
+        <module>shared-services/route-optimization-service</module>
         <module>shared-services/tenant-onboarding-service</module>
         <module>shared-services/shift-management-service</module>
         <module>shared-services/edi-service</module>
@@ -166,9 +163,7 @@
         <module>mobile-backend/customer-api-service</module>
 
         <!-- BFF (Backend for Frontend) -->
-        <module>bff/b2b-bff-service</module>
-        <module>bff/b2c-bff-service</module>
-        <module>bff/mobile-bff-service</module>
+        <module>bff/unified-bff-service</module>
         <module>rules-engine-service</module>
     </modules>
 
