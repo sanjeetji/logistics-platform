@@ -65,7 +65,7 @@
         <liquibase.version>4.27.0</liquibase.version>
 
         <!-- Monitoring -->
-        <micrometer-tracing.version>1.3.0</micrometer-tracing.version>
+        <micrometer-tracing.version>1.6.3</micrometer-tracing.version>
 
         <!-- QR Code Generation -->
         <zxing.version>3.5.3</zxing.version>
