@@ -3,14 +3,14 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.5</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<groupId>com.logistics.platform</groupId>
+		<artifactId>logistics-platform</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	<groupId>com.logistics.gateway</groupId>
 	<artifactId>gateway-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>API Gateway</name>
 	<description>Central API gateway with routing, security, rate limiting, request transformation, and API composition for microservices architecture.</description>
 	<url/>
@@ -53,11 +53,11 @@
 		</dependency>
 
 		                <dependency>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-starter-test</artifactId>
-                        <scope>test</scope>
-                </dependency>
-                <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+<dependency>
                         <groupId>org.springframework.security</groupId>
                         <artifactId>spring-security-test</artifactId>
                         <scope>test</scope>

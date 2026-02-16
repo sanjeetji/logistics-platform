@@ -19,6 +19,8 @@ public class AuditSearchRequest {
     private String status; // SUCCESS, FAILURE
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    @Builder.Default
     private int page = 0;
+    @Builder.Default
     private int size = 20;
 }

@@ -352,17 +352,22 @@ POST /pricing-service/api/pricing/calculate
 
 ---
 
-### 10. Route Service
-**Base Path**: `/route-service/api/routes`
+### 10. Intelligent Routing Service
+**Base Path**: `/intelligent-routing-service/api/routes`
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/optimize` | POST | Optimize multi-stop route |
+| `/optimize` | POST | Optimize multi-stop route (VRPTW, Heterogeneous Fleet) |
 | `/{routeId}` | GET | Get route details |
 | `/{routeId}/eta` | GET | Get estimated arrival times |
-| `/templates` | GET | Get route templates |
+| `/green/emissions` | POST | Calculate CO2 emissions for a route |
 
-**Swagger UI**: `https://api.logistics-platform.com/route-service/swagger-ui.html`
+**Advanced Features**:
+- **Time Windows**: Support for `pickupWindow` and `deliveryWindow`.
+- **Fleet Diversity**: Optimized for Bikes, Vans, Trucks, and EVs.
+- **Sustainability**: Integrated CO2 tracking per vehicle type.
+
+**Swagger UI**: `https://api.logistics-platform.com/intelligent-routing-service/swagger-ui.html`
 
 ---
 
@@ -670,5 +675,5 @@ X-API-Deprecation-Info: https://developers.logistics-platform.com/deprecations/v
 
 ---
 
-**Last Updated**: 2026-02-10  
-**API Version**: 1.0.0
+**Last Updated**: 2026-02-13  
+**API Version**: 1.1.0 (Intelligent Routing Update)

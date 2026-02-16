@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.logistics.sla</groupId>
 	<artifactId>sla-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>SLA Service</name>
 	<description>Service Level Agreement monitoring and breach detection service</description>
 
@@ -42,8 +42,7 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
+			<groupId>org.projectlombok</groupId><artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
         <dependency>
@@ -55,11 +54,15 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-        
-        <!-- Shared Libraries -->
+<!-- Shared Libraries -->
         <dependency>
             <groupId>com.logistics.platform</groupId>
             <artifactId>common-dto</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>event-contracts</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>

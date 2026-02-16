@@ -40,7 +40,7 @@ public class MasterDataService {
 
     @Transactional
     public City createCity(City city) {
-        return cityRepository.save(city);
+        return cityRepository.save(java.util.Objects.requireNonNull(city));
     }
 
     @Cacheable(value = "zones", key = "#cityId")
@@ -51,7 +51,7 @@ public class MasterDataService {
 
     @Transactional
     public ServiceZone createZone(ServiceZone zone) {
-        return zoneRepository.save(zone);
+        return zoneRepository.save(java.util.Objects.requireNonNull(zone));
     }
 
     @Cacheable(value = "vehicleTypes", key = "'all'")
@@ -68,7 +68,7 @@ public class MasterDataService {
 
     @Transactional
     public VehicleType createVehicleType(VehicleType vehicleType) {
-        return vehicleTypeRepository.save(vehicleType);
+        return vehicleTypeRepository.save(java.util.Objects.requireNonNull(vehicleType));
     }
 
     // Bulk Upload Methods
@@ -91,7 +91,7 @@ public class MasterDataService {
                     skipped++;
                     continue;
                 }
-                cityRepository.save(city);
+                cityRepository.save(java.util.Objects.requireNonNull(city));
                 success++;
             } catch (Exception e) {
                 log.error("Failed to save city: {}", city.getName(), e);

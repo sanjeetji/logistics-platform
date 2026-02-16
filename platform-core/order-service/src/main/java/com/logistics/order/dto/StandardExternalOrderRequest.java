@@ -38,6 +38,13 @@ public class StandardExternalOrderRequest {
     private String currency; // "USD", "EUR"
     private Double totalWeightKg;
 
+    // Scheduling and Preferences
+    private String scheduledTime; // ISO-8601 string
+    private String timeSlot;
+    private String deliveryInstructions;
+    private Boolean contactlessDelivery;
+    private String safeDropLocation;
+
     @Data
     @Builder
     @NoArgsConstructor

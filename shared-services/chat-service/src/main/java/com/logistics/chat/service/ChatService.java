@@ -28,7 +28,7 @@ public class ChatService {
                             .driverId(driverId)
                             .customerId(customerId)
                             .build();
-                    return roomRepository.save(room);
+                    return roomRepository.save(java.util.Objects.requireNonNull(room));
                 });
     }
 

@@ -1,0 +1,27 @@
+package rules;
+
+import com.logistics.platform.common.dto.rules.RuleFacts.DispatchFact;
+
+rule "On-Demand Strategy"
+    when
+        $f : DispatchFact(orderType == "B2C_INSTANT")
+    then
+        $f.setStrategyName("B2C_ON_DEMAND");
+        $f.setPriority(10);
+end
+
+rule "B2B Shipment Strategy"
+    when
+        $f : DispatchFact(orderType == "B2B")
+    then
+        $f.setStrategyName("B2B_SHIPMENT");
+        $f.setPriority(5);
+end
+
+rule "Standard Dispatch Strategy"
+    when
+        $f : DispatchFact(orderType == "B2C", weightKg <= 20)
+    then
+        $f.setStrategyName("STANDARD_DISPATCH");
+        $f.setPriority(1);
+end

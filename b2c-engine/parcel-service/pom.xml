@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.logistics.parcel</groupId>
 	<artifactId>parcel-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>Parcel Service</name>
 	<description>B2C parcel delivery service for quick bookings, instant price calculation, package validation, and customer-facing delivery tracking.</description>
 
@@ -58,8 +58,7 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-        
-        <!-- Shared Libraries -->
+<!-- Shared Libraries -->
         <dependency>
             <groupId>com.logistics.platform</groupId>
             <artifactId>common-dto</artifactId>
@@ -71,8 +70,7 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+            <groupId>org.projectlombok</groupId><artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 	</dependencies>

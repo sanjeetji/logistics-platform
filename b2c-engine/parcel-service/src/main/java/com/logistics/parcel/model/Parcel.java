@@ -23,6 +23,13 @@ public class Parcel extends BaseEntity {
     private String receiverName;
     private String receiverAddress;
     private BigDecimal weight;
+    private Double length;
+    private Double width;
+    private Double height;
+    private BigDecimal volumetricWeight;
+    private BigDecimal chargeableWeight;
     private String status; // CREATED, PICKED_UP, IN_TRANSIT, DELIVERED
+    private Long partnerId;
+    private String partnerTrackingNumber;
     private LocalDateTime estimatedDelivery;
 }

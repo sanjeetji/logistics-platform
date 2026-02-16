@@ -23,7 +23,7 @@ public interface B2BOrderRepository extends JpaRepository<B2BOrder, Long> {
     List<B2BOrder> findBySlaStatus(SLAStatus slaStatus);
     
     @Query("SELECT o FROM B2BOrder o WHERE o.slaDeadline BETWEEN :startDate AND :endDate")
-    List<B2BOrder> findBySlaDead lineRange(LocalDateTime startDate, LocalDateTime endDate);
+    List<B2BOrder> findBySlaDeadlineRange(LocalDateTime startDate, LocalDateTime endDate);
     
     @Query("SELECT o FROM B2BOrder o WHERE o.clientId = :clientId AND o.status = :status")
     List<B2BOrder> findByClientIdAndStatus(Long clientId, B2BOrderStatus status);

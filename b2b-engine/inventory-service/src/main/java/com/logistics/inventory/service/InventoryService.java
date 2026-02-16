@@ -2,13 +2,16 @@ package com.logistics.inventory.service;
 
 import com.logistics.inventory.model.InventoryItem;
 import com.logistics.inventory.repository.InventoryRepository;
+import com.logistics.platform.event.dto.InventoryUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -19,6 +22,7 @@ public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String INVENTORY_KEY_PREFIX = "inventory:";
 
@@ -66,14 +70,30 @@ public class InventoryService {
         String key = INVENTORY_KEY_PREFIX + sku;
         redisTemplate.opsForValue().set(key, String.valueOf(quantity));
 
+        // 3. Notify ERP/Other services via Kafka
+        publishUpdate(sku, warehouseId, "RESTOCKED", quantity, quantity);
+
         return saved;
+    }
+
+    private void publishUpdate(String sku, String warehouseId, String action, Integer newQty, Integer delta) {
+        InventoryUpdatedEvent event = InventoryUpdatedEvent.builder()
+                .skuId(sku)
+                .warehouseId(warehouseId)
+                .action(action)
+                .newQuantity(newQty)
+                .delta(delta)
+                .timestamp(LocalDateTime.now())
+                .updatedBy("SYSTEM")
+                .build();
+        kafkaTemplate.send("inventory-updates", sku, event);
     }
 
     public boolean reserveStock(String sku, int quantity) {
         String key = INVENTORY_KEY_PREFIX + sku;
         DefaultRedisScript<Long> script = new DefaultRedisScript<>(RESERVE_STOCK_SCRIPT, Long.class);
 
-        Long result = redisTemplate.execute(script, Collections.singletonList(key), quantity);
+        Long result = redisTemplate.execute(script, Collections.singletonList(key), String.valueOf(quantity));
 
         if (result == null || result == -1) {
             // Fallback: Check DB if Redis key missing (cache miss or eviction)
@@ -82,7 +102,10 @@ public class InventoryService {
 
         if (result == 1) {
             log.info("Stock reserved in Redis for SKU: {}", sku);
-            // Async sync to DB (omitted for brevity, typically done via Kafka event)
+            // Publish event for ERP sync
+            Optional<InventoryItem> item = inventoryRepository.findBySku(sku);
+            item.ifPresent(
+                    i -> publishUpdate(sku, i.getWarehouseId(), "RESERVED", i.getQuantity() - quantity, -quantity));
             return true;
         } else {
             log.warn("Insufficient stock in Redis for SKU: {}", sku);

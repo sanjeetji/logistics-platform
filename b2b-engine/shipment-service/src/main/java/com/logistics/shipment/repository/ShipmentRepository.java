@@ -15,4 +15,10 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
     List<Shipment> findByDriverId(String driverId);
 
     List<Shipment> findByStatus(ShipmentStatus status);
+
+    // Projections
+    List<com.logistics.shipment.model.projection.ShipmentSummary> findByTenantId(String tenantId);
+
+    List<com.logistics.shipment.model.projection.ShipmentSummary> findByDriverIdAndStatus(String driverId,
+            ShipmentStatus status);
 }

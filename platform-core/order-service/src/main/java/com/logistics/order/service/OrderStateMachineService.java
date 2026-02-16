@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-@Service
+@Service("manualOrderStateMachineService")
 @Slf4j
 public class OrderStateMachineService {
 

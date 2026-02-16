@@ -1,0 +1,27 @@
+package rules;
+
+import com.logistics.platform.common.dto.rules.RuleFacts.SlaFact;
+
+rule "Platinum Customer SLA"
+    when
+        $f : SlaFact(customerTier == "PLATINUM")
+    then
+        $f.setDeadlineMinutes(120); // 2 hours
+        $f.setEscalationPolicy("IMMEDIATE_MANAGER_ALERT");
+end
+
+rule "B2B Standard SLA"
+    when
+        $f : SlaFact(orderType == "B2B", customerTier == "GOLD")
+    then
+        $f.setDeadlineMinutes(480); // 8 hours
+        $f.setEscalationPolicy("DELAY_NOTIFICATION_4H");
+end
+
+rule "B2C Standard SLA"
+    when
+        $f : SlaFact(orderType == "B2C")
+    then
+        $f.setDeadlineMinutes(1440); // 24 hours
+        $f.setEscalationPolicy("RETRY_ON_FAIL");
+end

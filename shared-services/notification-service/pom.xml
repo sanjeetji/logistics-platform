@@ -9,7 +9,7 @@
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	<artifactId>notification-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>Notification Service</name>
 	<description>Multi-channel notification delivery system.</description>
 
@@ -47,6 +47,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
+        
+        <!-- Kafka -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        
+        <!-- Event Contracts -->
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>event-contracts</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
 
 		<!-- DB -->
 		<dependency>
@@ -57,8 +70,7 @@
 
 		<!-- UTILS -->
 		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
+			<groupId>org.projectlombok</groupId><artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
 
@@ -68,7 +80,7 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
+<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
@@ -83,8 +95,7 @@
 				<configuration>
 					<excludes>
 						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
+							<groupId>org.projectlombok</groupId><artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
 				</configuration>

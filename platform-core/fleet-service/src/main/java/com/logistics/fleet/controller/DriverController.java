@@ -54,4 +54,19 @@ public class DriverController {
         Driver updatedDriver = driverService.updateDriver(id, driver);
         return ApiResponse.success(driverMapper.toDto(updatedDriver));
     }
+
+    @PatchMapping("/{id}/status")
+    public ApiResponse<DriverDto> updateDriverStatus(
+            @PathVariable Long id,
+            @RequestParam com.logistics.fleet.model.DriverStatus status,
+            @RequestParam(required = false) String reason) {
+        Driver updatedDriver = driverService.updateDriverStatus(id, status, reason);
+        return ApiResponse.success(driverMapper.toDto(updatedDriver));
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteDriver(@PathVariable Long id) {
+        driverService.deleteDriver(id);
+        return ApiResponse.success(null);
+    }
 }

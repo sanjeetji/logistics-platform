@@ -8,13 +8,13 @@
     <parent>
         <groupId>com.logistics.platform</groupId>
         <artifactId>logistics-platform</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <groupId>com.logistics.driver</groupId>
     <artifactId>driver-app-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Driver App Service</name>
     <description>Driver app backend for B2C logistics platform</description>
 
@@ -44,30 +44,29 @@
         <dependency>
             <groupId>com.logistics.platform</groupId>
             <artifactId>common-utils</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Common DTOs -->
         <dependency>
             <groupId>com.logistics.platform</groupId>
             <artifactId>common-dto</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Lombok -->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+            <groupId>org.projectlombok</groupId><artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
         <!-- Test -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+</dependencies>
 
     <build>
         <plugins>

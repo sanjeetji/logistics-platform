@@ -2,11 +2,21 @@
 API Routes for ML Service
 """
 from fastapi import APIRouter, HTTPException, status
-from app.api.schemas import *
+from app.api.schemas import (
+    DemandPredictionRequest, DemandPredictionResponse,
+    DeliveryTimePredictionRequest, DeliveryTimePredictionResponse,
+    PricingRequest, PricingResponse,
+    TrainingRequest, TrainingResponse,
+    DriverMatchingRequest, DriverMatchingResponse,
+    RouteOptimizationRequest, RouteOptimizationResponse,
+    OptimizedRoute
+)
 from app.models.demand_prediction import DemandPredictor
 from app.models.delivery_time import DeliveryTimePredictor
-from app.models.route_optimization import MLRouteOptimizer
+from app.models.driver_matching import DriverMatchingModel
 from app.models.dynamic_pricing import DynamicPricingModel
+from app.models.eta_prediction import ETAPredictionModel
+from app.models.route_optimization import RouteOptimizationModel
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,8 +26,10 @@ router = APIRouter()
 # Initialize models
 demand_predictor = DemandPredictor()
 delivery_predictor = DeliveryTimePredictor()
-route_optimizer = MLRouteOptimizer()
+route_model = RouteOptimizationModel()
 pricing_model = DynamicPricingModel()
+matching_model = DriverMatchingModel()
+eta_model = ETAPredictionModel()
 
 @router.post("/predict/demand", response_model=DemandPredictionResponse)
 async def predict_demand(request: DemandPredictionRequest):
@@ -89,40 +101,38 @@ async def predict_delivery_time(request: DeliveryTimePredictionRequest):
 @router.post("/optimize/route", response_model=RouteOptimizationResponse)
 async def optimize_route(request: RouteOptimizationRequest):
     """
-    Optimize delivery route using ML predictions
+    Optimize multi-vehicle delivery routes using OR-Tools (VRP)
     
-    - **start_location**: Starting point
-    - **stops**: List of delivery stops
-    - **vehicle_type**: Vehicle type
-    - **max_stops**: Maximum stops per route
+    - **depot**: Starting point for all vehicles
+    - **orders**: List of delivery orders with locations and weights
+    - **vehicles**: List of available vehicles with capacities
     """
     try:
-        logger.info(f"Route optimization for {len(request.stops)} stops")
+        logger.info(f"Route optimization for {len(request.orders)} orders with {len(request.vehicles)} vehicles")
         
-        # Convert Pydantic models to dicts
-        start_dict = {
-            "lat": request.start_location.lat,
-            "lng": request.start_location.lng,
-            "stop_id": request.start_location.stop_id
-        }
+        depot_dict = {"lat": request.depot.lat, "lon": request.depot.lon}
+        orders_list = [{"id": o.id, "lat": o.lat, "lon": o.lon, "weight": o.weight} for o in request.orders]
+        vehicles_list = [{"id": v.id, "capacity": v.capacity, "lat": v.lat, "lon": v.lon} for v in request.vehicles]
         
-        stops_list = [
-            {"lat": stop.lat, "lng": stop.lng, "stop_id": stop.stop_id}
-            for stop in request.stops
-        ]
-        
-        result = route_optimizer.optimize_route(
-            start_location=start_dict,
-            stops=stops_list,
-            vehicle_type=request.vehicle_type
+        result = route_model.solve_vrp(
+            depot=depot_dict,
+            orders=orders_list,
+            vehicles=vehicles_list
         )
         
-        optimized = OptimizedRoute(**result)
-        
+        if result["status"] == "NO_SOLUTION":
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not find an optimal route with given constraints"
+            )
+            
         return RouteOptimizationResponse(
-            optimized_route=optimized,
-            alternative_routes=[]  # Can add alternative routes in future
+            status=result["status"],
+            total_distance_meters=result["total_distance_meters"],
+            routes=[VehicleRoute(**r) for r in result["routes"]]
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in route optimization: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -158,6 +168,38 @@ async def calculate_dynamic_pricing(request: PricingRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Pricing calculation failed: {str(e)}"
+        )
+
+@router.post("/predict/driver-match", response_model=DriverMatchingResponse)
+async def predict_driver_match(request: DriverMatchingRequest):
+    """
+    Score and rank drivers for an order
+    """
+    try:
+        logger.info(f"Driver matching request for order: {request.order_id} with {len(request.candidates)} candidates")
+        
+        # Convert Pydantic models to dicts
+        order_details = {
+            "order_id": request.order_id,
+            "pickup_lat": request.pickup_lat,
+            "pickup_lng": request.pickup_lng,
+            "required_vehicle": request.required_vehicle
+        }
+        
+        candidates_list = [candidate.dict() for candidate in request.candidates]
+        
+        scored_drivers = driver_matching_model.score_drivers(order_details, candidates_list)
+        
+        return DriverMatchingResponse(
+            request_id=request.request_id,
+            candidates_count=len(scored_drivers),
+            matches=scored_drivers
+        )
+    except Exception as e:
+        logger.error(f"Error in driver matching: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Driver matching failed: {str(e)}"
         )
 
 @router.post("/train/demand", response_model=TrainingResponse)

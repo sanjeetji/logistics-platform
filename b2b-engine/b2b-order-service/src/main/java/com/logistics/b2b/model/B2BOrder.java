@@ -24,6 +24,9 @@ public class B2BOrder extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String orderId;
 
+    @Column(unique = true)
+    private String erpOrderId;
+
     @Column(nullable = false)
     private Long clientId; // Enterprise client
 
@@ -46,8 +49,12 @@ public class B2BOrder extends BaseEntity {
     private SLAStatus slaStatus = SLAStatus.ON_TIME;
 
     private LocalDateTime scheduledPickupTime;
-    
+
     private LocalDateTime scheduledDeliveryTime;
+
+    private LocalDateTime slaPausedAt;
+
+    private Long slaRemainingMinutes; // Minutes remaining when paused
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

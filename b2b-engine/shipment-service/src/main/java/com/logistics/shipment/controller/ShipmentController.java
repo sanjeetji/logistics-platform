@@ -33,9 +33,11 @@ public class ShipmentController {
     }
 
     @PatchMapping("/{shipmentId}/status")
-    public ResponseEntity<ApiResponse<Shipment>> updateStatus(@PathVariable String shipmentId,
-            @RequestParam ShipmentStatus status) {
-        return ResponseEntity.ok(ApiResponse.success(shipmentService.updateStatus(shipmentId, status)));
+    public ResponseEntity<ApiResponse<Shipment>> updateStatus(
+            @PathVariable String shipmentId,
+            @RequestParam ShipmentStatus status,
+            @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(ApiResponse.success(shipmentService.updateStatus(shipmentId, status, reason)));
     }
 
     @PostMapping("/{shipmentId}/assign")

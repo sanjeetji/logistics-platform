@@ -12,7 +12,7 @@
 
     <groupId>com.logistics.geo</groupId>
     <artifactId>geo-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Geo Service</name>
     <description>Geocoding, routing, and location intelligence service</description>
 
@@ -41,8 +41,7 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+                            <groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><version>1.18.38</version>
             <optional>true</optional>
         </dependency>
 
@@ -96,11 +95,11 @@
 
         <!-- Testing -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+</dependencies>
 
     <build>
         <plugins>
@@ -112,9 +111,7 @@
                     <parameters>true</parameters>
                     <annotationProcessorPaths>
                         <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
+                                            <groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><version>1.18.38</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

@@ -9,7 +9,10 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "drivers")
+@Table(name = "drivers", indexes = {
+        @Index(name = "idx_driver_status", columnList = "status"),
+        @Index(name = "idx_driver_current_order", columnList = "currentOrderId")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -37,8 +40,8 @@ public class Driver extends BaseEntity {
     @Builder.Default
     private VerificationStatus verificationStatus = VerificationStatus.PENDING;
 
-    private Double currentLatitude;
-    private Double currentLongitude;
+    @Column(columnDefinition = "geometry(Point, 4326)")
+    private org.locationtech.jts.geom.Point currentLocation;
 
     // Current assignment
     private String currentOrderId; // Current order assigned to this driver

@@ -1,6 +1,6 @@
 package com.logistics.sla.listener;
 
-import com.logistics.platform.common.dto.event.AuditLogEvent;
+import com.logistics.platform.event.dto.AuditLogEvent;
 import com.logistics.sla.model.SLA;
 import com.logistics.sla.service.SLAService;
 import lombok.RequiredArgsConstructor;

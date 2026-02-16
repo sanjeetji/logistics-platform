@@ -1,115 +1,131 @@
-"""
-ML-based Route Optimization
-Uses ML to predict optimal routes considering traffic patterns
-"""
-import numpy as np
-from typing import List, Tuple
-import logging
+from ortools.constraint_solver import routing_enums_pb2
+from ortools.constraint_solver import pywrapcp
+import math
+from typing import List, Dict, Any, Tuple
 
-logger = logging.getLogger(__name__)
-
-class MLRouteOptimizer:
+class RouteOptimizationModel:
     def __init__(self):
-        self.model = None
-    
-    def optimize_route(self, start_location: dict, stops: List[dict], 
-                      vehicle_type: str) -> dict:
+        pass
+
+    def calculate_distance_matrix(self, locations: List[Dict[str, float]]) -> List[List[int]]:
         """
-        Optimize route using ML predictions
+        Calculates the distance matrix between all pairs of locations using Haversine formula.
+        Returns distances in meters.
+        """
+        num_locations = len(locations)
+        distance_matrix = [[0] * num_locations for _ in range(num_locations)]
+        
+        for i in range(num_locations):
+            for j in range(num_locations):
+                if i == j:
+                    distance_matrix[i][j] = 0
+                else:
+                    dist = self._haversine(
+                        locations[i]['lat'], locations[i]['lon'],
+                        locations[j]['lat'], locations[j]['lon']
+                    )
+                    distance_matrix[i][j] = int(dist * 1000) # Convert km to meters
+        return distance_matrix
+
+    def _haversine(self, lat1, lon1, lat2, lon2):
+        R = 6371  # radius of Earth in km
+        phi1, phi2 = math.radians(lat1), math.radians(lat2) 
+        dphi = math.radians(lat2 - lat1)
+        dlambda = math.radians(lon2 - lon1)
+        
+        a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+        return 2*R*math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    def solve_vrp(self, depot: Dict[str, float], orders: List[Dict[str, Any]], vehicles: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Solves the Vehicle Routing Problem.
         
         Args:
-            start_location: {lat, lng, stop_id}
-            stops: List of {lat, lng, stop_id}
-            vehicle_type: Vehicle type
-        
+            depot: Dict with 'lat', 'lon'
+            orders: List of dicts with 'id', 'lat', 'lon', 'weight' (optional)
+            vehicles: List of dicts with 'id', 'capacity' (optional)
+            
         Returns:
-            dict with optimized route
+            Dict containing routes for each vehicle.
         """
-        logger.info(f"Optimizing route for {len(stops)} stops")
+        # 1. Prepare Data
+        # Locations: [Depot, Order1, Order2, ...]
+        locations = [{'lat': depot['lat'], 'lon': depot['lon']}] + \
+                   [{'lat': o['lat'], 'lon': o['lon']} for o in orders]
         
-        # For now, use greedy nearest neighbor with ML-predicted times
-        # In production, use more sophisticated algorithms
+        # Requests mapping (Order Index in Input List -> Node Index in Routing Model)
+        # Node 0 is Depot. Node i is Order i-1.
         
-        current_location = start_location
-        remaining_stops = stops.copy()
-        route_sequence = []
+        distance_matrix = self.calculate_distance_matrix(locations)
+        num_vehicles = len(vehicles)
+        depot_index = 0
+        
+        # Create Routing Index Manager
+        manager = pywrapcp.RoutingIndexManager(len(distance_matrix), num_vehicles, depot_index)
+        
+        # Create Routing Model
+        routing = pywrapcp.RoutingModel(manager)
+        
+        # Create and register a transit callback
+        def distance_callback(from_index, to_index):
+            from_node = manager.IndexToNode(from_index)
+            to_node = manager.IndexToNode(to_index)
+            return distance_matrix[from_node][to_node]
+            
+        transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+        
+        # Define cost of each arc
+        routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+        
+        # Add Capacity Constraints (Optional)
+        # Assumes all orders have weight, all vehicles have capacity
+        # For MVP, we treat capacity as number of stops if weight not provided
+        # or just distance minimization if no capacity provided.
+        
+        # Setting search parameters
+        search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+        search_parameters.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+        
+        # Solve the problem
+        solution = routing.SolveWithParameters(search_parameters)
+        
+        # Format the solution
+        if solution:
+            return self._format_solution(manager, routing, solution, orders, vehicles)
+        else:
+            return {"status": "NO_SOLUTION", "routes": []}
+
+    def _format_solution(self, manager, routing, solution, orders, vehicles):
+        routes = []
         total_distance = 0
-        total_time = 0
         
-        while remaining_stops:
-            # Find nearest stop
-            nearest_stop, distance, time = self._find_nearest_stop(
-                current_location, remaining_stops, vehicle_type
-            )
+        for vehicle_id in range(len(vehicles)):
+            index = routing.Start(vehicle_id)
+            route = []
+            route_distance = 0
             
-            route_sequence.append(nearest_stop['stop_id'])
-            total_distance += distance
-            total_time += time
+            while not routing.IsEnd(index):
+                node_index = manager.IndexToNode(index)
+                # Skip depot (node 0) in the actual route list if we only want orders
+                if node_index != 0:
+                    # Adjust index to match input orders list (node_index - 1)
+                    order_data = orders[node_index - 1]
+                    route.append(order_data['id'])
+                
+                previous_index = index
+                index = solution.Value(routing.NextVar(index))
+                route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
+                
+            routes.append({
+                "vehicle_id": vehicles[vehicle_id]['id'],
+                "route_order_ids": route,
+                "distance_meters": route_distance
+            })
+            total_distance += route_distance
             
-            current_location = nearest_stop
-            remaining_stops.remove(nearest_stop)
-        
-        # Calculate optimization score (0-1, higher is better)
-        optimization_score = self._calculate_optimization_score(
-            total_distance, total_time, len(stops)
-        )
-        
         return {
-            "stop_sequence": route_sequence,
-            "total_distance_km": round(total_distance, 2),
-            "estimated_time_minutes": int(total_time),
-            "optimization_score": round(optimization_score, 3)
+            "status": "OPTIMAL",
+            "total_distance_meters": total_distance,
+            "routes": routes
         }
-    
-    def _find_nearest_stop(self, current: dict, stops: List[dict], 
-                          vehicle_type: str) -> Tuple[dict, float, float]:
-        """Find nearest stop using ML-predicted travel time"""
-        from app.models.delivery_time import DeliveryTimePredictor
-        
-        time_predictor = DeliveryTimePredictor()
-        
-        best_stop = None
-        best_distance = float('inf')
-        best_time = float('inf')
-        
-        for stop in stops:
-            # Predict travel time
-            prediction = time_predictor.predict(
-                current['lat'], current['lng'],
-                stop['lat'], stop['lng'],
-                vehicle_type, "AFTERNOON"  # Default time
-            )
-            
-            distance = prediction['factors']['distance_km']
-            time = prediction['predicted_time_minutes']
-            
-            # Use time as primary metric (ML-enhanced)
-            if time < best_time:
-                best_time = time
-                best_distance = distance
-                best_stop = stop
-        
-        return best_stop, best_distance, best_time
-    
-    def _calculate_optimization_score(self, distance: float, 
-                                     time: float, num_stops: int) -> float:
-        """
-        Calculate optimization score
-        Higher score = better optimization
-        """
-        # Ideal metrics (benchmarks)
-        ideal_distance_per_stop = 5  # km
-        ideal_time_per_stop = 15     # minutes
-        
-        # Calculate efficiency
-        actual_distance_per_stop = distance / max(num_stops, 1)
-        actual_time_per_stop = time / max(num_stops, 1)
-        
-        # Score based on how close to ideal
-        distance_score = min(1.0, ideal_distance_per_stop / actual_distance_per_stop)
-        time_score = min(1.0, ideal_time_per_stop / actual_time_per_stop)
-        
-        # Weighted average
-        score = (distance_score * 0.4 + time_score * 0.6)
-        
-        return max(0.0, min(1.0, score))

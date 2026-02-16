@@ -3,6 +3,7 @@ package com.logistics.dispatch.controller;
 import com.logistics.dispatch.dto.DispatchRequest;
 import com.logistics.dispatch.dto.DriverScore;
 import com.logistics.dispatch.model.DispatchAssignment;
+import com.logistics.dispatch.model.DispatchJob;
 import com.logistics.dispatch.service.DispatchService;
 import com.logistics.platform.common.dto.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -37,10 +38,10 @@ public class DispatchController {
     }
 
     @PostMapping("/auto-dispatch")
-    public ResponseEntity<ApiResponse<DispatchAssignment>> autoDispatch(
+    public ResponseEntity<ApiResponse<DispatchJob>> autoDispatch(
             @Valid @RequestBody DispatchRequest request) {
-        DispatchAssignment assignment = dispatchService.autoDispatch(request);
-        return ResponseEntity.ok(ApiResponse.success(assignment, "Order auto-dispatched successfully"));
+        DispatchJob job = dispatchService.autoDispatch(request);
+        return ResponseEntity.ok(ApiResponse.success(job, "Order auto-dispatch initiated"));
     }
 
     @GetMapping("/assignment/{orderId}")

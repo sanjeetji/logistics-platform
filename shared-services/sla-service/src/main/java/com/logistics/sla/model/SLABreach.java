@@ -22,4 +22,9 @@ public class SLABreach extends BaseEntity {
     private long actualDurationSeconds;
     private LocalDateTime breachTime;
     private String status; // DETECTED, NOTIFIED, RESOLVED
+    private int escalationLevel;
+    private boolean resolved;
+    private LocalDateTime resolvedAt;
+    private String resolvedBy;
+    private String resolution;
 }

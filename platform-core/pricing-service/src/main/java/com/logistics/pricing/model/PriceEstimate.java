@@ -24,6 +24,9 @@ public class PriceEstimate extends BaseEntity {
     @Column(nullable = false)
     private String vehicleType;
 
+    @Column(name = "service_level")
+    private String serviceLevel;
+
     @Column(nullable = false)
     private Double distance; // in km
 

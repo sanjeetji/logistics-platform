@@ -2,6 +2,9 @@ package com.logistics.payout.service;
 
 import com.logistics.payout.model.Payout;
 import com.logistics.payout.repository.PayoutRepository;
+import com.logistics.platform.api.payment.PaymentClient;
+import com.logistics.platform.common.dto.payment.PaymentDtos;
+import com.logistics.platform.common.dto.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +22,7 @@ import java.util.Objects;
 public class PayoutGenerationService {
 
     private final PayoutRepository payoutRepository;
+    private final PaymentClient paymentClient;
 
     /**
      * Scheduled job to generate payouts for completed orders
@@ -80,16 +84,36 @@ public class PayoutGenerationService {
         Payout payout = payoutRepository.findById(payoutId)
                 .orElseThrow(() -> new RuntimeException("Payout not found"));
 
-        if (payout.getStatus() != Payout.PayoutStatus.APPROVED) {
+        if (payout.getStatus() != Payout.PayoutStatus.APPROVED) { // Changed from PENDING to APPROVED based on original
+                                                                  // flow
             throw new RuntimeException("Payout must be approved before processing");
         }
 
-        // TODO: Integrate with payment gateway for actual transfer
+        log.info("Processing payout for driver: {}, amount: {}", payout.getDriverId(), payout.getAmount());
 
-        payout.setStatus(Payout.PayoutStatus.PAID);
-        payout.setPaidAt(LocalDateTime.now());
+        try {
+            PaymentDtos.PayoutRequest request = PaymentDtos.PayoutRequest.builder()
+                    .accountId(String.valueOf(payout.getDriverId())) // Assuming driverId is the accountId for now
+                    .amount(payout.getAmount())
+                    .currency("USD") // Default currency
+                    .gatewayType(PaymentDtos.GatewayType.STRIPE) // Default gateway
+                    .build();
+
+            ApiResponse<Boolean> response = paymentClient.processPayout(request);
+
+            if (response != null && Boolean.TRUE.equals(response.getData())) {
+                payout.setStatus(Payout.PayoutStatus.PAID); // Changed from COMPLETED to PAID to match existing enum
+                payout.setPaidAt(LocalDateTime.now()); // Changed from setProcessedAt to setPaidAt
+                log.info("Payout successful for driver: {}", payout.getDriverId());
+            } else {
+                payout.setStatus(Payout.PayoutStatus.FAILED);
+                log.error("Payout failed for driver: {}", payout.getDriverId());
+            }
+        } catch (Exception e) {
+            payout.setStatus(Payout.PayoutStatus.FAILED);
+            log.error("Error processing payout for driver: {}", payout.getDriverId(), e);
+        }
 
         payoutRepository.save(payout);
-        log.info("Payout {} processed successfully", payoutId);
     }
 }

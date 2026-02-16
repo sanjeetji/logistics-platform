@@ -53,6 +53,7 @@
 
         <!-- Messaging -->
         <kafka.version>3.7.0</kafka.version>
+        <spring-statemachine.version>4.0.0</spring-statemachine.version>
 
         <!-- Redis -->
         <jedis.version>5.1.2</jedis.version>
@@ -84,6 +85,7 @@
         <!-- Security Audit -->
         <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
         <skip.nvd>true</skip.nvd>
+        <netty-socketio.version>2.0.3</netty-socketio.version>
     </properties>
 
     <!-- MODULES -->
@@ -92,6 +94,7 @@
         <module>infrastructure/config-server</module>
         <module>infrastructure/service-discovery</module>
         <module>infrastructure/gateway-service</module>
+        <module>infrastructure/config-service</module>
 
         <!-- SHARED LIBRARIES -->
         <module>shared-lib/common-dto</module>
@@ -110,6 +113,12 @@
         <module>platform-core/order-service</module>
         <module>platform-core/dispatch-service</module>
         <module>platform-core/pricing-service</module>
+        <module>platform-core/customer-service</module>
+        <module>platform-core/driver-app-service</module>
+        <module>platform-core/orchestration-service</module>
+        <module>platform-core/wallet-service</module>
+        <module>platform-core/promo-code-service</module>
+        <module>platform-core/loyalty-service</module>
 
         <!-- B2B ENGINE -->
         <module>b2b-engine/team-service</module>
@@ -117,10 +126,11 @@
         <module>b2b-engine/warehouse-service</module>
         <module>b2b-engine/inventory-service</module>
         <module>b2b-engine/compliance-service</module>
+        <module>b2b-engine/b2b-order-service</module>
 
         <!-- B2C ENGINE -->
         <module>b2c-engine/parcel-service</module>
-        <module>b2c-engine/quick-dispatch</module>
+
 
         <!-- SHARED SERVICES -->
         <module>shared-services/returns-service</module>
@@ -129,6 +139,7 @@
         <module>shared-services/notification-service</module>
         <module>shared-services/billing-service</module>
         <module>shared-services/document-service</module>
+        <module>shared-services/intelligent-routing-service</module>
         <module>shared-services/geo-service</module>
         <module>shared-services/analytics-service</module>
         <module>shared-services/audit-log-service</module>
@@ -136,6 +147,19 @@
         <module>shared-services/integration-service</module>
         <module>shared-services/master-data-service</module>
         <module>shared-services/payout-service</module>
+        <module>shared-services/rating-service</module>
+        <module>shared-services/search-service</module>
+        <module>shared-services/streaming-analytics-service</module>
+        <module>shared-services/user-preferences-service</module>
+        <module>shared-services/tenant-onboarding-service</module>
+        <module>shared-services/shift-management-service</module>
+        <module>shared-services/edi-service</module>
+
+        <module>shared-services/sla-service</module>
+        <module>shared-services/exception-management-service</module>
+        <module>shared-services/location-hub-service</module>
+        <module>shared-services/control-tower-service</module>
+        <module>shared-services/webhook-worker-service</module>
 
         <!-- MOBILE BACKENDS -->
         <module>mobile-backend/driver-api-service</module>
@@ -145,6 +169,7 @@
         <module>bff/b2b-bff-service</module>
         <module>bff/b2c-bff-service</module>
         <module>bff/mobile-bff-service</module>
+        <module>rules-engine-service</module>
     </modules>
 
     <!-- DEPENDENCY MANAGEMENT -->
@@ -201,12 +226,9 @@
             <dependency>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct</artifactId>
-                <version>${mapstruct.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.mapstruct</groupId>
-                <artifactId>mapstruct-processor</artifactId>
-                <version>${mapstruct.version}</version>
+                <groupId>org.mapstruct</groupId><artifactId>mapstruct-processor</artifactId>
                 <scope>provided</scope>
             </dependency>
 
@@ -287,6 +309,11 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-micrometer</artifactId>
+                <version>13.2.1</version>
+            </dependency>
 
             <!-- QR CODE GENERATION -->
             <dependency>
@@ -334,6 +361,34 @@
                 <artifactId>spring-retry</artifactId>
                 <version>2.0.12</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-spatial</artifactId>
+                <version>${hibernate.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.locationtech.jts</groupId>
+                <artifactId>jts-core</artifactId>
+                <version>1.19.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.statemachine</groupId>
+                <artifactId>spring-statemachine-starter</artifactId>
+                <version>${spring-statemachine.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.corundumstudio.socketio</groupId>
+                <artifactId>netty-socketio</artifactId>
+                <version>${netty-socketio.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -354,14 +409,11 @@
 
         <!-- Testing -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-
-
-        <!-- Apache Commons Lang3 -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+<!-- Apache Commons Lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
@@ -405,11 +457,7 @@
                                 <artifactId>lombok</artifactId>
                                 <version>${lombok.version}</version>
                             </path>
-                            <path>
-                                <groupId>org.projectlombok</groupId>
-                                <artifactId>lombok-mapstruct-binding</artifactId>
-                                <version>0.2.0</version>
-                            </path>
+
                             <path>
                                 <groupId>org.mapstruct</groupId>
                                 <artifactId>mapstruct-processor</artifactId>

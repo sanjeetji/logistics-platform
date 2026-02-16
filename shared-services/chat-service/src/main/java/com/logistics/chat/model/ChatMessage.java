@@ -29,7 +29,20 @@ public class ChatMessage {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    // File sharing support
+    @Enumerated(EnumType.STRING)
+    private MessageType messageType = MessageType.TEXT; // TEXT, IMAGE, FILE, DOCUMENT
+
+    private String fileUrl;
+    private String fileName;
+    private Long fileSize;
+    private String mimeType;
+
     private LocalDateTime timestamp;
+
+    public enum MessageType {
+        TEXT, IMAGE, FILE, DOCUMENT
+    }
 
     @Enumerated(EnumType.STRING)
     private MessageStatus status; // SENT, DELIVERED, READ

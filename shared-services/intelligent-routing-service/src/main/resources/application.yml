@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: intelligent-routing-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/logistics_routing
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: routing-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: 8096
+
+ml:
+  service:
+    url: http://localhost:8092
+
+logging:
+  level:
+    com.logistics.routing: DEBUG
+
+route:
+  optimization:
+    max-iterations: 200
+    improvement-threshold: 0.005

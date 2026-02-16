@@ -10,7 +10,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+                @Index(name = "idx_order_order_id", columnList = "orderId"),
+                @Index(name = "idx_order_tenant_status", columnList = "tenantId, status"),
+                @Index(name = "idx_order_driver_status", columnList = "driverId, status"),
+                @Index(name = "idx_order_customer", columnList = "customerId"),
+                @Index(name = "idx_order_created_at", columnList = "createdAt") // Inherited from BaseEntity
+})
 @Getter
 @Setter
 @Builder
@@ -74,6 +80,18 @@ public class Order extends BaseEntity {
         private LocalDateTime estimatedDeliveryTime;
         private LocalDateTime actualPickupTime;
         private LocalDateTime actualDeliveryTime;
+
+        // Scheduling fields
+        private LocalDateTime scheduledTime;
+        private String timeSlot; // e.g., "09:00 - 12:00"
+
+        // Delivery Preferences
+        private String deliveryInstructions;
+        private Boolean contactlessDelivery = false;
+        private String safeDropLocation;
+        private LocalDateTime preferredDeliveryTimeStart;
+        private LocalDateTime preferredDeliveryTimeEnd;
+        private String safeDropPhotoUrl; // Photo proof for safe drop deliveries
 
         // Cancellation
         @Column(columnDefinition = "text")

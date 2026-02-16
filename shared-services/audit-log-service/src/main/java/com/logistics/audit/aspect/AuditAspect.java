@@ -32,7 +32,7 @@ public class AuditAspect {
             "@annotation(org.springframework.web.bind.annotation.DeleteMapping) || " +
             "@annotation(org.springframework.web.bind.annotation.PatchMapping)")
     public Object auditWriteOperations(ProceedingJoinPoint joinPoint) throws Throwable {
-        long startTime = System.currentTimeMillis();
+
         String action = determineAction(joinPoint);
         String userId = getCurrentUserId();
         String tenantId = getCurrentTenantId();
@@ -50,7 +50,6 @@ public class AuditAspect {
             errorMessage = e.getMessage();
             throw e;
         } finally {
-            long duration = System.currentTimeMillis() - startTime;
 
             AuditLog auditLog = AuditLog.builder()
                     .userId(userId)

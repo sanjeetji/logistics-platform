@@ -1,0 +1,19 @@
+server:
+  port: 8089
+
+spring:
+  application:
+    name: rules-engine-service
+  cloud:
+    discovery:
+      enabled: true
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
+logging:
+  level:
+    com.logistics.rules: DEBUG
+    org.kie: INFO

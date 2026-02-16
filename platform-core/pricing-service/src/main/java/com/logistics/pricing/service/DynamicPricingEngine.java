@@ -4,6 +4,8 @@ import com.logistics.pricing.model.RateCard;
 import com.logistics.pricing.model.SurgePricingRule;
 import com.logistics.pricing.repository.RateCardRepository;
 import com.logistics.pricing.repository.SurgePricingRuleRepository;
+import com.logistics.platform.client.rules.RulesEngineClient;
+import com.logistics.platform.common.dto.rules.RuleFacts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,8 +13,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -22,9 +22,10 @@ public class DynamicPricingEngine {
 
     private final RateCardRepository rateCardRepository;
     private final SurgePricingRuleRepository surgePricingRuleRepository;
+    private final RulesEngineClient rulesEngineClient;
 
     public BigDecimal calculateDynamicPrice(Double distanceKm, Integer estimatedMinutes,
-            String vehicleType, Integer currentDemand) {
+            String vehicleType, Integer currentDemand, String orderType) {
 
         // Get active rate card
         RateCard rateCard = rateCardRepository.findCurrentActiveRateCard(LocalDateTime.now())
@@ -34,17 +35,31 @@ public class DynamicPricingEngine {
         // Calculate base price
         BigDecimal basePrice = calculateBasePrice(rateCard, distanceKm, estimatedMinutes, vehicleType);
 
-        // Apply surge pricing
-        BigDecimal surgeMultiplier = calculateSurgeMultiplier(currentDemand);
+        // Call Rules Engine for adjustments
+        RuleFacts.PricingFact fact = RuleFacts.PricingFact.builder()
+                .orderType(orderType != null ? orderType : "B2C")
+                .distanceKm(distanceKm)
+                .baseRate(basePrice)
+                .build();
 
-        BigDecimal finalPrice = basePrice.multiply(surgeMultiplier).setScale(2, RoundingMode.HALF_UP);
+        try {
+            fact = rulesEngineClient.evaluatePricing(fact);
+        } catch (Exception e) {
+            log.error("Error calling rules engine, falling back to base price", e);
+        }
+
+        // Apply rules engine results
+        BigDecimal finalPrice = fact.getCalculatedRate() != null ? fact.getCalculatedRate() : basePrice;
+        finalPrice = finalPrice.multiply(BigDecimal.valueOf(fact.getSurgeMultiplier())).setScale(2,
+                RoundingMode.HALF_UP);
 
         // Ensure minimum fare
         if (rateCard.getMinimumFare() != null && finalPrice.compareTo(rateCard.getMinimumFare()) < 0) {
             finalPrice = rateCard.getMinimumFare();
         }
 
-        log.info("Calculated price: base={}, surge={}, final={}", basePrice, surgeMultiplier, finalPrice);
+        log.info("Calculated price: base={}, surge={}, final={} (RulesEngine: {})",
+                basePrice, fact.getSurgeMultiplier(), finalPrice, fact.getPricingModel());
         return finalPrice;
     }
 
@@ -74,35 +89,7 @@ public class DynamicPricingEngine {
         return price.setScale(2, RoundingMode.HALF_UP);
     }
 
-    private BigDecimal calculateSurgeMultiplier(Integer currentDemand) {
-        BigDecimal maxMultiplier = BigDecimal.ONE;
-
-        // Check time-based surge
-        LocalTime now = LocalTime.now();
-        List<SurgePricingRule> timeRules = surgePricingRuleRepository.findActiveTimeBasedRules(now);
-        for (SurgePricingRule rule : timeRules) {
-            if (rule.getMultiplier().compareTo(maxMultiplier) > 0) {
-                maxMultiplier = rule.getMultiplier();
-                log.debug("Applied time-based surge: {} ({})", rule.getName(), maxMultiplier);
-            }
-        }
-
-        // Check demand-based surge
-        if (currentDemand != null) {
-            List<SurgePricingRule> demandRules = surgePricingRuleRepository.findActiveDemandBasedRules(currentDemand);
-            for (SurgePricingRule rule : demandRules) {
-                if (rule.getMultiplier().compareTo(maxMultiplier) > 0) {
-                    maxMultiplier = rule.getMultiplier();
-                    log.debug("Applied demand-based surge: {} ({})", rule.getName(), maxMultiplier);
-                }
-            }
-        }
-
-        return maxMultiplier;
-    }
-
     public RateCard createRateCard(RateCard rateCard) {
-        // If this is set as default, unset all other defaults
         if (rateCard.getIsDefault()) {
             rateCardRepository.findByIsDefaultTrue().ifPresent(existing -> {
                 existing.setIsDefault(false);

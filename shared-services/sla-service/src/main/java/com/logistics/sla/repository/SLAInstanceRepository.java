@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface SLAInstanceRepository extends JpaRepository<SLAInstance, Long> {
     Optional<SLAInstance> findBySlaIdAndEntityId(String slaId, String entityId);
+
+    Optional<SLAInstance> findByEntityIdAndIsCompletedFalse(String entityId);
 }

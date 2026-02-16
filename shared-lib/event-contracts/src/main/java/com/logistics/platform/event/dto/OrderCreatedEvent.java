@@ -2,19 +2,25 @@ package com.logistics.platform.event.dto;
 
 import com.logistics.platform.common.dto.order.TransportOrderDto;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderCreatedEvent {
-    private String eventId;
+@EqualsAndHashCode(callSuper = true)
+public class OrderCreatedEvent extends BaseEvent {
     private String orderId;
     private TransportOrderDto orderDto;
-    private LocalDateTime timestamp;
+
+    public static OrderCreatedEvent create(String orderId, TransportOrderDto orderDto) {
+        return OrderCreatedEvent.builder()
+                .orderId(orderId)
+                .orderDto(orderDto)
+                .eventType("ORDER_CREATED")
+                .build();
+    }
 }

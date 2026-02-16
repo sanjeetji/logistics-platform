@@ -14,11 +14,17 @@ import java.util.UUID;
 public class ParcelService {
 
     private final ParcelRepository parcelRepository;
+    private final PartnerAggregatorService partnerAggregatorService;
 
     @Auditable(action = "CREATE_PARCEL", entityType = "PARCEL")
     public Parcel createParcel(Parcel parcel) {
         parcel.setTrackingNumber(UUID.randomUUID().toString());
         parcel.setStatus("CREATED");
+
+        // Partner Aggregation logic
+        String partnerTracking = partnerAggregatorService.createShipmentWithBestPartner(parcel);
+        parcel.setPartnerTrackingNumber(partnerTracking);
+
         return parcelRepository.save(parcel);
     }
 

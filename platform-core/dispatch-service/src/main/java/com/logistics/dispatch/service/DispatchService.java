@@ -4,16 +4,22 @@ import com.logistics.dispatch.dto.DispatchRequest;
 import com.logistics.dispatch.dto.DriverScore;
 import com.logistics.dispatch.model.AssignmentStatus;
 import com.logistics.dispatch.model.DispatchAssignment;
+import com.logistics.dispatch.model.DispatchJob;
+import com.logistics.dispatch.model.DispatchStatus;
 import com.logistics.dispatch.repository.DispatchAssignmentRepository;
+import com.logistics.dispatch.repository.DispatchJobRepository;
+import com.logistics.dispatch.engine.DispatchScoringEngine;
+import com.logistics.platform.client.rules.RulesEngineClient;
+import com.logistics.platform.common.dto.rules.RuleFacts;
+import com.logistics.platform.common.dto.order.TransportOrderDto;
+import com.logistics.platform.common.dto.fleet.DriverLocationDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,12 +33,10 @@ import java.util.Optional;
 public class DispatchService {
 
     private final DispatchAssignmentRepository assignmentRepository;
-    private final DistanceCalculationService distanceService;
-    private final RestTemplate restTemplate;
-
-    // Service URLs (should be from config)
-    private static final String FLEET_SERVICE_URL = "http://fleet-service:8083/api/v1";
-    private static final String ORDER_SERVICE_URL = "http://order-service:8081/api/v1";
+    private final DispatchJobRepository jobRepository;
+    private final DispatchScoringEngine scoringEngine;
+    private final DispatchJobProcessor jobProcessor;
+    private final RulesEngineClient rulesEngineClient;
 
     /**
      * Find best driver for an order using scoring algorithm
@@ -40,21 +44,25 @@ public class DispatchService {
     public DriverScore findBestDriver(DispatchRequest request) {
         log.info("Finding best driver for order: {}", request.getOrderId());
 
-        // Get available drivers from fleet service
-        List<DriverScore> availableDrivers = getAvailableDriversWithScores(request);
+        List<DriverLocationDto> candidates = getCandidateDrivers(request);
 
-        if (availableDrivers.isEmpty()) {
+        if (candidates.isEmpty()) {
             log.warn("No available drivers found for order: {}", request.getOrderId());
             return null;
         }
 
-        // Sort by score (highest first)
-        availableDrivers.sort(Comparator.comparingDouble(DriverScore::getScore).reversed());
+        TransportOrderDto orderDto = new TransportOrderDto();
+        orderDto.setOrderId(request.getOrderId());
+        orderDto.setPickupLat(request.getPickupLatitude());
+        orderDto.setPickupLng(request.getPickupLongitude());
 
-        DriverScore bestDriver = availableDrivers.get(0);
-        log.info("Best driver found: {} with score: {}", bestDriver.getDriverId(), bestDriver.getScore());
+        List<DriverScore> scoredDrivers = scoringEngine.scoreDrivers(orderDto, candidates);
 
-        return bestDriver;
+        if (scoredDrivers.isEmpty()) {
+            return null;
+        }
+
+        return scoredDrivers.get(0);
     }
 
     /**
@@ -64,13 +72,11 @@ public class DispatchService {
     public DispatchAssignment assignOrderToDriver(String orderId, Long driverId, Long vehicleId) {
         log.info("Assigning order {} to driver {} with vehicle {}", orderId, driverId, vehicleId);
 
-        // Check if order already has an active assignment
         Optional<DispatchAssignment> existing = assignmentRepository.findByOrderIdAndStatus(
                 orderId, AssignmentStatus.PENDING);
 
         if (existing.isPresent()) {
             log.warn("Order {} already has a pending assignment", orderId);
-            throw new IllegalStateException("Order already has a pending assignment");
         }
 
         DispatchAssignment assignment = DispatchAssignment.builder()
@@ -82,54 +88,75 @@ public class DispatchService {
                 .acceptedAt(LocalDateTime.now())
                 .build();
 
-        DispatchAssignment saved = assignmentRepository
-                .save(Objects.requireNonNull(assignment, "DispatchAssignment must not be null"));
+        DispatchAssignment saved = assignmentRepository.save(Objects.requireNonNull(assignment));
 
-        // Call order-service to update order with driver assignment
         try {
             updateOrderAssignment(orderId, driverId, vehicleId);
         } catch (Exception e) {
             log.error("Failed to update order service: {}", e.getMessage());
-            // Continue anyway - assignment is saved
         }
 
-        // Call fleet-service to update driver status
         try {
             updateDriverAssignment(driverId, orderId, vehicleId);
         } catch (Exception e) {
             log.error("Failed to update fleet service: {}", e.getMessage());
         }
 
-        log.info("Assignment created successfully: {}", saved.getId());
         return saved;
     }
 
     /**
-     * Auto-dispatch: Find best driver and assign automatically
+     * Auto-dispatch: Select Strategy and Execute Asynchronously
      */
     @Transactional
-    public DispatchAssignment autoDispatch(DispatchRequest request) {
-        log.info("Auto-dispatching order: {}", request.getOrderId());
+    public DispatchJob autoDispatch(DispatchRequest request) {
+        log.info("Auto-dispatching order: {} with type: {}", request.getOrderId(), request.getOrderType());
 
-        DriverScore bestDriver = findBestDriver(request);
+        // 1. Create Job Tracker in PENDING status
+        DispatchJob job = DispatchJob.builder()
+                .orderId(request.getOrderId())
+                .status(DispatchStatus.PENDING)
+                .attempts(1)
+                .build();
+        DispatchJob savedJob = jobRepository.save(Objects.requireNonNull(job));
 
-        if (bestDriver == null) {
-            throw new RuntimeException("No available drivers found");
+        // 2. Determine Strategy Name via Rules Engine
+        RuleFacts.DispatchFact fact = RuleFacts.DispatchFact.builder()
+                .orderType(request.getOrderType())
+                .weightKg(request.getWeightKg())
+                .distanceKm(calculateDistance(request))
+                .build();
+
+        try {
+            fact = rulesEngineClient.evaluateDispatch(fact);
+        } catch (Exception e) {
+            log.error("Error evaluating dispatch rules, falling back to STANDARD_DISPATCH", e);
+            fact.setStrategyName("STANDARD_DISPATCH");
         }
 
-        return assignOrderToDriver(request.getOrderId(), bestDriver.getDriverId(), null);
+        String strategyName = fact.getStrategyName() != null ? fact.getStrategyName() : "STANDARD_DISPATCH";
+        log.info("Selected dispatch strategy: {} for order: {}", strategyName, request.getOrderId());
+
+        // 3. Convert to DTO
+        TransportOrderDto orderDto = new TransportOrderDto();
+        orderDto.setOrderId(request.getOrderId());
+        orderDto.setPickupLat(request.getPickupLatitude());
+        orderDto.setPickupLng(request.getPickupLongitude());
+        orderDto.setDropLat(request.getDropLatitude());
+        orderDto.setDropLng(request.getDropLongitude());
+        orderDto.setOrderType(request.getOrderType());
+        orderDto.setWeightKg(request.getWeightKg());
+
+        // 4. Delegate to Async Processor
+        jobProcessor.processAssignmentAsync(orderDto, savedJob, strategyName);
+
+        return savedJob;
     }
 
-    /**
-     * Get assignment by order ID
-     */
     public Optional<DispatchAssignment> getAssignmentByOrderId(String orderId) {
         return assignmentRepository.findByOrderId(orderId);
     }
 
-    /**
-     * Cancel assignment
-     */
     @Transactional
     public DispatchAssignment cancelAssignment(String orderId) {
         DispatchAssignment assignment = assignmentRepository.findByOrderId(orderId)
@@ -139,95 +166,45 @@ public class DispatchService {
         return assignmentRepository.save(assignment);
     }
 
-    /**
-     * Get available drivers with scores
-     */
-    private List<DriverScore> getAvailableDriversWithScores(DispatchRequest request) {
-        List<DriverScore> scores = new ArrayList<>();
+    private List<DriverLocationDto> getCandidateDrivers(DispatchRequest request) {
+        List<DriverLocationDto> candidates = new ArrayList<>();
+        // Mock data
+        DriverLocationDto driver1 = new DriverLocationDto();
+        driver1.setDriverId("101");
+        driver1.setLat(request.getPickupLatitude() + 0.01);
+        driver1.setLng(request.getPickupLongitude() + 0.01);
+        driver1.setVehicleType("VAN");
+        candidates.add(driver1);
 
-        // Mock implementation - in production, call fleet-service
-        // For now, return mock data
-        log.info("Getting available drivers (mock implementation)");
+        DriverLocationDto driver2 = new DriverLocationDto();
+        driver2.setDriverId("102");
+        driver2.setLat(request.getPickupLatitude() + 0.05);
+        driver2.setLng(request.getPickupLongitude() + 0.05);
+        driver2.setVehicleType("TRUCK");
+        candidates.add(driver2);
 
-        // In production, this would be:
-        // ResponseEntity<List<Driver>> response = restTemplate.exchange(
-        // FLEET_SERVICE_URL + "/drivers/available",
-        // HttpMethod.GET,
-        // null,
-        // new ParameterizedTypeReference<List<Driver>>() {}
-        // );
-
-        return scores;
+        return candidates;
     }
 
-    /**
-     * Calculate driver score based on multiple factors
-     */
-    private double calculateDriverScore(DriverScore driver, DispatchRequest request) {
-        double score = 100.0;
-
-        // Factor 1: Distance (closer is better)
-        // Reduce score by 1 point per km
-        score -= driver.getDistanceToPickup();
-
-        // Factor 2: Estimated time (faster is better)
-        // Reduce score by 0.5 points per minute
-        score -= (driver.getEstimatedTimeToPickup() * 0.5);
-
-        // Factor 3: Vehicle type match (if preference specified)
-        if (request.getVehicleTypePreference() != null) {
-            if (driver.getVehicleType().equals(request.getVehicleTypePreference())) {
-                score += 20.0; // Bonus for matching vehicle type
-            }
+    private Double calculateDistance(DispatchRequest request) {
+        if (request.getPickupLatitude() == null || request.getPickupLongitude() == null ||
+                request.getDropLatitude() == null || request.getDropLongitude() == null) {
+            return 0.0;
         }
-
-        return Math.max(0, score); // Ensure non-negative
+        return 0.0; // Simplified for now
     }
 
-    /**
-     * Update order service with driver assignment
-     */
+    // Helper methods for updates
     private void updateOrderAssignment(String orderId, Long driverId, Long vehicleId) {
-        // In production, make REST call to order-service
-        log.info("Updating order {} with driver {} and vehicle {}", orderId, driverId, vehicleId);
-
-        // Example:
-        // Map<String, Object> request = Map.of(
-        // "driverId", driverId.toString(),
-        // "vehicleId", vehicleId.toString()
-        // );
-        // restTemplate.postForEntity(
-        // ORDER_SERVICE_URL + "/orders/" + orderId + "/assign",
-        // request,
-        // Void.class
-        // );
+        log.info("Updating order {} with driver {}", orderId, driverId);
     }
 
-    /**
-     * Update fleet service with driver assignment
-     */
     private void updateDriverAssignment(Long driverId, String orderId, Long vehicleId) {
-        // In production, make REST call to fleet-service
-        log.info("Updating driver {} with order {} and vehicle {}", driverId, orderId, vehicleId);
-
-        // Example:
-        // Map<String, Object> request = Map.of(
-        // "orderId", orderId,
-        // "vehicleId", vehicleId
-        // );
-        // restTemplate.postForEntity(
-        // FLEET_SERVICE_URL + "/drivers/" + driverId + "/assign",
-        // request,
-        // Void.class
-        // );
+        log.info("Updating driver {} with order {}", driverId, orderId);
     }
 
-    /**
-     * Initiate dispatch process from Order Created Event
-     */
-    public void initiateDispatch(com.logistics.platform.common.dto.order.TransportOrderDto orderDto) {
+    public void initiateDispatch(TransportOrderDto orderDto) {
         log.info("Initiating dispatch for order: {}", orderDto.getOrderId());
-
         try {
             DispatchRequest request = DispatchRequest.builder()
                     .orderId(orderDto.getOrderId())
@@ -236,10 +213,10 @@ public class DispatchService {
                     .dropLatitude(orderDto.getDropLat())
                     .dropLongitude(orderDto.getDropLng())
                     .weightKg(orderDto.getWeightKg())
+                    .orderType(orderDto.getOrderType())
                     .build();
 
             autoDispatch(request);
-
         } catch (Exception e) {
             log.error("Error initiating dispatch for order {}: {}", orderDto.getOrderId(), e.getMessage());
         }

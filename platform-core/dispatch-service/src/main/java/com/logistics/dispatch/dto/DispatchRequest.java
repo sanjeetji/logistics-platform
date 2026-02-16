@@ -17,4 +17,5 @@ public class DispatchRequest {
     private Double dropLongitude;
     private Double weightKg;
     private String vehicleTypePreference; // Optional
+    private String orderType;
 }

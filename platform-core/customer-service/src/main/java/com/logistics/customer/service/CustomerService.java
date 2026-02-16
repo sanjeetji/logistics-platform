@@ -49,9 +49,12 @@ public class CustomerService {
         return customerRepository.save(customer);
     }
 
+    // ... (previous code)
+
     /**
      * Get customer by user ID
      */
+    @org.springframework.cache.annotation.Cacheable(value = "customers", key = "#userId")
     public Customer getCustomerByUserId(Long userId) {
         return customerRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Customer not found for user: " + userId));
@@ -60,6 +63,7 @@ public class CustomerService {
     /**
      * Get customer by ID
      */
+    @org.springframework.cache.annotation.Cacheable(value = "customers_id", key = "#customerId")
     public Customer getCustomerById(Long customerId) {
         return customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found: " + customerId));
@@ -69,6 +73,7 @@ public class CustomerService {
      * Update customer profile
      */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = { "customers", "customers_id" }, allEntries = true)
     public Customer updateProfile(Long customerId, CustomerProfileRequest request) {
         Customer customer = getCustomerById(customerId);
 
@@ -85,6 +90,7 @@ public class CustomerService {
      * Add new address
      */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "customer_addresses", key = "#customerId")
     public CustomerAddress addAddress(Long customerId, AddressRequest request) {
         log.info("Adding address for customer: {}", customerId);
 
@@ -112,6 +118,7 @@ public class CustomerService {
     /**
      * Get customer addresses
      */
+    @org.springframework.cache.annotation.Cacheable(value = "customer_addresses", key = "#customerId")
     public List<CustomerAddress> getAddresses(Long customerId) {
         return addressRepository.findByCustomerIdAndActive(customerId, true);
     }
@@ -128,6 +135,7 @@ public class CustomerService {
      * Delete address
      */
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = "customer_addresses", allEntries = true)
     public void deleteAddress(Long addressId) {
         CustomerAddress address = getAddressById(addressId);
         address.setActive(false);

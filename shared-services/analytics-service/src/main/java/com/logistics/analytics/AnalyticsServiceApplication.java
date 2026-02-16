@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableKafka
 @EnableCaching
 @EnableScheduling
+@org.springframework.context.annotation.Import(com.logistics.platform.utils.config.RedisConfig.class)
 public class AnalyticsServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(AnalyticsServiceApplication.class, args);

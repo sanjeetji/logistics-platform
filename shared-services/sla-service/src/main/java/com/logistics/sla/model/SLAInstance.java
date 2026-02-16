@@ -21,6 +21,8 @@ public class SLAInstance extends BaseEntity {
     private String entityType;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private LocalDateTime predictedEndTime;
+    private String riskLevel; // LOW, MEDIUM, HIGH, CRITICAL
     private boolean isCompleted;
     private boolean isBreached;
 }

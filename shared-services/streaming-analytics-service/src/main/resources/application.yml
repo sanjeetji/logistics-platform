@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: streaming-analytics-service
+  
+  cloud:
+    stream:
+      kafka:
+        streams:
+          binder:
+            application-id: ${spring.application.name}
+            configuration:
+              default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
+              num.stream.threads: 4
+              commit.interval.ms: 1000
+            brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    streams:
+      application-id: ${spring.application.name}
+      properties:
+        num.stream.threads: 4
+        commit.interval.ms: 1000
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+      timeout: 2000ms
+
+server:
+  port: 8095
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+# Analytics Configuration
+analytics:
+  metrics:
+    update-interval-seconds: 10
+    retention-hours: 24
+  anomaly:
+    threshold-multiplier: 2.0
+    min-samples: 10
+  alerts:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.logistics: DEBUG
+    org.apache.kafka: INFO
+    org.springframework.kafka: INFO

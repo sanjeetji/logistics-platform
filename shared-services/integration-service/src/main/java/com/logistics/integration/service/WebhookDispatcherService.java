@@ -76,7 +76,7 @@ public class WebhookDispatcherService {
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    event.getTargetUrl(),
+                    java.util.Objects.requireNonNull(event.getTargetUrl()),
                     request,
                     String.class);
 

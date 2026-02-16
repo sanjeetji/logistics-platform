@@ -141,4 +141,42 @@ public class OrderValidationService {
             throw new IllegalArgumentException(locationType + " longitude must be between -180 and 180");
         }
     }
+
+    /**
+     * Validates scheduling details
+     */
+    public void validateScheduling(Order order) {
+        if (order.getScheduledTime() != null) {
+            // Allow 5 minutes buffer for processing time
+            if (order.getScheduledTime().isBefore(java.time.LocalDateTime.now().minusMinutes(5))) {
+                throw new IllegalArgumentException("Scheduled time must be in the future");
+            }
+        }
+
+        if (order.getTimeSlot() != null && !order.getTimeSlot().matches("\\d{2}:\\d{2}\\s*-\\s*\\d{2}:\\d{2}")) {
+            throw new IllegalArgumentException("Invalid time slot format. Expected 'HH:mm - HH:mm'");
+        }
+    }
+
+    /**
+     * Validates delivery preferences
+     */
+    public void validateDeliveryPreferences(com.logistics.order.dto.DeliveryPreferencesRequest request) {
+        // Validate preferred delivery time window
+        if (request.getPreferredDeliveryTimeStart() != null && request.getPreferredDeliveryTimeEnd() != null) {
+            if (request.getPreferredDeliveryTimeStart().isAfter(request.getPreferredDeliveryTimeEnd())) {
+                throw new IllegalArgumentException("Preferred delivery time start must be before end time");
+            }
+
+            if (request.getPreferredDeliveryTimeStart().isBefore(java.time.LocalDateTime.now())) {
+                throw new IllegalArgumentException("Preferred delivery time must be in the future");
+            }
+        }
+
+        // Validate contactless delivery with safe drop location
+        if (Boolean.TRUE.equals(request.getContactlessDelivery()) &&
+                (request.getSafeDropLocation() == null || request.getSafeDropLocation().isBlank())) {
+            log.warn("Contactless delivery requested without safe drop location");
+        }
+    }
 }

@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.logistics.returns</groupId>
 	<artifactId>returns-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>Returns Service</name>
 	<description>Reverse logistics and returns management for handling customer returns, refund processing, quality inspection, and returns analytics.</description>
 	<url/>
@@ -28,7 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<spring-cloud.version>2025.1.0</spring-cloud.version>
+		<spring-cloud.version>2023.0.3</spring-cloud.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -55,8 +55,7 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
+			<groupId>org.projectlombok</groupId><artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -70,7 +69,7 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-	<dependency>
+<dependency>
 <groupId>com.h2database</groupId>
 <artifactId>h2</artifactId>
 <version>2.2.224</version>

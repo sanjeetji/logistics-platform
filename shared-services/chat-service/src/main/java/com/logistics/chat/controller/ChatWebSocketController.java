@@ -35,14 +35,14 @@ public class ChatWebSocketController {
         // Broadcast to room subscribers
         messagingTemplate.convertAndSend(
                 "/topic/chat/" + message.getRoomId(),
-                savedMessage);
+                java.util.Objects.requireNonNull(savedMessage));
 
         // Send to specific recipient if needed
         if (message.getRecipientId() != null) {
             messagingTemplate.convertAndSendToUser(
                     message.getRecipientId(),
                     "/queue/messages",
-                    savedMessage);
+                    java.util.Objects.requireNonNull(savedMessage));
         }
     }
 }

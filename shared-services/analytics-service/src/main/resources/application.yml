@@ -1,0 +1,35 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: analytics-service
+    
+  datasource:
+    url: jdbc:postgresql://localhost:5432/logistics_orders
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    database-platform: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        
+  redis:
+    host: localhost
+    port: 6379
+    
+  cache:
+    type: redis
+    redis:
+      time-to-live: 900000 # 15 minutes for analytics cache
+
+logging:
+  level:
+    com.logistics.analytics: INFO
+    org.springframework.jdbc: DEBUG

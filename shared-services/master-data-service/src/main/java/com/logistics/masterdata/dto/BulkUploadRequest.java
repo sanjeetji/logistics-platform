@@ -13,6 +13,8 @@ import java.util.List;
 @AllArgsConstructor
 public class BulkUploadRequest<T> {
     private List<T> data;
+    @Builder.Default
     private boolean skipDuplicates = true;
+    @Builder.Default
     private boolean clearExisting = false;
 }

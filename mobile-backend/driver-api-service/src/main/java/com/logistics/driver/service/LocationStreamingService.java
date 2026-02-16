@@ -56,7 +56,8 @@ public class LocationStreamingService {
 
     private void publishToKafka(LocationUpdate locationUpdate) {
         try {
-            kafkaTemplate.send(KAFKA_TOPIC, locationUpdate.getDriverId(), locationUpdate);
+            kafkaTemplate.send(KAFKA_TOPIC, java.util.Objects.requireNonNull(locationUpdate.getDriverId()),
+                    locationUpdate);
         } catch (Exception e) {
             log.error("Failed to publish location to Kafka", e);
         }

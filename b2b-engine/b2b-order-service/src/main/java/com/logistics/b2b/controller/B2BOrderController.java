@@ -8,6 +8,7 @@ import com.logistics.b2b.model.SLAStatus;
 import com.logistics.b2b.service.B2BOrderService;
 import com.logistics.b2b.service.BulkUploadService;
 import com.logistics.b2b.service.SLAMonitoringService;
+import com.logistics.platform.common.dto.order.B2BOrderDto;
 import com.logistics.platform.common.dto.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,12 @@ public class B2BOrderController {
     private final B2BOrderService orderService;
     private final BulkUploadService bulkUploadService;
     private final SLAMonitoringService slaMonitoringService;
+
+    @PostMapping("/sync")
+    public ResponseEntity<ApiResponse<Void>> syncOrder(@RequestBody B2BOrderDto request) {
+        orderService.syncOrder(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Order synced successfully"));
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<B2BOrder>> createOrder(@Valid @RequestBody CreateB2BOrderRequest request) {

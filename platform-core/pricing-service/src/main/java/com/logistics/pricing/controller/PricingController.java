@@ -18,9 +18,9 @@ public class PricingController {
     private final PricingService pricingService;
 
     @PostMapping("/estimate")
-    public ResponseEntity<ApiResponse<PriceEstimateResponse>> calculateEstimate(
+    public ResponseEntity<ApiResponse<java.util.List<PriceEstimateResponse>>> calculateEstimate(
             @Valid @RequestBody PriceEstimateRequest request) {
-        PriceEstimateResponse response = pricingService.calculatePriceEstimate(request);
+        java.util.List<PriceEstimateResponse> response = pricingService.calculatePriceEstimate(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Price estimate calculated successfully"));
     }
 

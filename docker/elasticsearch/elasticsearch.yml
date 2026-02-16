@@ -1,0 +1,25 @@
+cluster.name: "logistics-cluster"
+node.name: "elasticsearch-node-1"
+network.host: 0.0.0.0
+
+# Paths
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+
+# Memory
+bootstrap.memory_lock: true
+
+# Discovery
+discovery.type: single-node
+
+# Security (disabled for development)
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+
+# Monitoring
+xpack.monitoring.collection.enabled: true
+
+# Index settings
+action.auto_create_index: true

@@ -37,13 +37,14 @@ public class IntegrationService {
                 .receivedAt(LocalDateTime.now())
                 .status("RECEIVED")
                 .build();
-        webhookLog = logRepository.save(webhookLog);
+        webhookLog = logRepository.save(java.util.Objects.requireNonNull(webhookLog));
 
         try {
             // 2. Validate Tenant Config
             Optional<WebhookConfig> configOpt = configRepository.findByTenantIdAndPlatform(tenantId, platform);
             if (configOpt.isEmpty()) {
-                throw new RuntimeException("No configuration found for tenant " + tenantId + " and platform " + platform);
+                throw new RuntimeException(
+                        "No configuration found for tenant " + tenantId + " and platform " + platform);
             }
             WebhookConfig config = configOpt.get();
 
@@ -53,7 +54,7 @@ public class IntegrationService {
             // 4. Parse & Transform
             JsonNode rootNode = objectMapper.readTree(payload);
             String orderId = extractOrderId(rootNode, platform);
-            
+
             log.info("Successfully extracted Order ID: {} from {}", orderId, platform);
 
             // 5. Update Log Status
@@ -61,9 +62,10 @@ public class IntegrationService {
             webhookLog.setEventType("ORDER_CREATED");
             logRepository.save(webhookLog);
 
-            // TODO: In a real implementation, we would now map this to an internal OrderDTO 
+            // TODO: In a real implementation, we would now map this to an internal OrderDTO
             // and send it to the Order Service via Feign/Kafka.
-            // For this audit implementation, logging the successful parsing is sufficient proof of integration.
+            // For this audit implementation, logging the successful parsing is sufficient
+            // proof of integration.
 
         } catch (Exception e) {
             log.error("Error processing webhook", e);
@@ -75,11 +77,13 @@ public class IntegrationService {
     }
 
     private void verifySignature(String payload, String signature, String secret) {
-        // In a real prod scenario, implement HMAC-SHA256 verification here using the secret
+        // In a real prod scenario, implement HMAC-SHA256 verification here using the
+        // secret
         // For now, checks if secret is present to simulate security check
         if (signature == null || signature.isEmpty()) {
             log.warn("Missing signature header");
-            // throw new RuntimeException("Missing signature"); // Commented out for easier testing
+            // throw new RuntimeException("Missing signature"); // Commented out for easier
+            // testing
         }
     }
 

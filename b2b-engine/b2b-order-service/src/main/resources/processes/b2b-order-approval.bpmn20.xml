@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:activiti="http://activiti.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.logistics.com/b2b">
+
+    <process id="b2bOrderApproval" name="B2B Order Approval" isExecutable="true">
+        <startEvent id="startEvent" name="Start"/>
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="managerApproval"/>
+
+        <userTask id="managerApproval" name="Manager Approval" activiti:candidateGroups="managers">
+            <documentation>Review and approve the B2B order.</documentation>
+        </userTask>
+        <sequenceFlow id="flow2" sourceRef="managerApproval" targetRef="approvalExclusiveGateway"/>
+
+        <exclusiveGateway id="approvalExclusiveGateway" name="Approved?"/>
+        <sequenceFlow id="flowApproved" name="Yes" sourceRef="approvalExclusiveGateway" targetRef="activateOrder">
+            <conditionExpression xsi:type="tFormalExpression">${approved == true}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flowRejected" name="No" sourceRef="approvalExclusiveGateway" targetRef="rejectOrder">
+            <conditionExpression xsi:type="tFormalExpression">${approved == false}</conditionExpression>
+        </sequenceFlow>
+
+        <serviceTask id="activateOrder" name="Activate Order" activiti:expression="${workflowService.activateOrder(orderId)}"/>
+        <sequenceFlow id="flow3" sourceRef="activateOrder" targetRef="endEvent"/>
+
+        <serviceTask id="rejectOrder" name="Reject Order" activiti:expression="${workflowService.rejectOrder(orderId)}"/>
+        <sequenceFlow id="flow4" sourceRef="rejectOrder" targetRef="endEvent"/>
+
+        <endEvent id="endEvent" name="End"/>
+    </process>
+
+</definitions>

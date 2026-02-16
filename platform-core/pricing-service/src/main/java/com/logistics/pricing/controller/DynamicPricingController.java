@@ -30,7 +30,8 @@ public class DynamicPricingController {
                 request.getDistanceKm(),
                 request.getEstimatedMinutes(),
                 request.getVehicleType(),
-                currentDemand);
+                currentDemand,
+                request.getOrderType());
 
         PriceCalculationResponse response = PriceCalculationResponse.builder()
                 .finalPrice(finalPrice)

@@ -31,14 +31,14 @@ public class AuditLogService {
                 .newValue(newValue)
                 .timestamp(LocalDateTime.now())
                 .build();
-        auditLogRepository.save(log);
+        auditLogRepository.save(java.util.Objects.requireNonNull(log));
     }
 
     public AuditLog createAuditLog(AuditLog auditLog) {
         if (auditLog.getTimestamp() == null) {
             auditLog.setTimestamp(LocalDateTime.now());
         }
-        return auditLogRepository.save(auditLog);
+        return auditLogRepository.save(java.util.Objects.requireNonNull(auditLog));
     }
 
     public List<AuditLog> getAllLogs() {
@@ -89,6 +89,6 @@ public class AuditLogService {
             spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("timestamp"), endDate));
         }
 
-        return auditLogRepository.findAll(spec, pageable);
+        return auditLogRepository.findAll(spec, java.util.Objects.requireNonNull(pageable));
     }
 }

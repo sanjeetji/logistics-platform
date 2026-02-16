@@ -1,0 +1,51 @@
+filebeat.inputs:
+  # File inputs for service logs
+  - type: filestream
+    id: logistics-services
+    enabled: true
+    paths:
+      - /var/log/logistics/*/*.log
+      - /var/log/logistics/*.log
+    fields:
+      log_type: application
+    fields_under_root: true
+    parsers:
+      - ndjson:
+          keys_under_root: true
+          overwrite_keys: true
+
+  # Docker container logs
+  - type: container
+    enabled: true
+    paths:
+      - '/var/lib/docker/containers/*/*.log'
+    processors:
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+
+# Output to Logstash
+output.logstash:
+  hosts: ["logstash:5044"]
+  compression_level: 3
+  bulk_max_size: 1024
+
+# Kibana endpoint for dashboards
+setup.kibana:
+  host: "kibana:5601"
+
+# Elasticsearch template settings
+setup.template.settings:
+  index.number_of_shards: 1
+
+# Logging
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# Monitoring
+monitoring.enabled: true
+monitoring.elasticsearch.hosts: ["http://elasticsearch:9200"]

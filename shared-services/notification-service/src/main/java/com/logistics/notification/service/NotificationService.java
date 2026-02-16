@@ -115,8 +115,14 @@ public class NotificationService {
     }
 
     private boolean sendEmail(String recipientId, String subject, String body) {
-        // In real implementation, fetch email from user service
-        String email = "user@example.com"; // Mock
+        String email;
+        // Simple regex check for email format
+        if (recipientId != null && recipientId.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            email = recipientId;
+        } else {
+            // In real implementation, fetch email from user service
+            email = "user@example.com"; // Mock
+        }
         return emailProvider.sendEmail(email, subject, body);
     }
 

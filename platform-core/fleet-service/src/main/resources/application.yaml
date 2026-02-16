@@ -3,3 +3,16 @@ spring:
     name: fleet-service
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888/}"
+
+kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: fleet-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+jackson:
+    serialization:
+      write-dates-as-timestamps: false

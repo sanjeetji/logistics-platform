@@ -17,12 +17,12 @@ public class IntegrationConfigController {
 
     @PostMapping
     public ResponseEntity<WebhookConfig> createConfig(@RequestBody WebhookConfig config) {
-        return ResponseEntity.ok(configRepository.save(config));
+        return ResponseEntity.ok(configRepository.save(java.util.Objects.requireNonNull(config)));
     }
 
     @GetMapping("/{tenantId}")
     public ResponseEntity<List<WebhookConfig>> getConfigs(@PathVariable String tenantId) {
         // Find by tenant logic would go here, using findAll for now
-        return ResponseEntity.ok(configRepository.findAll()); 
+        return ResponseEntity.ok(configRepository.findAll());
     }
 }

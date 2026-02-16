@@ -15,4 +15,5 @@ public class PriceCalculationRequest {
     private String vehicleType;
     private String pickupLocation;
     private String dropLocation;
+    private String orderType;
 }

@@ -9,12 +9,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface DriverRepository extends JpaRepository<Driver, Long> {
-    Optional<Driver> findByPhoneNumber(String phoneNumber);
+public interface DriverRepository extends JpaRepository<Driver, Long>, DriverGeospatialRepository {
+        Optional<Driver> findByPhoneNumber(String phoneNumber);
 
-    Optional<Driver> findByEmail(String email);
+        Optional<Driver> findByEmail(String email);
 
-    List<Driver> findByStatus(DriverStatus status);
+        List<Driver> findByStatus(DriverStatus status);
 
-    List<Driver> findByStatusIn(List<DriverStatus> statuses);
+        // Projections
+        List<com.logistics.fleet.model.projection.DriverSummary> findByStatusAndCurrentOrderIdNotNull(
+                        DriverStatus status);
+
+        List<Driver> findByStatusIn(List<DriverStatus> statuses);
 }

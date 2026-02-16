@@ -13,18 +13,21 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PriceEstimateResponse {
-    
+
     private String estimateId;
     private String vehicleType;
+    private com.logistics.pricing.model.ServiceLevel serviceLevel;
+    private com.logistics.pricing.dto.PriceEstimateRequest.DeliveryType deliveryType;
     private Double distance;
     private Integer estimatedTime;
-    
+    private Double surgeMultiplier;
+
     private PriceBreakdown breakdown;
-    
+
     private BigDecimal totalPrice;
     private String currency;
     private LocalDateTime validUntil;
-    
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -33,6 +36,7 @@ public class PriceEstimateResponse {
         private BigDecimal baseFare;
         private BigDecimal distanceFare;
         private BigDecimal timeFare;
+        private BigDecimal weightFare;
         private BigDecimal surgeFare;
         private BigDecimal serviceFee;
     }

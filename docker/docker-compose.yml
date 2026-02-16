@@ -197,8 +197,6 @@ services:
       MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
       LOGGING_PATTERN_LEVEL: "%5p [$${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
       JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-    volumes:
-      - ../infrastructure/gateway-service/target/gateway-service-0.0.1-SNAPSHOT.jar:/app/app.jar
     networks:
       - logistics-network
     depends_on:
@@ -320,6 +318,31 @@ services:
       config-server:
         condition: service_healthy
 
+  orchestration-service:
+    build:
+      context: ../platform-core/orchestration-service
+      dockerfile: ../Dockerfile
+    container_name: logistics-orchestration-service
+    restart: unless-stopped
+    ports:
+      - "8104:8104"
+    environment:
+      SERVER_PORT: 8104
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/orchestration_db
+      SPRING_DATASOURCE_USERNAME: logistics_user
+      SPRING_DATASOURCE_PASSWORD: logistics_pass
+    networks:
+      - logistics-network
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      service-discovery:
+        condition: service_started
+      config-server:
+        condition: service_healthy
+
   dispatch-service:
     build:
       context: ../platform-core/dispatch-service
@@ -375,9 +398,9 @@ services:
       - service-discovery
       - config-server
 
-  # PostgreSQL Database
+  # PostgreSQL Database (with PostGIS)
   postgres-db:
-    image: postgres:15-alpine
+    image: postgis/postgis:15-3.3-alpine
     container_name: logistics-postgres
     restart: unless-stopped
     environment:
@@ -522,7 +545,7 @@ services:
 
   pricing-service:
     build:
-      context: ../shared-services/pricing-service
+      context: ../platform-core/pricing-service
       dockerfile: ../Dockerfile
     container_name: logistics-pricing-service
     restart: unless-stopped
@@ -564,25 +587,27 @@ services:
       service-discovery:
         condition: service_started
 
-  team-service:
+  intelligent-routing-service:
     build:
-      context: ../b2b-engine/team-service
+      context: ../shared-services/intelligent-routing-service
       dockerfile: ../Dockerfile
-    container_name: logistics-team-service
+    container_name: logistics-intelligent-routing-service
     restart: unless-stopped
     ports:
-      - "8095:8095"
+      - "8096:8096"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/team_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/logistics_routing
       SPRING_DATASOURCE_USERNAME: logistics_user
       SPRING_DATASOURCE_PASSWORD: logistics_pass
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     networks:
       - logistics-network
     depends_on:
       postgres-db:
         condition: service_healthy
+      kafka:
+        condition: service_started
       service-discovery:
         condition: service_started
 
@@ -840,51 +865,7 @@ services:
 
   # --- B2C ENGINE SERVICES (Deployed via Audit) ---
 
-  quick-dispatch:
-    build:
-      context: ../b2c-engine/quick-dispatch
-      dockerfile: ../Dockerfile
-    container_name: logistics-quick-dispatch
-    restart: unless-stopped
-    ports:
-      - "8105:8105"
-    environment:
-      SERVER_PORT: 8105
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/quick_dispatch_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
 
-  customer-portal:
-    build:
-      context: ../b2c-engine/customer-portal
-      dockerfile: ../Dockerfile
-    container_name: logistics-customer-portal
-    restart: unless-stopped
-    ports:
-      - "8106:8106"
-    environment:
-      SERVER_PORT: 8106
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/customer_portal_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
 
   integration-service:
     build:

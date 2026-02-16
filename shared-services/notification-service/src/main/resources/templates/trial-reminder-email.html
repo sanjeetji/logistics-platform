@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trial Reminder</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #dc2626;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .countdown {
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .countdown-number {
+            font-size: 48px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: #2563eb;
+            color: #ffffff !important;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .pricing-table {
+            margin: 30px 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .pricing-row {
+            display: flex;
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .pricing-row:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-row:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .plan-name {
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .plan-price {
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📦 Logistics Platform</div>
+        </div>
+
+        <h1>⏰ Your Trial is Ending Soon!</h1>
+
+        <p>Hi <span th:text="${companyName}">Company</span>,</p>
+
+        <div class="countdown">
+            <span class="countdown-number" th:text="${daysRemaining}">7</span>
+            <span th:text="${daysRemaining == 1 ? 'Day' : 'Days'}">Days</span> Remaining
+        </div>
+
+        <p style="font-size: 16px; text-align: center;">
+            Don't lose access to your logistics management platform!<br>
+            Upgrade now to continue enjoying all premium features.
+        </p>
+
+        <p style="text-align: center;">
+            <a href="${upgradeUrl}" class="cta-button" th:href="${upgradeUrl}">
+                Upgrade Now →
+            </a>
+        </p>
+
+        <h3 style="margin-top: 40px;">Choose Your Plan:</h3>
+
+        <div class="pricing-table">
+            <div class="pricing-row">
+                <div class="plan-name">🚀 Starter</div>
+                <div class="plan-price">$49/month</div>
+            </div>
+            <div class="pricing-row">
+                <div class="plan-name">📈 Growth</div>
+                <div class="plan-price">$149/month</div>
+            </div>
+            <div class="pricing-row">
+                <div class="plan-name">🏢 Enterprise</div>
+                <div class="plan-price">Custom Pricing</div>
+            </div>
+        </div>
+
+        <p style="text-align: center; margin-top: 20px;">
+            <a href="${pricingUrl}" th:href="${pricingUrl}" style="color: #2563eb; text-decoration: none;">
+                View Full Pricing Details →
+            </a>
+        </p>
+
+        <p><strong>What You'll Keep:</strong></p>
+        <ul>
+            <li>✅ All your data and configurations</li>
+            <li>✅ Unlimited orders and deliveries</li>
+            <li>✅ Real-time tracking</li>
+            <li>✅ Advanced analytics</li>
+            <li>✅ Priority support</li>
+        </ul>
+
+        <div class="footer">
+            <p>Questions? Contact us anytime!</p>
+            <p>© 2026 Logistics Platform. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>

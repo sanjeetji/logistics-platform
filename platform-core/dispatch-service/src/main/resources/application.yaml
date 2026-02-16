@@ -15,3 +15,7 @@ spring:
         dispatchEventConsumer-in-0:
           destination: order-created-topic
           group: dispatch-group
+
+ml:
+  service:
+    url: ${ML_SERVICE_URL:http://localhost:8092}

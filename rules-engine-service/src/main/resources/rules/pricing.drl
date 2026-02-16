@@ -1,0 +1,28 @@
+package rules;
+
+import com.logistics.platform.common.dto.rules.RuleFacts.PricingFact;
+import java.math.BigDecimal;
+
+rule "Standard Pricing - B2C"
+    when
+        $f : PricingFact(orderType == "B2C", distanceKm <= 10)
+    then
+        $f.setCalculatedRate($f.getBaseRate().multiply(new BigDecimal("1.0")));
+        $f.setPricingModel("LOCAL_STANDARD");
+end
+
+rule "B2B Bulk Pricing"
+    when
+        $f : PricingFact(orderType == "B2B", weightKg > 500)
+    then
+        $f.setCalculatedRate($f.getBaseRate().multiply(new BigDecimal("0.85"))); // 15% discount for bulk
+        $f.setPricingModel("B2B_BULK_DISCOUNT");
+end
+
+rule "Surge Pricing Peak Hours"
+    when
+        $f : PricingFact(orderType == "B2C_INSTANT")
+    then
+        $f.setSurgeMultiplier(1.5);
+        $f.setPricingModel("INSTANT_SURGE");
+end
