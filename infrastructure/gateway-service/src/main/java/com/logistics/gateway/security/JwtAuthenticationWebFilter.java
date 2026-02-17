@@ -26,6 +26,7 @@ public class JwtAuthenticationWebFilter implements WebFilter {
     }
 
     @Override
+    @org.springframework.lang.NonNull
     public Mono<Void> filter(@org.springframework.lang.NonNull ServerWebExchange exchange,
             @org.springframework.lang.NonNull WebFilterChain chain) {
         String path = exchange.getRequest().getPath().value();

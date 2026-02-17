@@ -2,7 +2,7 @@ package com.logistics.fleet.controller;
 
 import com.logistics.fleet.model.Driver;
 import com.logistics.fleet.service.DriverService;
-import com.logistics.platform.common.dto.ApiResponse;
+import com.logistics.platform.common.dto.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

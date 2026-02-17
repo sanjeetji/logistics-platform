@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres-db:5432/fleet_db
+    url: jdbc:postgresql://postgres:5432/dispatch_db
     username: logistics_user
     password: logistics_pass
     driver-class-name: org.postgresql.Driver
@@ -16,3 +16,7 @@ spring:
         config:
           default:
             loggerLevel: BASIC
+fleet-service:
+  url: http://fleet-service:8080
+order-service:
+  url: http://order-service:8080

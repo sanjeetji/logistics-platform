@@ -1,6 +1,6 @@
 package com.logistics.usermanagement.controller;
 
-import com.logistics.platform.common.dto.ApiResponse;
+import com.logistics.platform.common.dto.response.ApiResponse;
 import com.logistics.usermanagement.entity.User;
 import com.logistics.usermanagement.service.UserService;
 import lombok.RequiredArgsConstructor;

@@ -2,6 +2,7 @@ package com.logistics.platform.utils.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logistics.platform.event.dto.AuditLogEvent;
+import com.logistics.platform.utils.audit.Auditable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;

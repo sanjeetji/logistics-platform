@@ -1,6 +1,6 @@
 package com.logistics.routing.controller;
 
-import com.logistics.platform.common.dto.ApiResponse;
+import com.logistics.platform.common.dto.response.ApiResponse;
 import com.logistics.routing.dto.ReRoutingRequest;
 import com.logistics.routing.dto.ReRoutingResponse;
 import com.logistics.routing.rerouting.DynamicReRoutingService;

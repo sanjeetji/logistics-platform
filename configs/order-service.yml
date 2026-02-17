@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres-db:5432/order_db
+    url: jdbc:postgresql://postgres:5432/order_db
     username: logistics_user
     password: logistics_pass
     driver-class-name: org.postgresql.Driver

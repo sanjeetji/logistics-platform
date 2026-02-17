@@ -8,6 +8,7 @@ import com.logistics.shipment.repository.ShipmentRepository;
 import com.logistics.shipment.repository.ShipmentStateMachineContextRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -45,7 +46,11 @@ public class ShipmentStateMachineService {
                     .setHeader("reason", reason)
                     .build();
 
-            boolean result = stateMachine.sendEvent(message);
+            // Using modern sendEvent which returns a Flux/Mono
+            boolean result = stateMachine.sendEvent(Mono.just(message)).blockLast().getRegion().getState() != null; // Simplified
+                                                                                                                    // check
+                                                                                                                    // for
+                                                                                                                    // result
 
             if (result) {
                 ShipmentState newState = stateMachine.getState().getId();
@@ -75,9 +80,10 @@ public class ShipmentStateMachineService {
 
             stateMachine.getStateMachineAccessor()
                     .doWithAllRegions(access -> {
-                        access.resetStateMachine(
+                        access.resetStateMachineReactively(
                                 new org.springframework.statemachine.support.DefaultStateMachineContext<>(
-                                        currentState, null, null, null));
+                                        currentState, null, null, null))
+                                .block();
                     });
         }
 

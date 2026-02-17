@@ -1,6 +1,6 @@
 package com.logistics.routing.controller;
 
-import com.logistics.platform.common.dto.ApiResponse;
+import com.logistics.platform.common.dto.response.ApiResponse;
 import com.logistics.routing.dto.RouteOptimizationRequest;
 import com.logistics.routing.dto.RouteOptimizationResponse;
 import com.logistics.routing.service.RouteOptimizationService;

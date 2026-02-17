@@ -1,6 +1,6 @@
 package com.logistics.bff.b2c.controller;
 
-import com.logistics.platform.common.dto.ApiResponse;
+import com.logistics.platform.common.dto.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

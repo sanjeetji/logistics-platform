@@ -3,7 +3,7 @@ spring:
     name: platform-core
 
   datasource:
-    url: jdbc:postgresql://postgres-db:5432/logistics_core_pg
+    url: jdbc:postgresql://postgres:5432/logistics_core_pg
     username: logistics_user
     password: logistics_pass
     driver-class-name: org.postgresql.Driver
