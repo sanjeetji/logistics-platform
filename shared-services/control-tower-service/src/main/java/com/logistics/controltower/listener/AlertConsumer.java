@@ -1,5 +1,6 @@
 package com.logistics.controltower.listener;
 
+import com.logistics.platform.event.dto.ExceptionCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,6 +25,17 @@ public class AlertConsumer {
             }
         } catch (Exception e) {
             log.error("Error processing alert", e);
+        }
+    }
+
+    @KafkaListener(topics = "exception.events", groupId = "control-tower-exception-group")
+    public void consumeExceptionEvents(ExceptionCreatedEvent event) {
+        try {
+            log.info("Exception event received: {}", event);
+            // Push to /topic/exceptions
+            messagingTemplate.convertAndSend("/topic/exceptions", event);
+        } catch (Exception e) {
+            log.error("Error processing exception event", e);
         }
     }
 }

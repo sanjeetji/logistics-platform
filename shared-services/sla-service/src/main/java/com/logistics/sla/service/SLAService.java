@@ -1,5 +1,6 @@
 package com.logistics.sla.service;
 
+import com.logistics.sla.client.NotificationServiceClient;
 import com.logistics.sla.model.SLA;
 import com.logistics.sla.model.SLABreach;
 import com.logistics.sla.model.SLAInstance;
@@ -13,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -24,6 +27,7 @@ public class SLAService {
     private final SLARepository slaRepository;
     private final SLAInstanceRepository slaInstanceRepository;
     private final SLABreachRepository slaBreachRepository;
+    private final NotificationServiceClient notificationClient;
 
     public List<SLA> getActiveSLAs(String entityType) {
         return slaRepository.findByEntityTypeAndIsActiveTrue(entityType);
@@ -51,7 +55,8 @@ public class SLAService {
 
     @Transactional
     public void endSla(SLA sla, String entityId, LocalDateTime endTime) {
-        Optional<SLAInstance> instanceOpt = slaInstanceRepository.findBySlaIdAndEntityId(sla.getId().toString(), entityId);
+        Optional<SLAInstance> instanceOpt = slaInstanceRepository.findBySlaIdAndEntityId(sla.getId().toString(),
+                entityId);
         if (instanceOpt.isEmpty()) {
             log.warn("No active SLA Instance found for SLA {} and Entity {}", sla.getName(), entityId);
             return;
@@ -64,7 +69,7 @@ public class SLAService {
 
         instance.setEndTime(endTime);
         instance.setCompleted(true);
-        
+
         long durationSeconds = Duration.between(instance.getStartTime(), endTime).getSeconds();
         if (durationSeconds > sla.getMaxDurationSeconds()) {
             instance.setBreached(true);
@@ -85,7 +90,32 @@ public class SLAService {
                 .status("DETECTED")
                 .build();
         slaBreachRepository.save(breach);
-        // TODO: Trigger Notification (via NotificationService Feign Client or Kafka)
+
+        // Trigger Notification
+        try {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("slaId", sla.getId());
+            metadata.put("slaName", sla.getName());
+            metadata.put("entityId", instance.getEntityId());
+            metadata.put("actualDuration", actualDuration);
+            metadata.put("maxDuration", sla.getMaxDurationSeconds());
+
+            notificationClient.sendNotification(NotificationServiceClient.SendNotificationRequest.builder()
+                    .recipientId("SLA_ADMIN")
+                    .recipientType("TEAM")
+                    .channel("PUSH")
+                    .subject("SLA Breach Detected: " + sla.getName())
+                    .body(String.format("SLA %s breached for %s:%s. Actual: %ds, Max: %ds",
+                            sla.getName(), instance.getEntityType(), instance.getEntityId(),
+                            actualDuration, sla.getMaxDurationSeconds()))
+                    .metadata(metadata)
+                    .build());
+            log.info("SLA breach notification sent for Entity {}", instance.getEntityId());
+        } catch (Exception e) {
+            log.error("Failed to send SLA breach notification for Entity {}: {}", instance.getEntityId(),
+                    e.getMessage());
+        }
+
         log.warn("SLA BREACH DETECTED: {} for Entity {}", sla.getName(), instance.getEntityId());
     }
 }

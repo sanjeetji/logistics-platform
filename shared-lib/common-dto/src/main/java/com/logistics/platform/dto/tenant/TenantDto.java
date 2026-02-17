@@ -1,4 +1,4 @@
-package com.logistics.tenant.dto;
+package com.logistics.platform.dto.tenant;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

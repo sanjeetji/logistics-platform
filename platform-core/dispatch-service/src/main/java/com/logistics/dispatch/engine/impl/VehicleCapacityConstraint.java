@@ -10,13 +10,20 @@ public class VehicleCapacityConstraint implements DispatchConstraint {
 
     @Override
     public boolean matches(TransportOrderDto order, DriverLocationDto driver) {
-        // Simple logic: if driver's vehicle capacity >= order weight
-        // Assuming DriverLocationDto has vehicle capacity info (or we fetch it)
-        // For now, let's assume DriverLocationDto has a 'capacity' field or we simulate
-        // it.
-        // Wait, DriverLocationDto might not have capacity. Let's check DTO.
+        if (order == null || driver == null) {
+            return false;
+        }
 
-        // If not available, we'll return true for now but add a TODO
+        double orderWeight = order.getWeightKg() != null ? order.getWeightKg() : 0.0;
+        double vehicleCapacity = driver.getMaxCapacityKg() != null ? driver.getMaxCapacityKg() : 0.0;
+
+        // If capacity is not set, we assume it's infinite or not yet synchronized
+        // For strict matching, we might want to return false if capacity is unknown
+        // But for now, if it's set, we enforce it.
+        if (vehicleCapacity > 0) {
+            return vehicleCapacity >= orderWeight;
+        }
+
         return true;
     }
 

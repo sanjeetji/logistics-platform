@@ -1,7 +1,7 @@
 package com.logistics.tenant.mapper;
 
-import com.logistics.tenant.dto.TenantConfigDto;
-import com.logistics.tenant.dto.TenantDto;
+import com.logistics.platform.dto.tenant.TenantConfigDto;
+import com.logistics.platform.dto.tenant.TenantDto;
 import com.logistics.tenant.model.Tenant;
 import com.logistics.tenant.model.TenantConfig;
 import org.mapstruct.Mapper;

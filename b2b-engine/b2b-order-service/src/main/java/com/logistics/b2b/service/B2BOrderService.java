@@ -1,5 +1,7 @@
 package com.logistics.b2b.service;
 
+import java.util.Objects;
+
 import com.logistics.b2b.dto.CreateB2BOrderRequest;
 import com.logistics.b2b.dto.OrderStopDTO;
 import com.logistics.b2b.model.*;
@@ -116,7 +118,7 @@ public class B2BOrderService {
             }
         }
 
-        order = orderRepository.save(order);
+        order = Objects.requireNonNull(orderRepository.save(order));
 
         Map<String, Object> variables = new HashMap<>();
         variables.put("orderId", order.getOrderId());

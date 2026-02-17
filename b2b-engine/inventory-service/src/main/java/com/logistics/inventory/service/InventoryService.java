@@ -1,5 +1,7 @@
 package com.logistics.inventory.service;
 
+import java.util.Objects;
+
 import com.logistics.inventory.model.InventoryItem;
 import com.logistics.inventory.repository.InventoryRepository;
 import com.logistics.platform.event.dto.InventoryUpdatedEvent;
@@ -43,7 +45,8 @@ public class InventoryService {
 
     @SuppressWarnings("null")
     @Transactional
-    public InventoryItem initializeStock(String sku, String productId, String warehouseId, int quantity,
+    public InventoryItem initializeStock(@org.springframework.lang.NonNull String sku, String productId,
+            String warehouseId, int quantity,
             String location) {
         log.info("Initializing stock for SKU: {}, Quantity: {}", sku, quantity);
 
@@ -76,7 +79,8 @@ public class InventoryService {
         return saved;
     }
 
-    private void publishUpdate(String sku, String warehouseId, String action, Integer newQty, Integer delta) {
+    private void publishUpdate(@org.springframework.lang.NonNull String sku, String warehouseId, String action,
+            Integer newQty, Integer delta) {
         InventoryUpdatedEvent event = InventoryUpdatedEvent.builder()
                 .skuId(sku)
                 .warehouseId(warehouseId)
@@ -93,7 +97,8 @@ public class InventoryService {
         String key = INVENTORY_KEY_PREFIX + sku;
         DefaultRedisScript<Long> script = new DefaultRedisScript<>(RESERVE_STOCK_SCRIPT, Long.class);
 
-        Long result = redisTemplate.execute(script, Collections.singletonList(key), String.valueOf(quantity));
+        Long result = redisTemplate.execute(script, Objects.requireNonNull(java.util.List.of(key)),
+                String.valueOf(quantity));
 
         if (result == null || result == -1) {
             // Fallback: Check DB if Redis key missing (cache miss or eviction)

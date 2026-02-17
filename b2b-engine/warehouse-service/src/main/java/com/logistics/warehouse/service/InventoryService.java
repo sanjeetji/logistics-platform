@@ -1,5 +1,7 @@
 package com.logistics.warehouse.service;
 
+import java.util.Objects;
+
 import com.logistics.platform.event.dto.InventoryUpdatedEvent;
 import com.logistics.warehouse.model.BinInventory;
 import com.logistics.warehouse.model.InventoryItem;
@@ -187,10 +189,12 @@ public class InventoryService {
         transactionRepository.save(transaction);
 
         // Publish event for real-time sync
-        publishInventoryUpdate(warehouseId, itemId, type, quantity, quantityAfter);
+        publishInventoryUpdate(Objects.requireNonNull(warehouseId), Objects.requireNonNull(itemId), type, quantity,
+                quantityAfter);
     }
 
-    private void publishInventoryUpdate(Long warehouseId, Long itemId, TransactionType type, Integer delta,
+    private void publishInventoryUpdate(@org.springframework.lang.NonNull Long warehouseId,
+            @org.springframework.lang.NonNull Long itemId, TransactionType type, Integer delta,
             Integer newTotal) {
         InventoryItem item = inventoryItemRepository.findById(itemId).orElse(null);
         if (item == null)
@@ -207,7 +211,9 @@ public class InventoryService {
                 .updatedBy("WAREHOUSE-SERVICE")
                 .build();
 
-        kafkaTemplate.send(TOPIC_INVENTORY_UPDATES, item.getSku(), event);
+        if (item.getSku() != null) {
+            kafkaTemplate.send(TOPIC_INVENTORY_UPDATES, item.getSku(), event);
+        }
         log.info("Published inventory update event for SKU: {}", item.getSku());
     }
 }

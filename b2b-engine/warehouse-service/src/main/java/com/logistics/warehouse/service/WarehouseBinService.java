@@ -1,5 +1,9 @@
 package com.logistics.warehouse.service;
 
+import java.util.Objects;
+
+import java.util.Objects;
+
 import com.logistics.warehouse.model.BinInventory;
 import com.logistics.warehouse.model.WarehouseBin;
 import com.logistics.warehouse.repository.BinInventoryRepository;
@@ -39,8 +43,8 @@ public class WarehouseBinService {
     public void allocateStockToBin(Long binId, Long inventoryItemId, Integer quantity) {
         log.info("Allocating {} items of inventory {} to bin {}", quantity, inventoryItemId, binId);
 
-        WarehouseBin bin = binRepository.findById(binId)
-                .orElseThrow(() -> new RuntimeException("Bin not found: " + binId));
+        WarehouseBin bin = Objects.requireNonNull(binRepository.findById(binId)
+                .orElseThrow(() -> new RuntimeException("Bin not found: " + binId)));
 
         if (bin.getCapacity() != null && bin.getCurrentOccupancy() + quantity > bin.getCapacity()) {
             throw new RuntimeException("Insufficient capacity in bin: " + bin.getBinCode());
@@ -82,8 +86,8 @@ public class WarehouseBinService {
             binInventoryRepository.save(binInventory);
         }
 
-        WarehouseBin bin = binRepository.findById(binId)
-                .orElseThrow(() -> new RuntimeException("Bin not found: " + binId));
+        WarehouseBin bin = Objects.requireNonNull(binRepository.findById(binId)
+                .orElseThrow(() -> new RuntimeException("Bin not found: " + binId)));
         bin.setCurrentOccupancy(Math.max(0, bin.getCurrentOccupancy() - quantity));
         binRepository.save(bin);
     }

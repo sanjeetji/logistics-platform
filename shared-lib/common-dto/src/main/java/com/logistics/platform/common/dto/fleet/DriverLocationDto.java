@@ -14,5 +14,6 @@ public class DriverLocationDto {
     private Double lat;
     private Double lng;
     private String vehicleType;
+    private Double maxCapacityKg;
     private Double distanceKm;
 }

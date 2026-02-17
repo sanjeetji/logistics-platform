@@ -12,7 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Optional;
 
 @Service
@@ -48,8 +52,10 @@ public class IntegrationService {
             }
             WebhookConfig config = configOpt.get();
 
-            // 3. Verify Signature (Mock Implementation)
-            verifySignature(payload, signature, config.getWebhookSecret());
+            // 3. Verify Signature
+            if (!verifySignature(payload, signature, config.getWebhookSecret())) {
+                throw new RuntimeException("Invalid webhook signature");
+            }
 
             // 4. Parse & Transform
             JsonNode rootNode = objectMapper.readTree(payload);
@@ -62,10 +68,12 @@ public class IntegrationService {
             webhookLog.setEventType("ORDER_CREATED");
             logRepository.save(webhookLog);
 
-            // TODO: In a real implementation, we would now map this to an internal OrderDTO
-            // and send it to the Order Service via Feign/Kafka.
-            // For this audit implementation, logging the successful parsing is sufficient
-            // proof of integration.
+            // TODO: Integrate with B2B Order Service to create internal order
+            // Example:
+            // CreateB2BOrderRequest request = mapToInternalOrder(rootNode, platform);
+            // b2bOrderClient.createOrder(tenantId, request);
+
+            log.info("Order {} from {} processed successfully for tenant {}", orderId, platform, tenantId);
 
         } catch (Exception e) {
             log.error("Error processing webhook", e);
@@ -76,14 +84,22 @@ public class IntegrationService {
         }
     }
 
-    private void verifySignature(String payload, String signature, String secret) {
-        // In a real prod scenario, implement HMAC-SHA256 verification here using the
-        // secret
-        // For now, checks if secret is present to simulate security check
+    private boolean verifySignature(String payload, String signature, String secret) {
         if (signature == null || signature.isEmpty()) {
             log.warn("Missing signature header");
-            // throw new RuntimeException("Missing signature"); // Commented out for easier
-            // testing
+            return false;
+        }
+
+        try {
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secret_key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            sha256_HMAC.init(secret_key);
+            byte[] hash = sha256_HMAC.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            String expectedSignature = Base64.getEncoder().encodeToString(hash);
+            return expectedSignature.equals(signature);
+        } catch (Exception e) {
+            log.error("Error verifying signature", e);
+            return false;
         }
     }
 

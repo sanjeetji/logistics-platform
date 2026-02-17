@@ -18,4 +18,13 @@ public class TenantConfig {
     private String currency; // USD, INR
     private boolean dedicatedFleet; // B2B Feature
     private boolean autoDispatch; // Dispatch Strategy config
+
+    // Branding & White-labeling
+    private String brandName;
+    private String logoUrl;
+    private String primaryColor;
+    private String secondaryColor;
+    private String websiteUrl;
+    private String supportPhone;
+    private String supportEmail;
 }

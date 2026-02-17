@@ -129,4 +129,16 @@ public class OrderController {
 
                 return ResponseEntity.ok(ApiResponse.success(response));
         }
+
+        @GetMapping("/completed")
+        public ResponseEntity<ApiResponse<List<Order>>> getCompletedOrders(
+                        @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime start,
+                        @RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime end) {
+                return ResponseEntity.ok(ApiResponse.success(orderService.getCompletedOrdersForPeriod(start, end)));
+        }
+
+        @GetMapping("/demand")
+        public ResponseEntity<ApiResponse<Integer>> getDemand() {
+                return ResponseEntity.ok(ApiResponse.success(orderService.getDemand()));
+        }
 }

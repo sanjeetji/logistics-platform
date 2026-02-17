@@ -1,5 +1,7 @@
 package com.logistics.b2b.service;
 
+import java.util.Objects;
+import com.logistics.b2b.client.NotificationServiceClient;
 import com.logistics.b2b.model.*;
 import com.logistics.b2b.repository.B2BOrderRepository;
 import com.logistics.b2b.repository.SLAEscalationRepository;
@@ -8,10 +10,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for SLA monitoring and alerts
@@ -24,6 +30,14 @@ public class SLAMonitoringService {
     private final B2BOrderRepository orderRepository;
     private final SLARuleService slaRuleService;
     private final SLAEscalationRepository escalationRepository;
+    private final NotificationServiceClient notificationClient;
+
+    /**
+     * Update SLA status for an order
+     */
+    @Autowired
+    @Lazy
+    private SLAMonitoringService self;
 
     /**
      * Update SLA status for an order
@@ -66,8 +80,37 @@ public class SLAMonitoringService {
                 .level(level)
                 .escalatedAt(LocalDateTime.now())
                 .build();
-        escalationRepository.save(escalation);
-        // TODO: Integrate with NotificationService to send actual alerts
+        escalationRepository.save(Objects.requireNonNull(escalation));
+
+        // Trigger notification
+        try {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("orderId", order.getOrderId());
+            metadata.put("clientId", order.getClientId());
+            metadata.put("escalationLevel", level.toString());
+
+            notificationClient.sendNotification(NotificationServiceClient.SendNotificationRequest.builder()
+                    .recipientId(order.getClientId().toString())
+                    .recipientType("CLIENT")
+                    .channel("PUSH")
+                    .subject("SLA Escalation Alert - " + order.getOrderId())
+                    .body(String.format("Order %s has reached escalation level: %s", order.getOrderId(), level))
+                    .metadata(metadata)
+                    .build());
+            log.info("SLA escalation notification sent for order: {}", order.getOrderId());
+        } catch (Exception e) {
+            log.error("Failed to send SLA escalation notification for order: {}", order.getOrderId(), e);
+        }
+    }
+
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public void processOrderSLA(B2BOrder order) {
+        SLAStatus oldStatus = order.getSlaStatus();
+        updateSLAStatus(order);
+
+        if (order.getSlaStatus() != oldStatus) {
+            orderRepository.save(order);
+        }
     }
 
     /**
@@ -75,7 +118,6 @@ public class SLAMonitoringService {
      * Runs every 15 minutes
      */
     @Scheduled(fixedRate = 900000)
-    @Transactional
     public void monitorAllOrders() {
         log.info("Running advanced SLA monitoring check...");
 
@@ -86,11 +128,10 @@ public class SLAMonitoringService {
                 .toList();
 
         for (B2BOrder order : activeOrders) {
-            SLAStatus oldStatus = order.getSlaStatus();
-            updateSLAStatus(order);
-
-            if (order.getSlaStatus() != oldStatus) {
-                orderRepository.save(order);
+            try {
+                self.processOrderSLA(order);
+            } catch (Exception e) {
+                log.error("Error processing SLA for order: {}", order.getOrderId(), e);
             }
         }
     }

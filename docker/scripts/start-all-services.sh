@@ -17,18 +17,18 @@ log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-COMPOSE_FILE="docker/docker-compose.yml"
+COMPOSE_FILE="../docker-compose.yml"
 
 echo "🚀 Starting Complete Logistics Platform..."
 echo "================================================"
 
 # Step 1: Stop any running containers
 log_info "Stopping any existing containers..."
-docker-compose -f $COMPOSE_FILE down 2>/dev/null
+docker compose -f $COMPOSE_FILE --project-directory ../.. down 2>/dev/null
 
 # Step 2: Start Infrastructure - Databases
 log_info "📦 Step 1/6: Starting databases..."
-docker-compose -f $COMPOSE_FILE up -d postgres-db mysql-db
+docker compose -f $COMPOSE_FILE --project-directory ../.. up -d postgres-db mysql-db
 echo "Waiting for databases to be ready (30s)..."
 sleep 30
 
@@ -49,12 +49,12 @@ fi
 
 # Step 3: Start Cache & Messaging
 log_info "📦 Step 2/6: Starting Redis and RabbitMQ..."
-docker-compose -f $COMPOSE_FILE up -d redis rabbitmq
+docker compose -f $COMPOSE_FILE --project-directory ../.. up -d redis rabbitmq
 sleep 15
 
 # Step 4: Start Service Discovery & Config
 log_info "🔍 Step 3/6: Starting Service Discovery and Config Server..."
-docker-compose -f $COMPOSE_FILE up -d service-discovery config-server
+docker compose -f $COMPOSE_FILE --project-directory ../.. up -d service-discovery config-server
 echo "Waiting for Eureka to be ready (40s)..."
 sleep 40
 
@@ -67,12 +67,12 @@ fi
 
 # Step 5: Start Monitoring Stack
 log_info "📊 Step 4/6: Starting monitoring stack (Loki, Promtail, Tempo, Grafana)..."
-docker-compose -f $COMPOSE_FILE up -d loki promtail tempo grafana pgadmin
+docker compose -f $COMPOSE_FILE --project-directory ../.. up -d loki promtail tempo grafana pgadmin
 sleep 10
 
 # Step 6: Start Core Services
 log_info "⚙️ Step 5/6: Starting core microservices..."
-docker-compose -f $COMPOSE_FILE up -d \
+docker compose -f $COMPOSE_FILE --project-directory ../.. up -d \
   auth-service \
   user-service \
   fleet-service \
@@ -85,7 +85,7 @@ sleep 30
 
 # Step 7: Start Advanced Features (Phase 5)
 log_info "🚀 Step 6/7: Starting Advanced Features (ML, Analytics, Notification)..."
-docker-compose -f $COMPOSE_FILE up -d \
+docker compose -f $COMPOSE_FILE --project-directory ../.. up -d \
   analytics-service \
   notification-service \
   ml-service \
@@ -101,7 +101,7 @@ sleep 20
 
 # Step 8: Start API Gateway
 log_info "🌐 Step 7/7: Starting API Gateway..."
-docker-compose -f $COMPOSE_FILE up -d gateway-service
+docker compose -f $COMPOSE_FILE --project-directory ../.. up -d gateway-service
 sleep 15
 
 # Final Status
@@ -112,7 +112,7 @@ echo ""
 
 # Show running containers
 log_info "📊 Service Status:"
-docker-compose -f $COMPOSE_FILE ps
+docker compose -f $COMPOSE_FILE --project-directory ../.. ps
 
 echo ""
 log_info "🔗 Access Points:"

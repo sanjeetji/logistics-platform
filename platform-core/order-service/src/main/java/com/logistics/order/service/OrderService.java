@@ -442,4 +442,15 @@ public class OrderService {
                 log.info("Delivery preferences updated for order {}", orderId);
                 return savedOrder;
         }
+
+        public List<Order> getCompletedOrdersForPeriod(LocalDateTime start, LocalDateTime end) {
+                return orderRepository.findByStatusAndActualDeliveryTimeBetween(OrderStatus.DELIVERED, start, end);
+        }
+
+        public Integer getDemand() {
+                List<OrderStatus> terminalStates = List.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED);
+                return (int) orderRepository.findAll().stream()
+                                .filter(order -> !terminalStates.contains(order.getStatus()))
+                                .count();
+        }
 }

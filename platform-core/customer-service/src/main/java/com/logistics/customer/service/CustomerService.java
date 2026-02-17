@@ -1,5 +1,7 @@
 package com.logistics.customer.service;
 
+import java.util.Objects;
+
 import com.logistics.customer.dto.AddressRequest;
 import com.logistics.customer.dto.CustomerProfileRequest;
 import com.logistics.customer.model.Customer;
@@ -46,7 +48,7 @@ public class CustomerService {
                 .phoneNumber(request.getPhoneNumber())
                 .build();
 
-        return customerRepository.save(customer);
+        return Objects.requireNonNull(customerRepository.save(customer));
     }
 
     // ... (previous code)
@@ -56,8 +58,8 @@ public class CustomerService {
      */
     @org.springframework.cache.annotation.Cacheable(value = "customers", key = "#userId")
     public Customer getCustomerByUserId(Long userId) {
-        return customerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Customer not found for user: " + userId));
+        return Objects.requireNonNull(customerRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Customer not found for user: " + userId)));
     }
 
     /**
@@ -65,8 +67,8 @@ public class CustomerService {
      */
     @org.springframework.cache.annotation.Cacheable(value = "customers_id", key = "#customerId")
     public Customer getCustomerById(Long customerId) {
-        return customerRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found: " + customerId));
+        return Objects.requireNonNull(customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found: " + customerId)));
     }
 
     /**
@@ -112,7 +114,7 @@ public class CustomerService {
                 .isDefault(Boolean.TRUE.equals(request.getIsDefault()))
                 .build();
 
-        return addressRepository.save(address);
+        return Objects.requireNonNull(addressRepository.save(address));
     }
 
     /**
@@ -127,8 +129,8 @@ public class CustomerService {
      * Get address by ID
      */
     public CustomerAddress getAddressById(Long addressId) {
-        return addressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Address not found: " + addressId));
+        return Objects.requireNonNull(addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found: " + addressId)));
     }
 
     /**

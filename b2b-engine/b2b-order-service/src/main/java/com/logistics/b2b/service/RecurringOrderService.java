@@ -1,5 +1,7 @@
 package com.logistics.b2b.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logistics.b2b.dto.CreateB2BOrderRequest;
 import com.logistics.b2b.model.RecurringFrequency;
 import com.logistics.b2b.model.RecurringOrderTemplate;
 import com.logistics.b2b.repository.RecurringOrderTemplateRepository;
@@ -9,7 +11,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class RecurringOrderService {
 
     private final RecurringOrderTemplateRepository templateRepository;
     private final B2BOrderService orderService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Create recurring order template
@@ -102,10 +104,10 @@ public class RecurringOrderService {
 
         return switch (template.getFrequency()) {
             case DAILY -> true;
-            case WEEKLY -> template.getDayOfWeek() != null && 
-                          today.getDayOfWeek().getValue() == template.getDayOfWeek();
-            case MONTHLY -> template.getDayOfMonth() != null && 
-                           today.getDayOfMonth() == template.getDayOfMonth();
+            case WEEKLY -> template.getDayOfWeek() != null &&
+                    today.getDayOfWeek().getValue() == template.getDayOfWeek();
+            case MONTHLY -> template.getDayOfMonth() != null &&
+                    today.getDayOfMonth() == template.getDayOfMonth();
         };
     }
 
@@ -114,12 +116,29 @@ public class RecurringOrderService {
      */
     private void createOrderFromTemplate(RecurringOrderTemplate template) {
         log.info("Creating order from template: {}", template.getTemplateId());
-        
-        // Extract order details from template
-        Map<String, Object> orderData = template.getOrderTemplate();
-        
-        // TODO: Convert template data to CreateB2BOrderRequest and create order
-        // This is a simplified version - in production, you'd parse the JSON template
-        log.info("Order created from template: {}", template.getTemplateId());
+
+        try {
+            // Extract order details from template
+            Map<String, Object> templateData = template.getOrderTemplate();
+
+            // Map JSON template to CreateB2BOrderRequest
+            CreateB2BOrderRequest request = objectMapper.convertValue(templateData, CreateB2BOrderRequest.class);
+
+            // Ensure client ID and metadata are correctly set
+            request.setClientId(template.getClientId());
+            if (request.getMetadata() == null) {
+                request.setMetadata(Map.of("templateId", template.getTemplateId()));
+            } else {
+                request.getMetadata().put("templateId", template.getTemplateId());
+            }
+
+            // Create the order
+            orderService.createOrder(request);
+
+            log.info("Successfully created B2B order from template: {}", template.getTemplateId());
+        } catch (Exception e) {
+            log.error("Error transforming template to order request: {}", template.getTemplateId(), e);
+            throw new RuntimeException("Failed to generate order from template", e);
+        }
     }
 }

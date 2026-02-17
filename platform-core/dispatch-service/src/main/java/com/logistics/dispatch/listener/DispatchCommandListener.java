@@ -3,6 +3,7 @@ package com.logistics.dispatch.listener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logistics.dispatch.dto.DispatchRequest;
 import com.logistics.dispatch.service.DispatchService;
+import com.logistics.dispatch.event.DispatchEventProducer;
 import com.logistics.platform.event.dto.OrchestrationCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class DispatchCommandListener {
 
     private final DispatchService dispatchService;
+    private final DispatchEventProducer eventProducer;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "orchestration.command.dispatch", groupId = "dispatch-service-group")
@@ -48,7 +50,8 @@ public class DispatchCommandListener {
 
         } catch (Exception e) {
             log.error("Failed to process dispatch command for ID: {}", command.getCommandId(), e);
-            // TODO: Publish CommandFailureEvent back to Orchestrator
+            String orderId = command.getPayload() != null ? (String) command.getPayload().get("orderId") : "UNKNOWN";
+            eventProducer.publishAssignmentFailure(orderId, e.getMessage());
         }
     }
 }

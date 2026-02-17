@@ -23,7 +23,7 @@ echo -e "${GREEN}==============================================\033[0m"
 echo ""
 
 # Navigate to load-tests directory
-cd "$(dirname "$0")/load-tests"
+cd "$(dirname "$0")/../../load-tests"
 
 case "$TEST_TYPE" in
   "quick"|"smoke")

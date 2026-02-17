@@ -1,5 +1,7 @@
 package com.logistics.dispatch.event;
 
+import java.util.Objects;
+
 import com.logistics.platform.event.dto.OrchestrationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +33,7 @@ public class DispatchEventProducer {
                 .build();
 
         log.info("Publishing OrderDispatched event for order: {}", orderId);
-        kafkaTemplate.send("orchestration.event.order", orderId, event);
+        kafkaTemplate.send("orchestration.event.order", Objects.requireNonNull(orderId), event);
     }
 
     public void publishAssignmentFailure(String orderId, String reason) {
@@ -47,7 +49,7 @@ public class DispatchEventProducer {
                 .build();
 
         log.info("Publishing OrderDispatchFailed event for order: {} (Reason: {})", orderId, reason);
-        kafkaTemplate.send("orchestration.event.order", orderId, event);
+        kafkaTemplate.send("orchestration.event.order", Objects.requireNonNull(orderId), event);
     }
 
     public void publishRouteUpdate(String driverId, List<String> stopSequence) {
@@ -57,6 +59,6 @@ public class DispatchEventProducer {
         payload.put("type", "ROUTE_OPTIMIZED");
 
         log.info("Publishing RouteUpdate event for driver: {}", driverId);
-        kafkaTemplate.send("fleet.route.updates", driverId, payload);
+        kafkaTemplate.send("fleet.route.updates", Objects.requireNonNull(driverId), payload);
     }
 }

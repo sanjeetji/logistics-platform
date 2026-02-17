@@ -12,6 +12,8 @@ import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
 import org.springframework.statemachine.guard.Guard;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.EnumSet;
@@ -153,7 +155,7 @@ public class OrderStateMachineConfig extends StateMachineConfigurerAdapter<Order
                         .previousStatus(previousState != null ? previousState.name() : null)
                         .newStatus(newState.name())
                         .timestamp(LocalDateTime.now())
-                        .changedBy("SYSTEM") // TODO: Get from security context
+                        .changedBy(getCurrentUser())
                         .reason(event != null ? event.name() : "UNKNOWN")
                         .build();
 
@@ -165,5 +167,10 @@ public class OrderStateMachineConfig extends StateMachineConfigurerAdapter<Order
                 log.error("Error publishing OrderStatusChangedEvent", e);
             }
         };
+    }
+
+    private String getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.getName() != null) ? auth.getName() : "SYSTEM";
     }
 }

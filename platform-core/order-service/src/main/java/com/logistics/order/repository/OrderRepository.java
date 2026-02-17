@@ -16,4 +16,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     java.util.List<com.logistics.order.model.projection.OrderSummary> findByDriverIdAndStatus(String driverId,
             com.logistics.order.model.OrderStatus status);
+
+    java.util.List<Order> findByStatusAndActualDeliveryTimeBetween(com.logistics.order.model.OrderStatus status,
+            java.time.LocalDateTime start, java.time.LocalDateTime end);
 }

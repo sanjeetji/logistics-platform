@@ -1,7 +1,7 @@
 package com.logistics.tenant.controller;
 
 import com.logistics.platform.common.dto.response.ApiResponse;
-import com.logistics.tenant.dto.TenantDto;
+import com.logistics.platform.dto.tenant.TenantDto;
 import com.logistics.tenant.mapper.TenantMapper;
 import com.logistics.tenant.model.Tenant;
 import com.logistics.tenant.service.TenantService;

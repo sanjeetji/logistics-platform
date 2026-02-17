@@ -1,5 +1,7 @@
 package com.logistics.inventory.controller;
 
+import java.util.Objects;
+
 import com.logistics.inventory.model.InventoryItem;
 import com.logistics.inventory.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,7 +25,8 @@ public class InventoryController {
             @RequestParam String warehouseId,
             @RequestParam int quantity,
             @RequestParam String location) {
-        return ResponseEntity.ok(inventoryService.initializeStock(sku, productId, warehouseId, quantity, location));
+        return ResponseEntity.ok(inventoryService.initializeStock(Objects.requireNonNull(sku), productId, warehouseId,
+                quantity, location));
     }
 
     @PostMapping("/reserve")

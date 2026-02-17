@@ -88,8 +88,13 @@
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
-			<version>1.5.5.Final</version>
 		</dependency>
+    
+      <dependency>
+        <groupId>org.wso2.carbon.apimgt</groupId>
+        <artifactId>org.wso2.carbon.apimgt.rest.api.publisher.v1.common</artifactId>
+        <version>9.32.175</version>
+      </dependency>
     </dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -126,7 +131,7 @@
 						<path>
 							<groupId>org.mapstruct</groupId>
 							<artifactId>mapstruct-processor</artifactId>
-							<version>1.5.5.Final</version>
+							<version>${mapstruct.version}</version>
 						</path>
 					</annotationProcessorPaths>
 					<compilerArgs>

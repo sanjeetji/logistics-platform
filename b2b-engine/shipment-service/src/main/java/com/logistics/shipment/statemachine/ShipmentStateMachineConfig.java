@@ -118,7 +118,7 @@ public class ShipmentStateMachineConfig extends EnumStateMachineConfigurerAdapte
             Shipment shipment = (Shipment) context.getExtendedState().getVariables().get("shipment");
             String reason = (String) context.getExtendedState().getVariables().get("reason");
 
-            if (shipment != null) {
+            if (shipment != null && shipment.getShipmentId() != null) {
                 ShipmentStatusChangedEvent statusEvent = ShipmentStatusChangedEvent.builder()
                         .shipmentId(shipment.getShipmentId())
                         .previousStatus(context.getSource().getId().name())

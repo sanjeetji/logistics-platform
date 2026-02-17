@@ -1,5 +1,7 @@
 package com.logistics.gateway.security;
 
+import java.util.Objects;
+
 import com.logistics.platform.security.jwt.JwtUtils;
 import com.logistics.platform.security.jwt.SecurityConstants;
 import org.springframework.http.HttpHeaders;
@@ -70,8 +72,8 @@ public class JwtAuthenticationWebFilter implements WebFilter {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username,
                         null, authorities);
 
-                return chain.filter(exchange)
-                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+                return Objects.requireNonNull(chain.filter(exchange)
+                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication)));
             }
         } catch (Exception e) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);

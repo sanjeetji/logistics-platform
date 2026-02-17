@@ -15,4 +15,7 @@ public interface OrderClient {
 
     @GetMapping
     List<TransportOrderDto> getAllOrders();
+
+    @GetMapping("/demand")
+    Integer getDemand();
 }

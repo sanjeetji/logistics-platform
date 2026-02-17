@@ -1,4 +1,4 @@
-package com.logistics.tenant.dto;
+package com.logistics.platform.dto.tenant;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,4 +15,13 @@ public class TenantConfigDto {
     private String currency;
     private boolean dedicatedFleet;
     private boolean autoDispatch;
+
+    // Branding
+    private String brandName;
+    private String logoUrl;
+    private String primaryColor;
+    private String secondaryColor;
+    private String websiteUrl;
+    private String supportPhone;
+    private String supportEmail;
 }

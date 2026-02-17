@@ -1,5 +1,7 @@
 package com.logistics.payout.service;
 
+import com.logistics.payout.client.OrderServiceClient;
+import com.logistics.payout.client.PaymentServiceClient;
 import com.logistics.payout.model.Payout;
 import com.logistics.payout.repository.PayoutRepository;
 import com.logistics.platform.common.dto.payment.PaymentDtos;
@@ -13,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +25,8 @@ import java.util.Objects;
 public class PayoutGenerationService {
 
     private final PayoutRepository payoutRepository;
+    private final OrderServiceClient orderClient;
+    private final PaymentServiceClient paymentClient;
 
     /**
      * Scheduled job to generate payouts for completed orders
@@ -35,8 +41,32 @@ public class PayoutGenerationService {
         LocalDateTime startOfDay = yesterday.withHour(0).withMinute(0).withSecond(0);
         LocalDateTime endOfDay = yesterday.withHour(23).withMinute(59).withSecond(59);
 
-        // TODO: Fetch completed orders from order-service
-        // For now, this is a stub implementation
+        try {
+            ApiResponse<List<OrderServiceClient.OrderResponse>> response = orderClient.getCompletedOrders(startOfDay,
+                    endOfDay);
+            if (response.isSuccess() && response.getData() != null) {
+                List<OrderServiceClient.OrderResponse> orders = response.getData();
+
+                // Group orders by driver
+                Map<String, List<OrderServiceClient.OrderResponse>> driverOrders = orders.stream()
+                        .filter(o -> o.getDriverId() != null)
+                        .collect(Collectors.groupingBy(OrderServiceClient.OrderResponse::getDriverId));
+
+                driverOrders.forEach((driverId, oList) -> {
+                    BigDecimal totalAmount = oList.stream()
+                            .map(o -> o.getPrice() != null ? o.getPrice() : BigDecimal.ZERO)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    List<String> orderIds = oList.stream()
+                            .map(OrderServiceClient.OrderResponse::getOrderId)
+                            .collect(Collectors.toList());
+
+                    createPayout(Long.parseLong(driverId), orderIds, totalAmount);
+                });
+            }
+        } catch (Exception e) {
+            log.error("Error during daily payout generation: {}", e.getMessage());
+        }
 
         log.info("Payout generation completed for period: {} to {}", startOfDay, endOfDay);
     }
@@ -50,7 +80,9 @@ public class PayoutGenerationService {
                 .generatedAt(LocalDateTime.now())
                 .build();
 
-        // TODO: Link orders to payout
+        // Note: Linking orders might require a many-to-many or a separate table
+        // For now, we store them as metadata if needed or just log
+        log.info("Created Payout for driver {} with {} orders, amount {}", driverId, orderIds.size(), amount);
 
         return payoutRepository.save(Objects.requireNonNull(payout, "Payout must not be null"));
     }
@@ -82,28 +114,23 @@ public class PayoutGenerationService {
         Payout payout = payoutRepository.findById(payoutId)
                 .orElseThrow(() -> new RuntimeException("Payout not found"));
 
-        if (payout.getStatus() != Payout.PayoutStatus.APPROVED) { // Changed from PENDING to APPROVED based on original
-                                                                  // flow
+        if (payout.getStatus() != Payout.PayoutStatus.APPROVED) {
             throw new RuntimeException("Payout must be approved before processing");
         }
 
         log.info("Processing payout for driver: {}, amount: {}", payout.getDriverId(), payout.getAmount());
 
         try {
-            // TODO: Integrate with payment service when PaymentClient is available
-            // PaymentDtos.PayoutRequest request = PaymentDtos.PayoutRequest.builder()
-            // .accountId(String.valueOf(payout.getDriverId()))
-            // .amount(payout.getAmount())
-            // .currency("USD")
-            // .gatewayType(PaymentDtos.GatewayType.STRIPE)
-            // .build();
-            //
-            // ApiResponse<Boolean> response = paymentClient.processPayout(request);
+            PaymentDtos.PayoutRequest request = PaymentDtos.PayoutRequest.builder()
+                    .accountId(String.valueOf(payout.getDriverId()))
+                    .amount(payout.getAmount())
+                    .currency("USD")
+                    .gatewayType(PaymentDtos.GatewayType.STRIPE)
+                    .build();
 
-            // Temporary: Mark as paid for now
-            Boolean success = true;
+            ApiResponse<Boolean> response = paymentClient.processPayout(request);
 
-            if (Boolean.TRUE.equals(success)) {
+            if (response.isSuccess() && Boolean.TRUE.equals(response.getData())) {
                 payout.setStatus(Payout.PayoutStatus.PAID);
                 payout.setPaidAt(LocalDateTime.now());
                 log.info("Payout successful for driver: {}", payout.getDriverId());

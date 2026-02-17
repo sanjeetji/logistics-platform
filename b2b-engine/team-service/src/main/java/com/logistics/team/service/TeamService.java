@@ -1,13 +1,14 @@
 package com.logistics.team.service;
 
+import java.util.List;
+import java.util.Objects;
 import com.logistics.team.dto.TeamDtos;
 import com.logistics.team.entity.*;
 import com.logistics.team.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
+import org.springframework.lang.NonNull;
 
 @Service
 @RequiredArgsConstructor
@@ -19,12 +20,13 @@ public class TeamService {
     private final TeamMemberRepository teamMemberRepository;
 
     @Transactional
+    @NonNull
     public Region createRegion(TeamDtos.CreateRegionRequest request) {
         Region region = Region.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .build();
-        return regionRepository.save(region);
+        return Objects.requireNonNull(regionRepository.save(region));
     }
 
     public List<Region> getAllRegions() {
@@ -32,8 +34,9 @@ public class TeamService {
     }
 
     @Transactional
+    @NonNull
     public Hub createHub(TeamDtos.CreateHubRequest request) {
-        Region region = regionRepository.findById(request.getRegionId())
+        Region region = regionRepository.findById(Objects.requireNonNull(request.getRegionId()))
                 .orElseThrow(() -> new RuntimeException("Region not found"));
 
         Hub hub = Hub.builder()
@@ -43,7 +46,7 @@ public class TeamService {
                 .longitude(request.getLongitude())
                 .region(region)
                 .build();
-        return hubRepository.save(hub);
+        return Objects.requireNonNull(hubRepository.save(hub));
     }
 
     public List<Hub> getHubsByRegion(String regionId) {
@@ -51,15 +54,16 @@ public class TeamService {
     }
 
     @Transactional
+    @NonNull
     public Team createTeam(TeamDtos.CreateTeamRequest request) {
-        Hub hub = hubRepository.findById(request.getHubId())
+        Hub hub = hubRepository.findById(Objects.requireNonNull(request.getHubId()))
                 .orElseThrow(() -> new RuntimeException("Hub not found"));
 
         Team team = Team.builder()
                 .name(request.getName())
                 .hub(hub)
                 .build();
-        return teamRepository.save(team);
+        return Objects.requireNonNull(teamRepository.save(team));
     }
 
     public List<Team> getTeamsByHub(String hubId) {
@@ -67,8 +71,9 @@ public class TeamService {
     }
 
     @Transactional
+    @NonNull
     public TeamMember assignMember(TeamDtos.AssignMemberRequest request) {
-        Team team = teamRepository.findById(request.getTeamId())
+        Team team = teamRepository.findById(Objects.requireNonNull(request.getTeamId()))
                 .orElseThrow(() -> new RuntimeException("Team not found"));
 
         TeamMember member = TeamMember.builder()
@@ -76,6 +81,6 @@ public class TeamService {
                 .role(request.getRole())
                 .team(team)
                 .build();
-        return teamMemberRepository.save(member);
+        return Objects.requireNonNull(teamMemberRepository.save(member));
     }
 }
