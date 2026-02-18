@@ -8,6 +8,7 @@ Comprehensive documentation for the Logistics Platform.
 
 ### Architecture
 - [System Overview](./architecture/system-overview.md)
+- [Monolith vs Microservices Analysis](./ARCHITECTURE_ANALYSIS.md) - **(New) Decision Report**
 - [Microservices Architecture](./architecture/microservices.md)
 - [Database Design](./architecture/database-design.md)
 - [API Design Guidelines](./architecture/api-design.md)

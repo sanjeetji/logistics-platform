@@ -1,0 +1,247 @@
+version: '3.8'
+
+# Common configuration for all Spring Boot microservices
+x-spring-boot-service: &spring-boot-service
+  environment:
+    - SPRING_PROFILES_ACTIVE=docker
+    - JAVA_TOOL_OPTIONS=-Xmx256m -Xms256m
+    - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+  deploy:
+    resources:
+      limits:
+        memory: 400M
+  networks:
+    - logistics-network
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+    interval: 45s
+    timeout: 10s
+    retries: 5
+    start_period: 60s
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  # ==================== Infrastructure ====================
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: logistics-postgres
+    environment:
+      POSTGRES_USER: logistics_user
+      POSTGRES_PASSWORD: logistics_pass
+      POSTGRES_DB: logistics_postgres
+    ports: ["5432:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../docker/postgres/init.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logistics_user"]
+      interval: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - logistics-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: logistics-redis
+    ports: ["6379:6379"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - logistics-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: logistics-mongo
+    ports: ["27017:27017"]
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - logistics-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: logistics-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports: ["2181:2181"]
+    networks:
+      - logistics-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: logistics-kafka
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports: ["9092:9092"]
+    networks:
+      - logistics-network
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  minio:
+    image: minio/minio:latest
+    container_name: logistics-minio
+    ports: ["9000:9000", "9001:9001"]
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - logistics-network
+
+  # ==================== Core Platform ====================
+  config-server:
+    <<: *spring-boot-service
+    build: ../infrastructure/config-server
+    container_name: logistics-config-server
+    ports: ["8888:8888"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+
+  service-discovery:
+    <<: *spring-boot-service
+    build: ../infrastructure/service-discovery
+    container_name: logistics-service-discovery
+    ports: ["8761:8761"]
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+
+  api-gateway:
+    <<: *spring-boot-service
+    build: ../infrastructure/api-gateway
+    container_name: logistics-api-gateway
+    ports: ["8080:8080"]
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+        
+  auth-service:
+    <<: *spring-boot-service
+    build: ../platform-core/auth-service
+    container_name: logistics-auth-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+
+  # ==================== Core Engines ====================
+  order-service:
+    <<: *spring-boot-service
+    build: ../platform-core/order-service
+    container_name: logistics-order-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  dispatch-service:
+    <<: *spring-boot-service
+    build: ../platform-core/dispatch-service
+    container_name: logistics-dispatch-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  fleet-service:
+    <<: *spring-boot-service
+    build: ../platform-core/fleet-service
+    container_name: logistics-fleet-service
+
+  tenant-service:
+    <<: *spring-boot-service
+    build: ../platform-core/tenant-service
+    container_name: logistics-tenant-service
+
+  # ==================== B2B Engine ====================
+  b2b-order-service:
+    <<: *spring-boot-service
+    build: ../b2b-engine/b2b-order-service
+    container_name: logistics-b2b-order-service
+
+  inventory-service:
+    <<: *spring-boot-service
+    build: ../b2b-engine/inventory-service
+    container_name: logistics-inventory-service
+
+  warehouse-service:
+    <<: *spring-boot-service
+    build: ../b2b-engine/warehouse-service
+    container_name: logistics-warehouse-service
+
+  # ==================== B2C Engine ====================
+  parcel-service:
+    <<: *spring-boot-service
+    build: ../b2c-engine/parcel-service
+    container_name: logistics-parcel-service
+
+  # ==================== Shared Services (Selection) ====================
+  # Only enabling critical shared services to save resources
+  # user-management-service:
+  #   <<: *spring-boot-service
+  #   build: ../shared-services/user-management-service
+  
+  notification-service:
+    <<: *spring-boot-service
+    build: ../shared-services/notification-service
+    container_name: logistics-notification-service
+    depends_on: 
+      kafka:
+        condition: service_started
+
+  tracking-service:
+    <<: *spring-boot-service
+    build: ../shared-services/tracking-service
+    container_name: logistics-tracking-service
+    depends_on: 
+      kafka:
+        condition: service_started
+
+volumes:
+  postgres-data:
+  redis-data:
+  mongo-data:
+  minio-data:
+
+networks:
+  logistics-network:
+    driver: bridge
