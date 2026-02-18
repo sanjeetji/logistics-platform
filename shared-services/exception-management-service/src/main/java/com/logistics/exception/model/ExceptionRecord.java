@@ -5,7 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @Table(name = "exception_records")
@@ -16,20 +20,45 @@ import java.time.LocalDateTime;
 public class ExceptionRecord {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    private String orderId;
-    private Long driverId; // Nullable if order-level exception
-    
-    private String type; // SLA_BREACH, VEHICLE_BREAKDOWN, etc.
-    private String severity; // CRITICAL, HIGH, MEDIUM, LOW
-    
-    @Column(length = 1000)
-    private String description;
-    
+    @Column(nullable = false)
+    private String exceptionId; // From the event
+
+    @Column(nullable = false)
+    private String serviceName;
+
+    @Column(nullable = false)
+    private String exceptionType;
+
+    @Column(columnDefinition = "TEXT")
+    private String message;
+
+    @Column(nullable = false)
+    private String severity; // INFO, WARN, CRITICAL
+
+    @Column(nullable = false)
     private LocalDateTime timestamp;
-    
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, String> metadata;
+
+    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private String status = "OPEN"; // OPEN, ACKNOWLEDGED, RESOLVED
+    private ExceptionStatus status = ExceptionStatus.OPEN;
+
+    private String resolvedBy;
+
+    @Column(columnDefinition = "TEXT")
+    private String resolutionNotes;
+
+    private LocalDateTime resolvedAt;
+
+    public enum ExceptionStatus {
+        OPEN,
+        IN_PROGRESS,
+        RESOLVED
+    }
 }

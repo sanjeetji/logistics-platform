@@ -1,55 +1,28 @@
 package com.logistics.routing.controller;
 
-import com.logistics.platform.common.dto.response.ApiResponse;
 import com.logistics.routing.dto.ReRoutingRequest;
 import com.logistics.routing.dto.ReRoutingResponse;
 import com.logistics.routing.rerouting.DynamicReRoutingService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.logistics.platform.common.dto.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Re-routing Controller
- */
 @RestController
-@RequestMapping("/api/v1/routes/reroute")
+@RequestMapping("/api/routing")
 @RequiredArgsConstructor
-@Slf4j
-@Tag(name = "Re-routing", description = "Dynamic route re-optimization APIs")
 public class ReRoutingController {
 
     private final DynamicReRoutingService reRoutingService;
 
-    /**
-     * Trigger manual re-routing
-     */
-    @PostMapping
-    @Operation(summary = "Trigger re-routing", description = "Manually trigger route re-optimization")
+    @PostMapping("/reroute")
     public ResponseEntity<ApiResponse<ReRoutingResponse>> triggerReRouting(
-            @RequestBody ReRoutingRequest request) {
-        
-        log.info("Manual re-routing request: route={}, trigger={}", 
-            request.getRouteId(), request.getTrigger());
-        
+            @Valid @RequestBody ReRoutingRequest request) {
         ReRoutingResponse response = reRoutingService.triggerReRouting(request);
-        
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    /**
-     * Get re-routing status
-     */
-    @GetMapping("/{reRoutingId}")
-    @Operation(summary = "Get re-routing status", description = "Get status of a re-routing operation")
-    public ResponseEntity<ApiResponse<ReRoutingResponse>> getReRoutingStatus(
-            @PathVariable String reRoutingId) {
-        
-        // In real implementation, fetch from database
-        log.debug("Fetching re-routing status: {}", reRoutingId);
-        
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponse.success(response, "Re-routing process completed"));
     }
 }

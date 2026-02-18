@@ -20,3 +20,17 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+  cloud:
+    function:
+      definition: processDriverLocations;processHeatmap
+    stream:
+      bindings:
+        processDriverLocations-in-0:
+          destination: fleet.driver-updates
+        processDriverLocations-out-0:
+          destination: tracking.events
+        processHeatmap-in-0:
+          destination: tracking.events
+        processHeatmap-out-0:
+          destination: market.heatmap
+

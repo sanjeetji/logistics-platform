@@ -34,6 +34,53 @@ services:
       timeout: 30s
       retries: 3
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: logistics-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "*"
+      KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: [ "CMD-SHELL", "echo ruok | nc 127.0.0.1 2181 | grep imok" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logistics-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: logistics-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - logistics-network
+
   # Service Discovery
   service-discovery:
     build:
@@ -50,9 +97,6 @@ services:
       MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
     networks:
       - logistics-network
-    depends_on:
-      mysql-db:
-        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
       interval: 30s
@@ -83,7 +127,7 @@ services:
       service-discovery:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      test: [ "CMD", "curl", "-f", "-u", "admin:admin_password", "http://localhost:8888/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -435,7 +479,7 @@ services:
 
   analytics-service:
     build:
-      context: ../shared-services/analytics-service
+      context: ../shared-services/streaming-analytics-service
       dockerfile: ../Dockerfile
     container_name: logistics-analytics-service
     restart: unless-stopped
@@ -568,7 +612,7 @@ services:
 
   intelligent-routing-service:
     build:
-      context: ../shared-services/intelligent-routing-service
+      context: ../shared-services/route-optimization-service
       dockerfile: ../Dockerfile
     container_name: logistics-intelligent-routing-service
     restart: unless-stopped
@@ -597,7 +641,7 @@ services:
     container_name: logistics-billing-service
     restart: unless-stopped
     ports:
-      - "8096:8096"
+      - "8095:8096"
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
@@ -958,7 +1002,7 @@ networks:
     driver: bridge
 
 volumes:
-  mysql-data:
+
   redis-data:
   rabbitmq-data:
   postgres-data:

@@ -1,11 +1,13 @@
-#!/bin/bash
-echo "🔄 Restoring PostgreSQL database..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_DIR="$SCRIPT_DIR/.."
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+PROJECT_ROOT="$SCRIPT_DIR/../.."
 
 BACKUP_FILE=$1
 
 if [ -z "$BACKUP_FILE" ]; then
     echo "❌ Please provide backup file path"
-    echo "Usage: ./scripts/postgres-restore.sh <backup_file.sql.gz>"
+    echo "Usage: ./docker/scripts/postgres-restore.sh <backup_file.sql.gz>"
     exit 1
 fi
 
@@ -14,7 +16,7 @@ if [ ! -f "$BACKUP_FILE" ]; then
     exit 1
 fi
 
-echo "⚠️  WARNING: This will overwrite current database!"
+echo "⚠️  WARNING: This will STOP the platform and OVERWRITE current database!"
 read -p "Are you sure? (y/N): " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -24,13 +26,16 @@ fi
 
 echo "Restoring from $BACKUP_FILE..."
 
-# Stop applications using PostgreSQL first
-docker-compose stop platform-core b2b-engine b2c-engine
+# Stop all services to ensure no active connections
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform down
+
+# Start only PostgreSQL
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d postgres-db
+echo "Waiting for database to be ready..."
+sleep 10
 
 # Restore the database
-gunzip -c "$BACKUP_FILE" | docker-compose exec -T postgres-db psql -U logistics_user
-
-# Restart applications
-docker-compose start platform-core b2b-engine b2c-engine
+gunzip -c "$BACKUP_FILE" | docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec -T postgres-db psql -U logistics_user
 
 echo "✅ Database restored successfully!"
+echo "🚀 You can now start the platform: ./docker/scripts/run-platform.sh start"

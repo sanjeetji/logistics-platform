@@ -1,43 +1,48 @@
 #!/bin/bash
 echo "🔧 Fixing pgAdmin Connection Issues..."
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_DIR="$SCRIPT_DIR/.."
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+PROJECT_ROOT="$SCRIPT_DIR/../.."
+
 echo "1. Stopping pgAdmin..."
-docker-compose stop pgadmin
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform stop pgadmin
 
 echo "2. Checking PostgreSQL connection..."
-if docker-compose exec postgres-db pg_isready -U logistics_user; then
+if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec postgres-db pg_isready -U logistics_user; then
     echo "✅ PostgreSQL is accessible"
 else
     echo "❌ Cannot connect to PostgreSQL"
     echo "   Starting PostgreSQL..."
-    docker-compose up -d postgres-db
+    docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d postgres-db
     sleep 5
 fi
 
 echo "3. Checking network connectivity..."
-docker-compose exec pgadmin ping -c 2 postgres-db
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec pgadmin ping -c 2 postgres-db
 
 echo "4. Creating new pgpass file..."
-cat > docker/pgadmin/pgpass << EOF
+cat > "$PROJECT_ROOT/docker/pgadmin/pgpass" << EOF
 postgres-db:5432:*:logistics_user:logistics_pass
 localhost:5432:*:postgres:logistics_pass
 172.17.0.1:5432:*:logistics_user:logistics_pass
 host.docker.internal:5432:*:logistics_user:logistics_pass
 EOF
 
-chmod 600 docker/pgadmin/pgpass
+chmod 600 "$PROJECT_ROOT/docker/pgadmin/pgpass"
 
 echo "5. Starting pgAdmin..."
-docker-compose up -d pgadmin
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d pgadmin
 
 echo ""
 echo "📊 Connection Test Commands:"
 echo "============================"
 echo "From pgAdmin container:"
-echo "  docker-compose exec pgadmin ping postgres-db"
+echo "  docker compose exec pgadmin ping postgres-db"
 echo ""
 echo "From PostgreSQL container:"
-echo "  docker-compose exec postgres-db psql -U logistics_user -d logistics_postgres"
+echo "  docker compose exec postgres-db psql -U logistics_user -d logistics_postgres"
 echo ""
 echo "Direct connection test:"
 echo "  PGPASSWORD=logistics_pass psql -h localhost -p 5432 -U logistics_user -d logistics_postgres"

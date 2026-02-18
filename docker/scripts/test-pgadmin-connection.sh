@@ -1,6 +1,11 @@
 #!/bin/bash
 echo "🔌 Testing PostgreSQL Connections..."
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_DIR="$SCRIPT_DIR/.."
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+PROJECT_ROOT="$SCRIPT_DIR/../.."
+
 echo ""
 echo "1. Testing from Host Machine:"
 echo "=============================="
@@ -17,7 +22,7 @@ fi
 echo ""
 echo "2. Testing from Docker Network:"
 echo "==============================="
-if docker-compose exec postgres-db pg_isready -U logistics_user &> /dev/null; then
+if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec postgres-db pg_isready -U logistics_user &> /dev/null; then
     echo "✅ PostgreSQL internal: SUCCESS"
 else
     echo "❌ PostgreSQL internal: FAILED"
@@ -26,7 +31,7 @@ fi
 echo ""
 echo "3. Testing pgAdmin → PostgreSQL:"
 echo "================================"
-if docker-compose exec pgadmin curl -s http://postgres-db:5432 &> /dev/null; then
+if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec pgadmin curl -s http://postgres-db:5432 &> /dev/null; then
     echo "✅ pgAdmin → PostgreSQL: NETWORK ACCESSIBLE"
 else
     echo "❌ pgAdmin → PostgreSQL: NETWORK BLOCKED"
@@ -39,7 +44,7 @@ hostnames=("postgres-db" "localhost" "host.docker.internal" "172.17.0.1")
 
 for host in "${hostnames[@]}"; do
     echo -n "   Testing $host:5432 ... "
-    if docker-compose exec pgadmin nc -z -w2 $host 5432 &> /dev/null; then
+    if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec pgadmin nc -z -w2 $host 5432 &> /dev/null; then
         echo "✅ REACHABLE"
     else
         echo "❌ UNREACHABLE"
@@ -51,7 +56,7 @@ echo "💡 Solution:"
 echo "==========="
 echo "In pgAdmin, use 'postgres-db' as hostname"
 echo "If that fails, try these steps:"
-echo "1. Run: ./scripts/fix-pgadmin.sh"
+echo "1. Run: ./docker/scripts/fix-pgadmin.sh"
 echo "2. Check if containers are in same network: docker network ls"
-echo "3. Check PostgreSQL logs: docker-compose logs postgres-db"
-echo "4. Check pgAdmin logs: docker-compose logs pgadmin"
+echo "3. Check PostgreSQL logs: docker compose logs postgres-db"
+echo "4. Check pgAdmin logs: docker compose logs pgadmin"

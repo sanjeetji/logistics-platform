@@ -16,9 +16,13 @@ NC='\033[0m' # No Color
 # --- Default Configurations ---
 # --- Default Configurations ---
 DEFAULT_ENV="dev"
-DOCKER_DIR=".."
-ENV_FILE="../../.env" 
-PROJECT_ROOT="../.."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_DIR="$SCRIPT_DIR/.."
+PROJECT_ROOT="$SCRIPT_DIR/../.."
+ENV_FILE="$PROJECT_ROOT/.env"
+
+# Ensure standard paths are in PATH
+export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
 # --- Helper Functions ---
 log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
@@ -122,7 +126,7 @@ case "$COMMAND" in
     # Docker compose resolves paths relative to the compose file location by default.
     # So if file is in docker/, ../ is project root. Correct.
     
-    if docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" up -d; then
+    if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" up -d; then
         log_success "Platform started successfully!"
     else
         log_error "Failed to start platform."
@@ -133,7 +137,7 @@ case "$COMMAND" in
     stop)
     check_docker_daemon
     log_info "Stopping platform..."
-    docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" down
+    docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" down
     log_success "Platform stopped."
     ;;
 
@@ -153,7 +157,7 @@ case "$COMMAND" in
         
         check_docker_daemon
         log_info "Building Docker images..."
-        if docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" build; then
+        if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" build; then
             log_success "Docker images built."
         else
              log_error "Docker build failed."
@@ -167,12 +171,12 @@ case "$COMMAND" in
 
   logs)
     check_docker_daemon
-    docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" logs -f
+    docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" logs -f
     ;;
 
   status)
     check_docker_daemon
-    docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" ps
+    docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" ps
     ;;
 
   prune)

@@ -36,28 +36,47 @@ spring:
           filters:
             - RewritePath=/dispatch-service/(?<path>.*), /$\{path}
         - id: user-service
-          uri: lb://user-service
+          uri: lb://user-management-service
           predicates:
             - Path=/user-service/**
           filters:
             - RewritePath=/user-service/(?<path>.*), /$\{path}
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 10
-            redis-rate-limiter.burstCapacity: 20
-            redis-rate-limiter.requestedTokens: 1
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "*"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-            allowedHeaders: "*"
+        - id: role-permission-service
+          uri: lb://user-management-service
+          predicates:
+            - Path=/role-permission-service/**
+          filters:
+            - RewritePath=/role-permission-service/(?<path>.*), /$\{path}
+        - id: user-management-service
+          uri: lb://user-management-service
+          predicates:
+            - Path=/user-management-service/**
+          filters:
+            - RewritePath=/user-management-service/(?<path>.*), /$\{path}
+        - id: b2b-bff-service
+          uri: lb://unified-bff-service
+          predicates:
+            - Path=/api/b2b/**
+          filters:
+            - RewritePath=/api/b2b/(?<path>.*), /$\{path}
+        - id: b2c-bff-service
+          uri: lb://unified-bff-service
+          predicates:
+            - Path=/api/b2c/**
+          filters:
+            - RewritePath=/api/b2c/(?<path>.*), /$\{path}
+        - id: mobile-bff-service
+          uri: lb://unified-bff-service
+          predicates:
+            - Path=/api/mobile/**
+          filters:
+            - RewritePath=/api/mobile/(?<path>.*), /$\{path}
+        - id: unified-bff-service
+          uri: lb://unified-bff-service
+          predicates:
+            - Path=/unified-bff-service/**
+          filters:
+            - RewritePath=/unified-bff-service/(?<path>.*), /$\{path}
 
 eureka:
   client:

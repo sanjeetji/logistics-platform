@@ -221,4 +221,16 @@ public class DispatchService {
             log.error("Error initiating dispatch for order {}: {}", orderDto.getOrderId(), e.getMessage());
         }
     }
+
+    public void initiateDispatch(String orderId) {
+        log.info("Initiating dispatch for order ID: {}", orderId);
+        // In a real system, we would fetch the order details from OrderService via
+        // Feign Client here.
+        // For now, we will create a dummy request to allow compilation,
+        // assuming the order details will be enriched later or fetched.
+        // TODO: Inject OrderServiceClient and fetch details.
+
+        log.warn("Dispatch initiated with ID only. fetching details (Placeholder)");
+        // Placeholder logic to avoid compilation error, but ideally needs Data Fetch
+    }
 }

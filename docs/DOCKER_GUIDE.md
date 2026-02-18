@@ -56,6 +56,23 @@ docker-compose -f docker-compose.yml \
                -f docker/docker-compose-b2c.yml up -d --build
 ```
 
+### 🟡 Scenario E: Safe Grouped Startup (Recommended for Stability)
+*Use this to avoid system freezes by starting services in phases. Always check RAM usage between steps.*
+
+**Step 1: Start Core Infrastructure (Wait for "Healthy" status)**
+```bash
+docker compose -f docker/docker-compose.yml -p logistics-platform up -d zookeeper kafka service-discovery config-server gateway-service auth-service postgres-db
+```
+
+**Step 2: Start Business Verticals (Choose one or both)**
+```bash
+# B2C (Consumer) Flow
+docker compose -f docker/docker-compose.yml -p logistics-platform up -d user-service order-service fleet-service notification-service
+
+# B2B (Business) Flow
+docker compose -f docker/docker-compose.yml -p logistics-platform up -d tenant-service b2b-order-service billing-service inventory-service
+```
+
 ---
 
 ## 3. Maintenance & Lifecycle

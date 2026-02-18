@@ -1,17 +1,22 @@
 #!/bin/bash
 echo "🚀 Quick Start for pgAdmin with PostgreSQL"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_DIR="$SCRIPT_DIR/.."
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+PROJECT_ROOT="$SCRIPT_DIR/../.."
+
 # Stop any existing instances
-docker-compose down pgadmin postgres-db 2>/dev/null
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform down pgadmin postgres-db 2>/dev/null
 
 # Start fresh
-docker-compose up -d postgres-db
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d postgres-db
 
 echo "⏳ Waiting for PostgreSQL to start..."
 sleep 5
 
 # Start pgAdmin
-docker-compose up -d pgadmin
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d pgadmin
 
 echo "⏳ Waiting for pgAdmin to start..."
 sleep 3
@@ -46,4 +51,4 @@ echo "   - Username: logistics_user"
 echo "   - Password: logistics_pass"
 echo "6. Click 'Save'"
 echo ""
-echo "🔄 If connection fails, run: ./scripts/fix-pgadmin.sh"
+echo "🔄 If connection fails, run: ./docker/scripts/fix-pgadmin.sh"

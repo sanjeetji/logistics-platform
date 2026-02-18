@@ -117,6 +117,8 @@
         <module>platform-core/wallet-service</module>
         <module>platform-core/promo-code-service</module>
         <module>platform-core/loyalty-service</module>
+        <module>platform-core/user-service</module>
+        <module>platform-core/role-permission-service</module>
 
         <!-- B2B ENGINE -->
         <module>b2b-engine/team-service</module>
@@ -157,6 +159,9 @@
         <module>shared-services/location-hub-service</module>
         <module>shared-services/control-tower-service</module>
         <module>shared-services/webhook-worker-service</module>
+
+        <module>b2b-engine/erp-integration-service</module>
+        <module>shared-services/user-preferences-service</module>
 
         <!-- MOBILE BACKENDS -->
         <module>mobile-backend/driver-api-service</module>

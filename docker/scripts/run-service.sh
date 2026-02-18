@@ -25,15 +25,17 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-COMPOSE_FILE="../docker-compose.yml"
-PROJECT_ROOT="../.."
-ENV_FILE="../../.env"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCKER_DIR="$SCRIPT_DIR/.."
+PROJECT_ROOT="$SCRIPT_DIR/../.."
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+ENV_FILE="$PROJECT_ROOT/.env"
 
 # Core Infrastructure Services that usually must run
-INFRA_SERVICES="postgres-db mysql-db redis rabbitmq service-discovery config-server"
+INFRA_SERVICES="postgres-db redis rabbitmq service-discovery config-server"
 
 log_info "Starting Infrastructure Services: $INFRA_SERVICES"
-docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" up -d $INFRA_SERVICES
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" up -d $INFRA_SERVICES
 
 echo "Waiting for core infra to initialize (20s)..."
 sleep 20
@@ -42,11 +44,11 @@ sleep 20
 REQUESTED_SERVICES="$@"
 log_info "Starting Requested Services: $REQUESTED_SERVICES"
 
-if docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" up -d $REQUESTED_SERVICES; then
+if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" up -d $REQUESTED_SERVICES; then
     log_success "Services started successfully!"
     echo ""
     log_info "Status:"
-    docker compose -f "$COMPOSE_FILE" --project-directory "$PROJECT_ROOT" --env-file "$ENV_FILE" ps
+    docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform --env-file "$ENV_FILE" ps
 else
     log_error "Failed to start services."
     exit 1

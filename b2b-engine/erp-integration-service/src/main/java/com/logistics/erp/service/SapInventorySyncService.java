@@ -2,15 +2,14 @@ package com.logistics.erp.service;
 
 import com.logistics.erp.adapter.ErpConnector;
 import com.logistics.platform.event.dto.InventoryUpdatedEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class SapInventorySyncService {
 
@@ -23,13 +22,12 @@ public class SapInventorySyncService {
     @KafkaListener(topics = "inventory-updates", groupId = "erp-group")
     public void handleInventoryUpdate(InventoryUpdatedEvent event) {
         log.info("Received inventory update for SKU: {}", event.getSkuId());
-        
+
         try {
             boolean success = erpConnector.syncInventory(
-                event.getSkuId(), 
-                new BigDecimal(event.getNewQuantity())
-            );
-            
+                    event.getSkuId(),
+                    new BigDecimal(event.getNewQuantity()));
+
             if (success) {
                 log.info("Successfully synced inventory to SAP for SKU: {}", event.getSkuId());
             } else {

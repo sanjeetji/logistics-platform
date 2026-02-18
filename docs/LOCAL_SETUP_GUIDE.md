@@ -84,12 +84,25 @@ java -jar platform-core/service-discovery/target/service-discovery-*.jar
 java -jar infrastructure/api-gateway/target/api-gateway-*.jar
 ```
 
-### Terminal 4: Core Business Services
-Start these one by one or in background.
+### Terminal 4: Core Authentication
 ```bash
-java -jar platform-core/auth-service/target/auth-service-*.jar &
+java -jar platform-core/auth-service/target/auth-service-*.jar
+```
+
+### Terminal 5: B2C Vertical (Consumer Operations)
+*Run these for the customer-facing app flows.*
+```bash
 java -jar platform-core/user-service/target/user-service-*.jar &
 java -jar platform-core/order-service/target/order-service-*.jar &
+java -jar platform-core/fleet-service/target/fleet-service-*.jar &
+```
+
+### Terminal 6: B2B Vertical (Business Operations)
+*Run these for the enterprise/tenant flows.*
+```bash
+java -jar platform-core/tenant-service/target/tenant-service-*.jar &
+java -jar platform-core/b2b-order-service/target/b2b-order-service-*.jar &
+java -jar platform-core/inventory-service/target/inventory-service-*.jar &
 ```
 
 ---

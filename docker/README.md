@@ -26,7 +26,7 @@ docker/
 ├── configs/              # Configuration files for Config Server
 ├── images/              # Docker image templates
 ├── mongodb/            # MongoDB configurations
-├── mysql/              # MySQL initialization scripts
+
 ├── rabbitmq/           # RabbitMQ configurations
 ├── redis/              # Redis configurations
 ├── scripts/            # Utility scripts
@@ -39,7 +39,7 @@ docker/
 └── README.md                   # This file
 🛠️ Services Overview
 Service	Port	Description	Health Check
-MySQL Database	3306	Primary relational database	http://localhost:3306
+PostgreSQL Database	5432	Primary relational database	pg_isready -U logistics_user
 Redis	6379	Caching and session storage	redis-cli ping
 RabbitMQ	5672/15672	Message broker	http://localhost:15672
 Service Discovery	8761	Eureka server	http://localhost:8761/actuator/health
@@ -110,7 +110,7 @@ docker-compose ps
 
 # Execute command in container
 docker-compose exec platform-core sh
-docker-compose exec mysql-db mysql -u root -p
+
 
 # View resource usage
 docker stats
@@ -118,13 +118,11 @@ docker stats
 # Clean unused resources
 docker system prune -a
 🗄️ Database Access
-MySQL
-bash
-# Connect to MySQL
-docker-compose exec mysql-db mysql -u logistics_user -plogistics_pass logistics_core_db
-
-# Or using root
-docker-compose exec mysql-db mysql -u root -prootpassword
+PostgreSQL
+```bash
+# Connect to PostgreSQL
+docker compose exec postgres-db psql -U logistics_user -d logistics_postgres
+```
 Redis
 bash
 # Connect to Redis CLI

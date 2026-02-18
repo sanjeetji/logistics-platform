@@ -3,7 +3,6 @@ package com.logistics.erp.service;
 import com.logistics.erp.adapter.ErpConnector;
 import com.logistics.erp.client.B2BOrderClient;
 import com.logistics.platform.common.dto.order.B2BOrderDto;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -14,12 +13,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
+public class SapOrderSyncService {
+
     private final ErpConnector erpConnector;
     private final B2BOrderClient b2bOrderClient;
 
-    public SapOrderSyncService(@Qualifier("sapConnector") ErpConnector erpConnector, B2BOrderClient b2bOrderClient) {
+    public SapOrderSyncService(ErpConnector erpConnector, B2BOrderClient b2bOrderClient) {
         this.erpConnector = erpConnector;
         this.b2bOrderClient = b2bOrderClient;
     }
@@ -45,20 +45,19 @@ import java.util.stream.Collectors;
         }
     }
 
+    @SuppressWarnings("unchecked")
     private B2BOrderDto mapToDto(Map<String, Object> sapOrder) {
         List<Map<String, Object>> items = (List<Map<String, Object>>) sapOrder.get("items");
-        
+
         return B2BOrderDto.builder()
                 .sapOrderId((String) sapOrder.get("sapOrderId"))
                 .clientId((String) sapOrder.get("clientId"))
                 .totalAmount((BigDecimal) sapOrder.get("amount"))
                 .status("SAP_SYNCED")
-                .items(items.stream().map(item -> 
-                    B2BOrderDto.B2BOrderItemDto.builder()
+                .items(items.stream().map(item -> B2BOrderDto.B2BOrderItemDto.builder()
                         .sku((String) item.get("sku"))
                         .quantity((Integer) item.get("quantity"))
-                        .build()
-                ).collect(Collectors.toList()))
+                        .build()).collect(Collectors.toList()))
                 .build();
     }
 }
