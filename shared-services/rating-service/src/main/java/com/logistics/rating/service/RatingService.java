@@ -31,9 +31,20 @@ public class RatingService {
     public Rating submitRating(SubmitRatingRequest request) {
         log.info("Submitting rating for target: {} by user: {}", request.getTargetId(), request.getOrderId());
 
+        String currentUserId = "CUSTOMER"; // Fallback
+        try {
+            if (org.springframework.security.core.context.SecurityContextHolder.getContext()
+                    .getAuthentication() != null) {
+                currentUserId = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                        .getAuthentication().getName();
+            }
+        } catch (Exception e) {
+            log.warn("Could not retrieve current user from security context", e);
+        }
+
         Rating rating = Rating.builder()
                 .orderId(request.getOrderId())
-                .userId("CUSTOMER") // TODO: Get from security context
+                .userId(currentUserId)
                 .targetId(request.getTargetId())
                 .targetType(request.getTargetType())
                 .score(request.getScore())
@@ -49,7 +60,7 @@ public class RatingService {
         // Publish event
         RatingSubmittedEvent event = RatingSubmittedEvent.create(
                 request.getOrderId(),
-                "CUSTOMER", // TODO: Get from security context
+                currentUserId,
                 request.getTargetId(),
                 request.getTargetType().name(),
                 request.getScore(),

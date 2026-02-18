@@ -6,43 +6,45 @@ This guide explains how to run the Logistics Platform completely on your local m
 
 ---
 
-## 1. Prerequisites
+## 1. Prerequisites (Local Environment)
 
-You must have the following installed on your machine:
-*   **Java 17+** (`java -version`)
-*   **Maven 3.8+** (`mvn -version`)
-*   **PostgreSQL 14+** (Running on port 5432)
-*   **Redis 7+** (Running on port 6379)
-*   **Kafka 3.5+** (Running on port 9092)
-*   **RabbitMQ** (Optional, if used by legacy services)
+Since you are running the platform **locally without Docker**, you must install and configure all infrastructure components manually on your machine.
+
+### Required Software
+*   **Java 17+** (`java -version`) - Required for running services.
+*   **Maven 3.8+** (`mvn -version`) - Required for building the project.
+*   **PostgreSQL 14+** - Primary database.
+    *   *GUI Tool*: **PgAdmin 4** or **DBeaver** (Required to manage DB, view tables manually).
+*   **Redis 7+** - Caching and session management.
+    *   *GUI Tool*: **RedisInsight** (Optional, for debugging cache).
+*   **Kafka 3.5+** - Event streaming.
+    *   *GUI Tool*: **Conduktor** or **Offset Explorer** (Optional, to view topics/messages).
+*   **RabbitMQ** - (Optional, check if legacy services require it).
+
+> **Crucial Difference vs Docker**: When running locally, **YOU** are responsible for installing, starting, and connecting these tools. When using Docker, these are provided automatically as containers.
 
 ---
 
-## 2. Infrastructure Setup (The Hard Part)
+## 2. Infrastructure Setup (Manual Steps)
 
-### Option A: Hybrid (Recommended)
-Run only the "hard" stuff in Docker, and your code locally.
-```bash
-docker-compose up -d postgres redis kafka zookeeper config-server service-discovery
-```
+### A. PostgreSQL Setup
+1.  **Install**: Download from [postgresql.org](https://www.postgresql.org/download/) or use `brew install postgresql` (Mac).
+2.  **Start Service**: `brew services start postgresql`.
+3.  **Configure User/DB**:
+    *   User: `postgres`
+    *   Password: `password` (or update `application.yml` in config-server to match yours).
+    *   Database: `logistics_db` (Create this using PgAdmin).
+4.  **Verify**: Open PgAdmin, connect to localhost:5432, and ensure you can see the database.
 
-### Option B: Pure Native (100% No Docker)
-If you cannot use Docker at all, you must install and start these services manually.
+### B. Redis Setup
+1.  **Install**: `brew install redis`.
+2.  **Start**: `brew services start redis`.
+3.  **Verify**: Run `redis-cli ping` -> Should reply `PONG`.
 
-1.  **PostgreSQL**:
-    *   Install from [postgresql.org](https://www.postgresql.org/download/).
-    *   Start the service: `brew services start postgresql` (Mac) or `sudo systemctl start postgresql` (Linux).
-    *   Create Config: User `postgres`, Password `postgres`, DB `logistics`.
-    *   Initialize DB: Run `docker/init-db.sql` content in your local DB.
-
-2.  **Redis**:
-    *   Install: `brew install redis`.
-    *   Start: `redis-server`.
-
-3.  **Kafka & Zookeeper**:
-    *   Install: `brew install kafka`.
-    *   Start Zookeeper: `zookeeper-server-start /usr/local/etc/kafka/zookeeper.properties`.
-    *   Start Kafka: `kafka-server-start /usr/local/etc/kafka/server.properties`.
+### C. Kafka & Zookeeper Setup
+1.  **Install**: `brew install kafka`.
+2.  **Start Zookeeper**: `zookeeper-server-start /usr/local/etc/kafka/zookeeper.properties`.
+3.  **Start Kafka**: `kafka-server-start /usr/local/etc/kafka/server.properties`.
 
 ---
 

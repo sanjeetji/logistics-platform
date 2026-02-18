@@ -20,12 +20,10 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.time.LocalDateTime;
 import java.util.Properties;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.any;
 
 @ExtendWith(MockitoExtension.class)
 public class DriverMetricsProcessorTest {

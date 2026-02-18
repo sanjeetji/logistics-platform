@@ -28,12 +28,11 @@ Comprehensive documentation for the Logistics Platform.
 - [Parcel API](./api/parcel-api.md)
 - [Webhook Documentation](./api/webhooks.md)
 
-### Deployment
-- [Local Deployment](./deployment/local.md)
-- [Docker Deployment](./deployment/docker.md)
-- [Kubernetes Deployment](./deployment/kubernetes.md)
-- [AWS Deployment](./deployment/aws.md)
-- [Monitoring Setup](./deployment/monitoring.md)
+### Deployment & Setup
+- [Local Setup Guide (No Docker)](./LOCAL_SETUP_GUIDE.md) - **Read this if running without Docker.**
+- [Docker Operations Guide](./DOCKER_GUIDE.md) - **Read this for Docker-based setup.**
+- [Database Setup](./DATABASE_SETUP_GUIDE.md)
+- [General Deployment](./DEPLOYMENT_GUIDE.md)
 
 ### Operations
 - [Monitoring Guide](./operations/monitoring.md)

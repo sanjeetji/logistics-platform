@@ -3,7 +3,6 @@ package com.logistics.bff.unified.service.b2c;
 import com.logistics.bff.unified.client.b2c.TrackingServiceClient;
 import com.logistics.bff.unified.client.order.OrderServiceClient;
 import com.logistics.bff.unified.client.b2c.TenantServiceClient;
-import com.logistics.bff.unified.client.b2c.CustomerServiceClient;
 import com.logistics.bff.unified.dto.b2c.PublicTrackingResponse;
 import com.logistics.platform.dto.order.OrderDTO;
 import com.logistics.platform.dto.tracking.TrackingEventDTO;
@@ -13,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

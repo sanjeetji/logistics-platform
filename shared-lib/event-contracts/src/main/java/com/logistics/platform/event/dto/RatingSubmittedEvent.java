@@ -1,6 +1,5 @@
 package com.logistics.platform.event.dto;
 
-import com.logistics.platform.event.dto.BaseEvent;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

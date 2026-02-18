@@ -2,7 +2,6 @@ package com.logistics.b2b.service;
 
 import com.logistics.b2b.client.OrderServiceClient;
 import com.logistics.b2b.dto.CreateB2BOrderRequest;
-import com.logistics.b2b.dto.OrderStopDTO;
 import com.logistics.b2b.model.*;
 import com.logistics.b2b.repository.B2BOrderRepository;
 import com.logistics.platform.common.dto.order.B2BOrderDto;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 

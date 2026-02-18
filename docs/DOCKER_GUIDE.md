@@ -5,12 +5,27 @@ This is the definitive guide for managing the Logistics Platform environment. It
 ---
 
 ## 1. Prerequisites & Setup
+
+When using Docker, **you do NOT need to install PostgreSQL, Redis, or Kafka locally**. Use this guide if you want a "batteries-included" experience where the environment is set up for you.
+
 *   **Docker Desktop**: Running with **16GB+ RAM** allocated (Settings -> Resources).
 *   **Disk Space**: 20GB+ free.
-*   **Infrastructure Build**: Run this **once** or whenever you change infrastructure code:
-    ```bash
-    mvn clean package -DskipTests -pl infrastructure/gateway-service,infrastructure/service-discovery,infrastructure/config-server
-    ```
+*   **No Local Conflicts**: Ensure local Postgres/Redis are **STOPPED** so ports 5432/6379 are free for Docker.
+
+### Included Tools (No Installation Needed)
+*   **Database**: PostgreSQL 16 (Containerized)
+*   **DB GUI**: PgAdmin 4 (Containerized at `http://localhost:5050`)
+*   **Cache**: Redis 7 (Containerized)
+*   **Messaging**: Kafka + Zookeeper (Containerized)
+*   **Service Registry**: Eureka (Containerized)
+
+> **Key Benefit**: You don't need to manually configure versions or connection strings. It just works.
+
+### Initial Build
+Run this **once** to package the JARs that Docker will wrap:
+```bash
+mvn clean package -DskipTests
+```
 
 ---
 

@@ -2,8 +2,6 @@ package com.logistics.warehouse.service;
 
 import java.util.Objects;
 
-import java.util.Objects;
-
 import com.logistics.warehouse.model.BinInventory;
 import com.logistics.warehouse.model.WarehouseBin;
 import com.logistics.warehouse.repository.BinInventoryRepository;

@@ -2,7 +2,6 @@ package com.logistics.fleet.event;
 
 import com.logistics.fleet.service.DriverService;
 import com.logistics.fleet.service.GeofenceService;
-import com.logistics.fleet.model.Driver;
 import com.logistics.platform.event.dto.DriverLocationUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
