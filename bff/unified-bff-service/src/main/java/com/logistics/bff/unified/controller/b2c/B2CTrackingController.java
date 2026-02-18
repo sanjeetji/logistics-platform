@@ -1,6 +1,6 @@
 package com.logistics.bff.unified.controller.b2c;
 
-import com.logistics.bff.unified.client.TrackingServiceClient;
+import com.logistics.bff.unified.client.b2c.TrackingServiceClient;
 import com.logistics.platform.dto.tracking.TrackingInfoDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * B2C Tracking Controller
- * Handles tracking operations for B2C customers
  */
 @RestController
 @RequestMapping("/api/v1/bff/b2c/track")
@@ -23,9 +22,9 @@ public class B2CTrackingController {
     private final TrackingServiceClient trackingClient;
 
     @GetMapping("/{trackingNumber}")
-    @Operation(summary = "Track by number", description = "Track parcel by tracking number")
+    @Operation(summary = "Track by number")
     public ResponseEntity<TrackingInfoDTO> trackByNumber(@PathVariable String trackingNumber) {
-        log.info("Tracking parcel: {}", trackingNumber);
-        return ResponseEntity.ok(trackingClient.getTrackingByNumber(trackingNumber));
+        log.info("B2C tracking request for: {}", trackingNumber);
+        return ResponseEntity.ok(trackingClient.getTrackingInfo(trackingNumber));
     }
 }

@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "fleet-service")
 public interface FleetServiceClient {
-
     @GetMapping("/api/v1/drivers/{id}")
     DriverDTO getDriverById(@PathVariable("id") Long id);
 }

@@ -48,7 +48,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -79,41 +80,31 @@ services:
     networks:
       - logistics-network
 
-  # ==================== Core Services ====================
-
-  config-server:
-    build:
-      context: ./infrastructure/config-server
-      dockerfile: Dockerfile
-    container_name: logistics-config-server
+  minio:
+    image: minio/minio:latest
+    container_name: logistics-minio
     ports:
-      - "8888:8888"
+      - "9000:9000"
+      - "9001:9001"
     environment:
-      SPRING_PROFILES_ACTIVE: native,docker
-      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: file:///configs
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
     volumes:
-      - ./configs:/configs
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      - minio-data:/data
     networks:
       - logistics-network
+
+  # ==================== Core Platform Services ====================
 
   service-discovery:
     build:
       context: ./infrastructure/service-discovery
-      dockerfile: Dockerfile
     container_name: logistics-eureka
-    depends_on:
-      config-server:
-        condition: service_healthy
     ports:
       - "8761:8761"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
       interval: 30s
@@ -122,37 +113,154 @@ services:
     networks:
       - logistics-network
 
-  api-gateway:
+  auth-service:
     build:
-      context: ./infrastructure/gateway-service
-      dockerfile: Dockerfile
-    container_name: logistics-gateway
+      context: ./platform-core/auth-service
+    container_name: logistics-auth
     depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       service-discovery:
         condition: service_healthy
-    ports:
-      - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth_db
+      REDIS_HOST: redis
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
     networks:
       - logistics-network
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: logistics-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@logistics.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
+  user-management-service:
+    build:
+      context: ./shared-services/user-management-service
+    container_name: logistics-user-management
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_management_db
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+
+  order-service:
+    build:
+      context: ./platform-core/order-service
+    container_name: logistics-order
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/order_db
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+
+  tenant-service:
+    build:
+      context: ./platform-core/tenant-service
+    container_name: logistics-tenant
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tenant_db
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+
+  # ==================== BFF & Adapters ====================
+
+  unified-bff-service:
+    build:
+      context: ./bff/unified-bff-service
+    container_name: logistics-unified-bff
+    ports:
+      - "8080:8080"
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+
+  b2b-order-service:
+    build:
+      context: ./b2b-engine/b2b-order-service
+    container_name: logistics-b2b-order
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/b2b_order_db
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+
+  parcel-service:
+    build:
+      context: ./b2c-engine/parcel-service
+    container_name: logistics-parcel
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/customer_db
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+
+  # ==================== Shared Domain Services ====================
+
+  geo-service:
+    build:
+      context: ./shared-services/geo-service
+    container_name: logistics-geo
+    depends_on:
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+    networks:
+      - logistics-network
+
+  document-service:
+    build:
+      context: ./shared-services/document-service
+    container_name: logistics-document
+    depends_on:
+      minio:
+        condition: service_started
+      service-discovery:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      AWS_S3_ENDPOINT: http://minio:9000
+      DOCUMENT_STORAGE_BASE_URL: http://minio:9000
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
     networks:
       - logistics-network
 
@@ -160,6 +268,8 @@ volumes:
   postgres-data:
     driver: local
   redis-data:
+    driver: local
+  minio-data:
     driver: local
 
 networks:

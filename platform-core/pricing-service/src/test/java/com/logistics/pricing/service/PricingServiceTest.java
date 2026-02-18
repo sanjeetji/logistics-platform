@@ -1,10 +1,10 @@
 package com.logistics.pricing.service;
 
-import com.logistics.pricing.dto.PriceEstimateRequest;
-import com.logistics.pricing.dto.PriceEstimateResponse;
+import com.logistics.platform.common.dto.pricing.PriceEstimateRequest;
+import com.logistics.platform.common.dto.pricing.PriceEstimateResponse;
 import com.logistics.pricing.model.PriceEstimate;
 import com.logistics.pricing.model.PricingRule;
-import com.logistics.pricing.model.ServiceLevel;
+import com.logistics.platform.common.dto.pricing.enums.ServiceLevel;
 import com.logistics.pricing.repository.PriceEstimateRepository;
 import com.logistics.pricing.repository.PricingRuleRepository;
 import com.logistics.pricing.repository.SurgeZoneRepository;

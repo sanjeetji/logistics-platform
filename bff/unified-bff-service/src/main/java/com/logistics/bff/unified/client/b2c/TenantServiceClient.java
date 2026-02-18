@@ -5,9 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "tenant-service", url = "${application.config.tenant-service-url}")
+@FeignClient(name = "tenant-service")
 public interface TenantServiceClient {
-
     @GetMapping("/api/v1/tenants/{id}")
-    TenantDto getTenantById(@PathVariable("id") Long id);
+    TenantDto getTenantById(@PathVariable("id") String id);
 }

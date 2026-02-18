@@ -1,6 +1,6 @@
 package com.logistics.bff.unified.controller.mobile;
 
-import com.logistics.bff.unified.service.MobileSettingsService;
+import com.logistics.bff.unified.service.mobile.MobileSettingsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -12,44 +12,29 @@ import java.util.Map;
 
 /**
  * Mobile Settings Controller
- * Handles app settings and configuration for mobile users
  */
 @RestController
-@RequestMapping("/api/v1/mobile")
+@RequestMapping("/api/v1/mobile/settings")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Mobile Settings", description = "App settings and configuration")
+@Tag(name = "Mobile Settings", description = "Settings and configurations for mobile app")
 public class MobileSettingsController {
 
     private final MobileSettingsService settingsService;
 
-    @GetMapping("/settings")
-    @Operation(summary = "Get settings", description = "Get app settings for user")
+    @GetMapping
+    @Operation(summary = "Get settings")
     public ResponseEntity<Map<String, Object>> getSettings(@RequestParam String userId) {
-        log.info("Fetching settings for user: {}", userId);
+        log.info("Mobile settings request for user: {}", userId);
         return ResponseEntity.ok(settingsService.getSettings(userId));
     }
 
-    @PutMapping("/settings")
-    @Operation(summary = "Update settings", description = "Update app settings")
+    @PutMapping
+    @Operation(summary = "Update settings")
     public ResponseEntity<Map<String, Object>> updateSettings(
             @RequestParam String userId,
-            @RequestBody Map<String, Object> settingsData) {
-        log.info("Updating settings for user: {}", userId);
-        return ResponseEntity.ok(settingsService.updateSettings(userId, settingsData));
-    }
-
-    @PostMapping("/feedback")
-    @Operation(summary = "Submit feedback", description = "Submit user feedback")
-    public ResponseEntity<Map<String, Object>> submitFeedback(@RequestBody Map<String, Object> feedbackData) {
-        log.info("Submitting feedback");
-        return ResponseEntity.ok(settingsService.submitFeedback(feedbackData));
-    }
-
-    @GetMapping("/help")
-    @Operation(summary = "Get help", description = "Get help resources and FAQs")
-    public ResponseEntity<Map<String, Object>> getHelp(@RequestParam(required = false) String category) {
-        log.info("Fetching help resources for category: {}", category);
-        return ResponseEntity.ok(settingsService.getHelp(category));
+            @RequestBody Map<String, Object> settings) {
+        log.info("Mobile settings update request for user: {}", userId);
+        return ResponseEntity.ok(settingsService.updateSettings(userId, settings));
     }
 }

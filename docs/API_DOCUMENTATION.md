@@ -14,7 +14,24 @@
 - [B2B Enterprise Journey](#b2b-enterprise-journey)
 - [Service Endpoints](#service-endpoints)
 - [Postman Collection](#postman-collection)
+- [Individual Service API Docs](#individual-service-api-docs)
 - [Swagger Documentation](#swagger-documentation)
+
+---
+
+## 🎯 Individual Service API Docs
+
+Full details, Swagger URLs, and key endpoints for each service are available in the [docs/api/](./api/) directory:
+
+- [Auth Service](./api/auth-service.md)
+- [User Management](./api/user-management-service.md)
+- [Order Core](./api/order-service.md)
+- [Tenant Service](./api/tenant-service.md)
+- [Unified BFF](./api/unified-bff-service.md)
+- [B2B Order Adapter](./api/b2b-order-service.md)
+- [B2C Parcel Adapter](./api/parcel-service.md)
+- [Geo Service](./api/geo-service.md)
+- [Document Service](./api/document-service.md)
 
 ---
 

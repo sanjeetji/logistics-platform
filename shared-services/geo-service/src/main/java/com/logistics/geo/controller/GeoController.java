@@ -1,39 +1,27 @@
 package com.logistics.geo.controller;
 
-import com.logistics.platform.common.dto.fleet.DriverLocationDto;
-import com.logistics.platform.common.dto.response.ApiResponse;
+import com.logistics.geo.dto.DistanceRequest;
+import com.logistics.geo.dto.DistanceResponse;
+import com.logistics.geo.dto.GeoCoordinates;
+import com.logistics.geo.service.GeoService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/v1/geo")
 @RequiredArgsConstructor
-@Slf4j
 public class GeoController {
 
-    @GetMapping("/drivers/nearby")
-    public ResponseEntity<ApiResponse<List<DriverLocationDto>>> findDriversNearby(
-            @RequestParam Double lat,
-            @RequestParam Double lng,
-            @RequestParam Double radiusKm) {
+    private final GeoService geoService;
 
-        log.info("Searching for drivers within {}km of {}, {}", radiusKm, lat, lng);
+    @PostMapping("/distance")
+    public ResponseEntity<DistanceResponse> calculateDistance(@RequestBody DistanceRequest request) {
+        return ResponseEntity.ok(geoService.calculateDistance(request));
+    }
 
-        // Placeholder: Return a mock driver for now
-        List<DriverLocationDto> drivers = new ArrayList<>();
-        drivers.add(DriverLocationDto.builder()
-                .driverId("driver-123")
-                .lat(lat + 0.001)
-                .lng(lng + 0.001)
-                .vehicleType("BIKE")
-                .distanceKm(0.5)
-                .build());
-
-        return ResponseEntity.ok(ApiResponse.success(drivers));
+    @GetMapping("/geocode")
+    public ResponseEntity<GeoCoordinates> geocode(@RequestParam String address) {
+        return ResponseEntity.ok(geoService.geocode(address));
     }
 }

@@ -1,8 +1,9 @@
 package com.logistics.pricing.controller;
 
 import com.logistics.platform.common.dto.response.ApiResponse;
-import com.logistics.pricing.dto.PriceEstimateRequest;
-import com.logistics.pricing.dto.PriceEstimateResponse;
+import com.logistics.platform.common.dto.pricing.PriceEstimateRequest;
+import com.logistics.platform.common.dto.pricing.PriceEstimateResponse;
+import com.logistics.platform.common.dto.pricing.enums.ServiceLevel;
 import com.logistics.pricing.model.PriceEstimate;
 import com.logistics.pricing.service.PricingService;
 import jakarta.validation.Valid;

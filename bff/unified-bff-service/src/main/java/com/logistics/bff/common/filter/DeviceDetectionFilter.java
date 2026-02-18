@@ -17,28 +17,17 @@ import java.io.IOException;
 @Slf4j
 public class DeviceDetectionFilter extends OncePerRequestFilter {
 
-    private static final String DEVICE_TYPE_HEADER = "X-Device-Type";
-    private static final String TENANT_ID_HEADER = "X-Tenant-Id";
-
     @Override
-    protected void doFilterInternal(@org.springframework.lang.NonNull HttpServletRequest request,
-            @org.springframework.lang.NonNull HttpServletResponse response,
-            @org.springframework.lang.NonNull FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
 
         String userAgent = request.getHeader("User-Agent");
         String deviceType = detectDeviceType(userAgent);
 
-        // Add device type to request attributes
-        request.setAttribute(DEVICE_TYPE_HEADER, deviceType);
-
-        // Extract tenant ID from header or path
-        String tenantId = request.getHeader(TENANT_ID_HEADER);
-        if (tenantId != null) {
-            request.setAttribute(TENANT_ID_HEADER, tenantId);
-        }
-
-        log.debug("Request from device: {}, tenant: {}, path: {}", deviceType, tenantId, request.getRequestURI());
+        log.debug("Detected device type: {} for User-Agent: {}", deviceType, userAgent);
+        request.setAttribute("X-Device-Type", deviceType);
 
         filterChain.doFilter(request, response);
     }
@@ -48,11 +37,10 @@ public class DeviceDetectionFilter extends OncePerRequestFilter {
             return "UNKNOWN";
         }
 
-        userAgent = userAgent.toLowerCase();
-
-        if (userAgent.contains("mobile") || userAgent.contains("android") || userAgent.contains("iphone")) {
+        String ua = userAgent.toLowerCase();
+        if (ua.contains("mobile") || ua.contains("android") || ua.contains("iphone")) {
             return "MOBILE";
-        } else if (userAgent.contains("tablet") || userAgent.contains("ipad")) {
+        } else if (ua.contains("tablet") || ua.contains("ipad")) {
             return "TABLET";
         } else {
             return "DESKTOP";

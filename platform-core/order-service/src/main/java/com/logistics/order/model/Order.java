@@ -100,4 +100,8 @@ public class Order extends BaseEntity {
 
         @Builder.Default
         private Boolean deleted = false;
+
+        @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+        @Builder.Default
+        private java.util.List<OrderStop> stops = new java.util.ArrayList<>();
 }

@@ -1,7 +1,6 @@
 package com.logistics.bff.unified.controller.mobile;
 
-import com.logistics.bff.unified.client.OrderServiceClient;
-import com.logistics.bff.unified.service.MobileOrderService;
+import com.logistics.bff.unified.service.mobile.MobileOrderService;
 import com.logistics.platform.dto.order.OrderDTO;
 import com.logistics.platform.dto.order.UpdateOrderRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +14,6 @@ import java.util.List;
 
 /**
  * Mobile Driver Order Controller
- * Handles order operations for driver mobile app
  */
 @RestController
 @RequestMapping("/api/v1/mobile/driver/orders")
@@ -24,38 +22,19 @@ import java.util.List;
 @Tag(name = "Driver Orders", description = "Order management for driver mobile app")
 public class DriverOrderController {
 
-    private final OrderServiceClient orderClient;
-    private final MobileOrderService orderService;
+        private final MobileOrderService mobileOrderService;
 
-    @GetMapping
-    @Operation(summary = "Get assigned orders", description = "Get all orders assigned to driver")
-    public ResponseEntity<List<OrderDTO>> getDriverOrders(
-            @RequestParam String driverId,
-            @RequestParam(required = false) String status) {
-        log.info("Fetching orders for driver: {}, status: {}", driverId, status);
-        return ResponseEntity.ok(orderClient.getDriverOrders(driverId, status));
-    }
+        @PostMapping("/{id}/accept")
+        @Operation(summary = "Accept order")
+        public ResponseEntity<OrderDTO> acceptOrder(@PathVariable String id) {
+                log.info("Mobile driver accept order request: {}", id);
+                return ResponseEntity.ok(mobileOrderService.acceptOrder(id));
+        }
 
-    @PostMapping("/{id}/accept")
-    @Operation(summary = "Accept order", description = "Driver accepts an assigned order")
-    public ResponseEntity<OrderDTO> acceptOrder(@PathVariable String id) {
-        log.info("Driver accepting order: {}", id);
-        return ResponseEntity.ok(orderService.acceptOrder(id));
-    }
-
-    @PostMapping("/{id}/reject")
-    @Operation(summary = "Reject order", description = "Driver rejects an assigned order")
-    public ResponseEntity<OrderDTO> rejectOrder(@PathVariable String id) {
-        log.info("Driver rejecting order: {}", id);
-        return ResponseEntity.ok(orderService.rejectOrder(id));
-    }
-
-    @PutMapping("/{id}/status")
-    @Operation(summary = "Update order status", description = "Update the status of an order")
-    public ResponseEntity<OrderDTO> updateOrderStatus(
-            @PathVariable String id,
-            @RequestBody UpdateOrderRequest request) {
-        log.info("Updating order status: {} to {}", id, request.getStatus());
-        return ResponseEntity.ok(orderClient.updateOrderStatus(id, request));
-    }
+        @PostMapping("/{id}/reject")
+        @Operation(summary = "Reject order")
+        public ResponseEntity<OrderDTO> rejectOrder(@PathVariable String id) {
+                log.info("Mobile driver reject order request: {}", id);
+                return ResponseEntity.ok(mobileOrderService.rejectOrder(id));
+        }
 }

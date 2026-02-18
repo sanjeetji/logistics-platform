@@ -1,6 +1,6 @@
 package com.logistics.bff.unified.controller.mobile;
 
-import com.logistics.bff.unified.service.DriverLocationService;
+import com.logistics.bff.unified.service.mobile.DriverLocationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  * Driver Location Controller
- * Handles location updates and navigation for driver mobile app
  */
 @RestController
 @RequestMapping("/api/v1/mobile/driver")
@@ -22,27 +21,27 @@ import java.util.Map;
 @Tag(name = "Driver Location", description = "Location management for driver mobile app")
 public class DriverLocationController {
 
-    private final DriverLocationService locationService;
+    private final DriverLocationService driverLocationService;
 
     @PostMapping("/location/update")
-    @Operation(summary = "Update location", description = "Update driver's current location")
+    @Operation(summary = "Update location")
     public ResponseEntity<Map<String, Object>> updateLocation(@RequestBody Map<String, Object> locationData) {
-        log.info("Updating driver location");
-        return ResponseEntity.ok(locationService.updateLocation(locationData));
+        log.info("Mobile driver location update request received");
+        return ResponseEntity.ok(driverLocationService.updateLocation(locationData));
     }
 
     @PostMapping("/location/batch")
-    @Operation(summary = "Batch location update", description = "Update multiple location points in batch")
+    @Operation(summary = "Batch location update")
     public ResponseEntity<Map<String, Object>> batchUpdateLocation(
             @RequestBody List<Map<String, Object>> locationBatch) {
-        log.info("Batch updating {} location points", locationBatch.size());
-        return ResponseEntity.ok(locationService.batchUpdateLocation(locationBatch));
+        log.info("Mobile driver batch location update request received");
+        return ResponseEntity.ok(driverLocationService.batchUpdateLocation(locationBatch));
     }
 
     @GetMapping("/navigation/{orderId}")
-    @Operation(summary = "Get navigation", description = "Get navigation details for an order")
+    @Operation(summary = "Get navigation")
     public ResponseEntity<Map<String, Object>> getNavigation(@PathVariable String orderId) {
-        log.info("Fetching navigation for order: {}", orderId);
-        return ResponseEntity.ok(locationService.getNavigation(orderId));
+        log.info("Mobile driver navigation request for order: {}", orderId);
+        return ResponseEntity.ok(driverLocationService.getNavigation(orderId));
     }
 }

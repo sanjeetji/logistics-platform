@@ -1,8 +1,8 @@
 package com.logistics.bff.unified.controller.b2c;
 
-import com.logistics.bff.unified.client.CustomerServiceClient;
-import com.logistics.platform.dto.customer.AddressDTO;
+import com.logistics.bff.unified.client.b2c.CustomerServiceClient;
 import com.logistics.platform.dto.customer.CustomerDTO;
+import com.logistics.platform.dto.customer.AddressDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,6 @@ import java.util.List;
 
 /**
  * B2C Customer Controller
- * Handles customer profile operations for B2C web app
  */
 @RestController
 @RequestMapping("/api/v1/bff/b2c/customer")
@@ -26,25 +25,25 @@ public class B2CCustomerController {
     private final CustomerServiceClient customerClient;
 
     @GetMapping("/profile")
-    @Operation(summary = "Get profile", description = "Get customer profile information")
+    @Operation(summary = "Get profile")
     public ResponseEntity<CustomerDTO> getProfile(@RequestParam String customerId) {
-        log.info("Fetching customer profile: {}", customerId);
-        return ResponseEntity.ok(customerClient.getCustomer(customerId));
+        log.info("B2C profile request for customer: {}", customerId);
+        return ResponseEntity.ok(customerClient.getCustomerById(customerId));
     }
 
     @PutMapping("/profile")
-    @Operation(summary = "Update profile", description = "Update customer profile information")
+    @Operation(summary = "Update profile")
     public ResponseEntity<CustomerDTO> updateProfile(
             @RequestParam String customerId,
             @RequestBody CustomerDTO customerData) {
-        log.info("Updating customer profile: {}", customerId);
+        log.info("B2C profile update request for customer: {}", customerId);
         return ResponseEntity.ok(customerClient.updateCustomer(customerId, customerData));
     }
 
     @GetMapping("/addresses")
-    @Operation(summary = "Get addresses", description = "Get all saved addresses for customer")
+    @Operation(summary = "Get addresses")
     public ResponseEntity<List<AddressDTO>> getAddresses(@RequestParam String customerId) {
-        log.info("Fetching addresses for customer: {}", customerId);
-        return ResponseEntity.ok(customerClient.getCustomerAddresses(customerId));
+        log.info("B2C addresses request for customer: {}", customerId);
+        return ResponseEntity.ok(customerClient.getAddresses(customerId));
     }
 }

@@ -1,13 +1,14 @@
 package com.logistics.bff.unified.service.b2c;
 
-import com.logistics.bff.unified.client.OrderServiceClient;
-import com.logistics.bff.unified.client.PricingServiceClient;
-import com.logistics.platform.dto.order.CreateOrderRequest;
+import com.logistics.bff.unified.client.b2c.PricingServiceClient;
+import com.logistics.bff.unified.client.order.OrderServiceClient;
 import com.logistics.platform.dto.order.OrderDTO;
-import com.logistics.platform.dto.order.UpdateOrderRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * B2C Order Service
@@ -24,23 +25,25 @@ public class B2COrderService {
     /**
      * Create order with automatic pricing calculation
      */
-    public OrderDTO createOrderWithPricing(CreateOrderRequest request) {
+    public OrderDTO createOrderWithPricing(OrderDTO orderRequest) {
+        log.info("Creating B2C order with pricing for customer: {}", orderRequest.getCustomerId());
         try {
-            // Calculate price before creating order
-            Double pricing = pricingClient.calculatePrice(
-                request.getPickupAddress(),
-                request.getDeliveryAddress(),
-                request.getWeight()
-            );
-            
-            // Set calculated amount (convert Double to BigDecimal)
-            request.setAmount(java.math.BigDecimal.valueOf(pricing));
-            
-            // Create order
-            return orderClient.createOrder(request);
+            // 1. Calculate price
+            Double calculatedPrice = pricingClient.calculatePrice(
+                    orderRequest.getPickupAddress(),
+                    orderRequest.getDeliveryAddress(),
+                    orderRequest.getWeight() != null ? orderRequest.getWeight().doubleValue() : 0.0);
+
+            // 2. Set price in order if successful
+            if (calculatedPrice != null) {
+                orderRequest.setAmount(BigDecimal.valueOf(calculatedPrice));
+            }
+
+            // 3. Create order
+            return orderClient.createOrder(orderRequest);
         } catch (Exception e) {
-            log.error("Failed to create order with pricing", e);
-            throw new RuntimeException("Failed to create order: " + e.getMessage());
+            log.error("Failed to create B2C order with pricing", e);
+            throw new RuntimeException("Order creation failed: " + e.getMessage());
         }
     }
 
@@ -48,14 +51,12 @@ public class B2COrderService {
      * Cancel order
      */
     public OrderDTO cancelOrder(String orderId) {
+        log.info("Cancelling B2C order: {}", orderId);
         try {
-            return orderClient.updateOrder(orderId, 
-                UpdateOrderRequest.builder()
-                    .status("CANCELLED")
-                    .build());
+            return orderClient.updateOrderStatus(orderId, "CANCELLED");
         } catch (Exception e) {
-            log.error("Failed to cancel order: {}", orderId, e);
-            throw new RuntimeException("Failed to cancel order: " + e.getMessage());
+            log.error("Failed to cancel B2C order", e);
+            throw new RuntimeException("Cancel failed: " + e.getMessage());
         }
     }
 }

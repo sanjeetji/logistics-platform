@@ -1,12 +1,13 @@
 package com.logistics.pricing.service;
 
-import com.logistics.pricing.dto.PriceEstimateRequest;
-import com.logistics.pricing.dto.PriceEstimateResponse;
+import com.logistics.platform.common.dto.pricing.PriceEstimateRequest;
+import com.logistics.platform.common.dto.pricing.PriceEstimateResponse;
 import com.logistics.pricing.model.PriceEstimate;
 import com.logistics.pricing.model.PricingRule;
 import com.logistics.pricing.repository.PriceEstimateRepository;
 import com.logistics.pricing.repository.PricingRuleRepository;
 import com.logistics.pricing.client.MLPriceClient;
+import com.logistics.platform.common.dto.pricing.enums.ServiceLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -87,7 +88,7 @@ public class PricingService {
                 log.info("Resolved Zones: From={}, To={}", fromZoneId, toZoneId);
 
                 // Filter by requested service level if provided
-                List<com.logistics.pricing.model.ServiceLevel> targetLevels;
+                List<ServiceLevel> targetLevels;
                 if (request.getServiceLevel() != null) {
                         targetLevels = List.of(request.getServiceLevel());
                 } else {
@@ -128,7 +129,7 @@ public class PricingService {
                                         request.getPickupLongitude());
                 }
 
-                for (com.logistics.pricing.model.ServiceLevel level : targetLevels) {
+                for (ServiceLevel level : targetLevels) {
                         // Find best rule for this level
                         PricingRule bestRule = findBestRule(rules, level, fromZoneId, toZoneId);
                         if (bestRule != null) {
@@ -162,7 +163,7 @@ public class PricingService {
                 return "NIGHT";
         }
 
-        private PricingRule findBestRule(List<PricingRule> rules, com.logistics.pricing.model.ServiceLevel level,
+        private PricingRule findBestRule(List<PricingRule> rules, ServiceLevel level,
                         String fromZoneId, String toZoneId) {
                 return rules.stream()
                                 .filter(r -> r.getServiceLevel() == level)

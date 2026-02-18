@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderDTO {
-    private String id;
+    private String orderId;
     private String trackingNumber;
     private String customerId;
     private String driverId;
@@ -29,6 +29,13 @@ public class OrderDTO {
     private Double weight;
     private String specialInstructions;
     private String tenantId;
+
+    // Unified Order Fields
+    private String type;
+    private java.util.Map<String, Object> metadata;
+    private java.util.List<OrderStopDto> stops;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
 }

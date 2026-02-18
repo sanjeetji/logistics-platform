@@ -1,6 +1,7 @@
 package com.logistics.pricing.model;
 
 import com.logistics.platform.utils.model.BaseEntity;
+import com.logistics.platform.common.dto.pricing.enums.ServiceLevel;
 import jakarta.persistence.*;
 import lombok.*;
 

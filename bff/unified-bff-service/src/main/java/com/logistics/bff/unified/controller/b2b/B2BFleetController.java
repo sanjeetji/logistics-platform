@@ -1,7 +1,6 @@
 package com.logistics.bff.unified.controller.b2b;
 
-import com.logistics.bff.unified.client.FleetServiceClient;
-import com.logistics.bff.unified.service.FleetManagementService;
+import com.logistics.bff.unified.service.b2b.FleetManagementService;
 import com.logistics.platform.dto.fleet.DriverDTO;
 import com.logistics.platform.dto.fleet.VehicleDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +15,6 @@ import java.util.Map;
 
 /**
  * B2B Fleet Management Controller
- * Handles fleet operations for B2B clients
  */
 @RestController
 @RequestMapping("/api/v1/bff/b2b/fleet")
@@ -25,56 +23,30 @@ import java.util.Map;
 @Tag(name = "B2B Fleet", description = "Fleet management for B2B clients")
 public class B2BFleetController {
 
-    private final FleetServiceClient fleetClient;
-    private final FleetManagementService fleetManagementService;
+        private final FleetManagementService fleetService;
 
-    @GetMapping("/drivers")
-    @Operation(summary = "List drivers", description = "Get all drivers with optional filters")
-    public ResponseEntity<List<DriverDTO>> getDrivers(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Boolean isAvailable) {
-        log.info("Fetching drivers - status: {}, available: {}", status, isAvailable);
-        return ResponseEntity.ok(fleetClient.getDrivers(status, isAvailable));
-    }
+        @PostMapping("/assign")
+        @Operation(summary = "Assign driver")
+        public ResponseEntity<Map<String, Object>> assignDriver(@RequestBody Map<String, Object> assignmentData) {
+                log.info("B2B driver assignment request received");
+                return ResponseEntity.ok(fleetService.assignDriver(assignmentData));
+        }
 
-    @GetMapping("/drivers/{id}")
-    @Operation(summary = "Get driver details", description = "Get detailed information about a specific driver")
-    public ResponseEntity<DriverDTO> getDriver(@PathVariable Long id) {
-        log.info("Fetching driver: {}", id);
-        return ResponseEntity.ok(fleetClient.getDriver(id));
-    }
+        @GetMapping("/availability")
+        @Operation(summary = "Check availability")
+        public ResponseEntity<Map<String, Object>> checkAvailability(
+                        @RequestParam String location,
+                        @RequestParam(required = false) String timeSlot) {
+                log.info("B2B fleet availability check at: {}", location);
+                return ResponseEntity.ok(fleetService.checkAvailability(location, timeSlot));
+        }
 
-    @GetMapping("/vehicles")
-    @Operation(summary = "List vehicles", description = "Get all vehicles with optional filters")
-    public ResponseEntity<List<VehicleDTO>> getVehicles(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String type) {
-        log.info("Fetching vehicles - status: {}, type: {}", status, type);
-        return ResponseEntity.ok(fleetClient.getVehicles(status, type));
-    }
-
-    @PostMapping("/assign")
-    @Operation(summary = "Assign driver", description = "Assign a driver to an order")
-    public ResponseEntity<Map<String, Object>> assignDriver(@RequestBody Map<String, Object> assignmentData) {
-        log.info("Assigning driver to order");
-        return ResponseEntity.ok(fleetManagementService.assignDriver(assignmentData));
-    }
-
-    @GetMapping("/availability")
-    @Operation(summary = "Check availability", description = "Check driver availability for a specific time and location")
-    public ResponseEntity<Map<String, Object>> checkAvailability(
-            @RequestParam String location,
-            @RequestParam(required = false) String timeSlot) {
-        log.info("Checking driver availability for location: {}", location);
-        return ResponseEntity.ok(fleetManagementService.checkAvailability(location, timeSlot));
-    }
-
-    @GetMapping("/performance")
-    @Operation(summary = "Driver performance", description = "Get driver performance metrics")
-    public ResponseEntity<Map<String, Object>> getPerformanceMetrics(
-            @RequestParam(required = false) Long driverId,
-            @RequestParam(required = false) String period) {
-        log.info("Fetching performance metrics - driverId: {}, period: {}", driverId, period);
-        return ResponseEntity.ok(fleetManagementService.getPerformanceMetrics(driverId, period));
-    }
+        @GetMapping("/performance")
+        @Operation(summary = "Driver performance")
+        public ResponseEntity<Map<String, Object>> getPerformanceMetrics(
+                        @RequestParam(required = false) Long driverId,
+                        @RequestParam(required = false) String period) {
+                log.info("B2B fleet performance metrics request");
+                return ResponseEntity.ok(fleetService.getPerformanceMetrics(driverId, period));
+        }
 }

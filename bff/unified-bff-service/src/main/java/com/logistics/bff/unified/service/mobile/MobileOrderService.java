@@ -1,8 +1,7 @@
 package com.logistics.bff.unified.service.mobile;
 
-import com.logistics.bff.unified.client.OrderServiceClient;
+import com.logistics.bff.unified.client.order.OrderServiceClient;
 import com.logistics.platform.dto.order.OrderDTO;
-import com.logistics.platform.dto.order.UpdateOrderRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,13 +21,11 @@ public class MobileOrderService {
      * Driver accepts an order
      */
     public OrderDTO acceptOrder(String orderId) {
+        log.info("Driver accepting order: {}", orderId);
         try {
-            return orderClient.updateOrderStatus(orderId,
-                UpdateOrderRequest.builder()
-                    .status("CONFIRMED")
-                    .build());
+            return orderClient.updateOrderStatus(orderId, "CONFIRMED");
         } catch (Exception e) {
-            log.error("Failed to accept order: {}", orderId, e);
+            log.error("Failed to accept order", e);
             throw new RuntimeException("Failed to accept order: " + e.getMessage());
         }
     }
@@ -37,13 +34,11 @@ public class MobileOrderService {
      * Driver rejects an order
      */
     public OrderDTO rejectOrder(String orderId) {
+        log.info("Driver rejecting order: {}", orderId);
         try {
-            return orderClient.updateOrderStatus(orderId,
-                UpdateOrderRequest.builder()
-                    .status("REJECTED")
-                    .build());
+            return orderClient.updateOrderStatus(orderId, "REJECTED");
         } catch (Exception e) {
-            log.error("Failed to reject order: {}", orderId, e);
+            log.error("Failed to reject order", e);
             throw new RuntimeException("Failed to reject order: " + e.getMessage());
         }
     }

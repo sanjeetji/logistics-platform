@@ -1,17 +1,21 @@
 package com.logistics.bff.unified.client.b2c;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 @FeignClient(name = "promotion-service")
 public interface PromotionServiceClient {
-    
     @GetMapping("/api/promotions/active")
-    Object getActivePromotions(@RequestParam String customerId);
-    
+    List<Object> getActivePromotions();
+
     @PostMapping("/api/promotions/apply")
-    Object applyPromoCode(@RequestBody Object request);
-    
+    Object applyPromotion(@RequestParam String promoCode, @RequestParam String userId);
+
     @GetMapping("/api/promotions/{promoCode}/validate")
-    Object validatePromoCode(@PathVariable String promoCode);
+    Object validatePromotion(@PathVariable("promoCode") String promoCode);
 }

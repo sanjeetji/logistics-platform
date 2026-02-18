@@ -8,7 +8,6 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -56,10 +55,6 @@ public class B2BOrder extends BaseEntity {
 
     private Long slaRemainingMinutes; // Minutes remaining when paused
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<OrderStop> stops = new ArrayList<>();
-
     // Custom metadata for client-specific fields
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
@@ -74,10 +69,4 @@ public class B2BOrder extends BaseEntity {
 
     @Column(columnDefinition = "text")
     private String notes;
-
-    // Helper method to add stop
-    public void addStop(OrderStop stop) {
-        stops.add(stop);
-        stop.setOrder(this);
-    }
 }

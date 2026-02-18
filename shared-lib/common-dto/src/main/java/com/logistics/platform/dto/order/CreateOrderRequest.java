@@ -23,4 +23,11 @@ public class CreateOrderRequest {
     private BigDecimal amount;
     private String paymentMethod; // CASH, CARD, WALLET, UPI
     private String tenantId;
+
+    // Unified Order Fields
+    private String type; // B2B_SHIPMENT, B2C_ON_DEMAND, etc.
+    private java.util.Map<String, Object> metadata;
+    private java.util.List<OrderStopDto> stops;
+    private LocalDateTime scheduledTime;
+
 }

@@ -1,6 +1,6 @@
 package com.logistics.bff.unified.controller.b2c;
 
-import com.logistics.bff.unified.client.NotificationServiceClient;
+import com.logistics.bff.unified.client.b2c.NotificationServiceClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  * B2C Notifications Controller
- * Handles notifications for B2C customers
  */
 @RestController
 @RequestMapping("/api/v1/bff/b2c/notifications")
@@ -25,18 +24,19 @@ public class B2CNotificationsController {
     private final NotificationServiceClient notificationClient;
 
     @GetMapping
-    @Operation(summary = "Get notifications", description = "Get all notifications for user")
-    public ResponseEntity<List<Map<String, Object>>> getNotifications(
+    @Operation(summary = "Get notifications")
+    public ResponseEntity<List<Object>> getNotifications(
             @RequestParam String userId,
             @RequestParam(required = false) Boolean unreadOnly) {
-        log.info("Fetching notifications for user: {}, unreadOnly: {}", userId, unreadOnly);
-        return ResponseEntity.ok(notificationClient.getUserNotifications(userId, unreadOnly));
+        log.info("B2C notifications request for user: {}", userId);
+        return ResponseEntity.ok(notificationClient.getNotifications(userId));
     }
 
     @PutMapping("/{id}/read")
-    @Operation(summary = "Mark as read", description = "Mark notification as read")
-    public ResponseEntity<Map<String, Object>> markAsRead(@PathVariable String id) {
-        log.info("Marking notification as read: {}", id);
-        return ResponseEntity.ok(notificationClient.markAsRead(id));
+    @Operation(summary = "Mark as read")
+    public ResponseEntity<Void> markAsRead(@PathVariable String id) {
+        log.info("B2C mark notification as read: {}", id);
+        notificationClient.markAsRead(id);
+        return ResponseEntity.ok().build();
     }
 }

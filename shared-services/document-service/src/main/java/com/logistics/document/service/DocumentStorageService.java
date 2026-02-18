@@ -1,84 +1,63 @@
 package com.logistics.document.service;
 
+import com.logistics.document.model.DocumentMetadata;
+import com.logistics.document.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class DocumentStorageService {
 
-    private final S3Client s3Client;
+    private final DocumentRepository documentRepository;
+    private final io.awspring.cloud.s3.S3Template s3Template;
 
-    @Value("${document.storage.bucket-name:logistics-documents}")
+    @org.springframework.beans.factory.annotation.Value("${aws.s3.bucket-name:logistics-documents}")
     private String bucketName;
 
-    @Value("${document.storage.base-url:http://localhost:9000}")
-    private String baseUrl;
+    public DocumentMetadata uploadFile(MultipartFile file) {
+        String key = "uploads/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
 
-    /**
-     * Upload document to S3/MinIO
-     */
-    public String uploadDocument(MultipartFile file, String folder) throws IOException {
-        String fileName = generateFileName(file.getOriginalFilename(), folder);
+        try {
+            // Upload to S3 using S3Template
+            s3Template.upload(bucketName, key, file.getInputStream());
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(fileName)
-                .contentType(file.getContentType())
-                .build();
+            DocumentMetadata metadata = DocumentMetadata.builder()
+                    .fileName(file.getOriginalFilename())
+                    .contentType(file.getContentType())
+                    .size(file.getSize())
+                    .storagePath(key) // Storing Key relative to bucket
+                    .uploadedAt(LocalDateTime.now())
+                    .build();
 
-        s3Client.putObject(putObjectRequest,
-                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-
-        String documentUrl = String.format("%s/%s/%s", baseUrl, bucketName, fileName);
-        log.info("Uploaded document: {}", documentUrl);
-
-        return documentUrl;
-    }
-
-    /**
-     * Download document from S3/MinIO
-     */
-    public InputStream downloadDocument(String fileName) {
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucketName)
-                .key(fileName)
-                .build();
-
-        return s3Client.getObject(getObjectRequest);
-    }
-
-    /**
-     * Delete document from S3/MinIO
-     */
-    public void deleteDocument(String fileName) {
-        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(fileName)
-                .build();
-
-        s3Client.deleteObject(deleteObjectRequest);
-        log.info("Deleted document: {}", fileName);
-    }
-
-    private String generateFileName(String originalFilename, String folder) {
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            return documentRepository.save(metadata);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Failed to read file input stream", e);
+        } catch (Exception e) {
+            // Check if it's an S3 config issue (e.g. valid credentials missing)
+            // Fallback provided? In this case, we rethrow for now or could save local.
+            throw new RuntimeException("Failed to upload to S3: " + e.getMessage(), e);
         }
-        return String.format("%s/%s%s", folder, UUID.randomUUID(), extension);
+    }
+
+    public DocumentMetadata getDocumentMetadata(Long id) {
+        return documentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+    }
+
+    public String getPresignedUrl(Long id) {
+        DocumentMetadata meta = getDocumentMetadata(id);
+        try {
+            // Generate presigned URL valid for 1 hour
+            java.net.URL url = s3Template.createSignedGetURL(bucketName, meta.getStoragePath(),
+                    java.time.Duration.ofHours(1));
+            return url.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate presigned URL", e);
+        }
     }
 }
