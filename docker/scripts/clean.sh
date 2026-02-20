@@ -7,7 +7,11 @@ COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
 PROJECT_ROOT="$SCRIPT_DIR/../.."
 
 # Stop and remove containers
-docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform down -v
+# Stop and remove containers via compose
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" down -v 2>/dev/null || true
+
+# Force remove specific containers (in case of project name mismatch)
+docker rm -f logistics-postgres logistics-kafka logistics-zookeeper logistics-redis logistics-minio logistics-app 2>/dev/null || true
 
 # Remove all logistics images
 docker rmi $(docker images "logistics-*" -q) 2>/dev/null || true

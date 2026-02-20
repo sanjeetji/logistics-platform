@@ -1,130 +1,92 @@
-# 🐳 Total Docker Operations Guide
+# 🐳 Docker Operations Guide (Logistic Platform Edition)
 
-This is the definitive guide for managing the Logistics Platform environment. It covers everything from local development to full platform orchestration.
+This guide covers how to run the **Logistics Platform Logistic Platform** using Docker.
 
 ---
 
 ## 1. Prerequisites & Setup
 
-When using Docker, **you do NOT need to install PostgreSQL, Redis, or Kafka locally**. Use this guide if you want a "batteries-included" experience where the environment is set up for you.
+*   **Docker Desktop**: Installed and running.
+*   **Disk Space**: 10GB+ free.
+*   **Ports**: Ensure 8080 (App), 5432 (DB), 6379 (Redis), 9092 (Kafka) are free.
 
-*   **Docker Desktop**: Running with **16GB+ RAM** allocated (Settings -> Resources).
-*   **Disk Space**: 20GB+ free.
-*   **No Local Conflicts**: Ensure local Postgres/Redis are **STOPPED** so ports 5432/6379 are free for Docker.
+### Included Infrastructure
+*   **Database**: PostgreSQL 16
+*   **Cache**: Redis 7
+*   **Messaging**: Kafka + Zookeeper
+*   **Object Storage**: MinIO
 
-### Included Tools (No Installation Needed)
-*   **Database**: PostgreSQL 16 (Containerized)
-*   **DB GUI**: PgAdmin 4 (Containerized at `http://localhost:5050`)
-*   **Cache**: Redis 7 (Containerized)
-*   **Messaging**: Kafka + Zookeeper (Containerized)
-*   **Service Registry**: Eureka (Containerized)
+---
 
-> **Key Benefit**: You don't need to manually configure versions or connection strings. It just works.
+## 2. Quick Start
 
-### Initial Build
-Run this **once** to package the JARs that Docker will wrap:
+### 🟢 Run Everything (App + Infra)
+This gets you a fully working environment.
+
 ```bash
-mvn clean package -DskipTests
+./docker/scripts/run-platform.sh start
+```
+*   **App URL**: http://localhost:8080
+*   **PgAdmin**: http://localhost:5050
+*   **MinIO**: http://localhost:9001
+
+### 🔴 Stop Everything
+```bash
+./docker/scripts/run-platform.sh stop
 ```
 
 ---
 
-## 2. Deployment Scenarios
+## 3. Development Mode (Hybrid)
 
-### 🟢 Scenario A: Infrastructure Only (For Service Developers)
-*Use this if you want to run one service in your IDE but need the DB, Message Broker, and Registry in Docker.*
-```bash
-docker-compose up -d
-```
-*Services included: PostgreSQL, Redis, Kafka, Zookeeper, Eureka, Config Server, Gateway, PgAdmin.*
+If you want to run the **Java App in your IDE** (for debugging) but keep the **Database/Kafka in Docker**:
 
-### 🟠 Scenario B: Infrastructure + One Specific Service
-*Use this to test how a single service interacts with the shared environment.*
-```bash
-# Example: Running only the Auth Service
-docker-compose -f docker-compose.yml -f docker/docker-compose-core.yml up -d --build auth-service
-```
+1.  **Start Infrastructure Only**:
+    ```bash
+    docker compose up -d postgres redis kafka zookeeper minio
+    ```
 
-### 🔵 Scenario C: Engine-Level Focus (B2B or B2C)
-*Use this to work on a specific business vertical.*
+2.  **Run Keys**:
+    *   Postgres: `localhost:5432` (User: `logistics_user`, Pass: `logistics_pass`)
+    *   Redis: `localhost:6379`
+    *   Kafka: `localhost:9092`
 
-**B2B Engine (Infra + Core + B2B):**
-```bash
-docker-compose -f docker-compose.yml \
-               -f docker/docker-compose-core.yml \
-               -f docker/docker-compose-b2b.yml up -d --build
-```
-
-**B2C Engine (Infra + Core + B2C):**
-```bash
-docker-compose -f docker-compose.yml \
-               -f docker/docker-compose-core.yml \
-               -f docker/docker-compose-b2c.yml up -d --build
-```
-
-### 🔴 Scenario D: Full Platform (All Services)
-*Use this for integration testing or complete system demo. Requires significant RAM.*
-```bash
-docker-compose -f docker-compose.yml \
-               -f docker/docker-compose-core.yml \
-               -f docker/docker-compose-b2b.yml \
-               -f docker/docker-compose-b2c.yml up -d --build
-```
-
-### 🟡 Scenario E: Safe Grouped Startup (Recommended for Stability)
-*Use this to avoid system freezes by starting services in phases. Always check RAM usage between steps.*
-
-**Step 1: Start Core Infrastructure (Wait for "Healthy" status)**
-```bash
-docker compose -f docker/docker-compose.yml -p logistics-platform up -d zookeeper kafka service-discovery config-server gateway-service auth-service postgres-db
-```
-
-**Step 2: Start Business Verticals (Choose one or both)**
-```bash
-# B2C (Consumer) Flow
-docker compose -f docker/docker-compose.yml -p logistics-platform up -d user-service order-service fleet-service notification-service
-
-# B2B (Business) Flow
-docker compose -f docker/docker-compose.yml -p logistics-platform up -d tenant-service b2b-order-service billing-service inventory-service
-```
+3.  **Run App in IDE**:
+    Start `LogisticApplication.java`. It will connect to the exposed Docker ports.
 
 ---
 
-## 3. Maintenance & Lifecycle
+## 4. Maintenance Commands
 
 | Action | Command | Description |
 | :--- | :--- | :--- |
-| **Stop** | `docker-compose stop` | Pauses containers (data safe). |
-| **Shut Down** | `docker-compose down` | Removes containers/networks (data safe). |
-| **Hard Reset** | `docker-compose down -v` | **Deletes all DB data** and volumes. |
-| **Update Code** | `docker-compose up -d --build <service>` | Rebuilds and restarts 1 specific service. |
-| **Check Logs** | `docker logs -f <container_name>` | Follow real-time logs for a service. |
-| **Deep Clean** | `docker system prune -a -f` | Deletes all unused images and build cache. |
+| **Build Project** | `./docker/scripts/run-platform.sh build` | Recompile & rebuild Docker image. |
+| **Check Status** | `./docker/scripts/check-status.sh` | See what's running. |
+| **View Logs** | `./docker/scripts/run-platform.sh logs` | See all logs. |
+| **Clean All** | `./docker/scripts/clean.sh` | **WARNING**: Deletes all data. |
 
 ---
 
-## 4. Port & Credential Map
-
-| Component | URL / Port | Credentials (User/Pass) |
-| :--- | :--- | :--- |
-| **API Gateway** | `http://localhost:8080` | - |
-| **Service Registry** | `http://localhost:8761` | - |
-| **Config Server** | `http://localhost:8888` | `admin` / `admin_password` |
-| **PostgreSQL** | `localhost:5432` | `logistics_user` / `logistics_pass` |
-| **PgAdmin (GUI)** | `http://localhost:5050` | `admin@logistics.com` / `admin` |
-| **Redis** | `localhost:6379` | `redispass` |
-| **Kafka UI** | `http://localhost:9021` | - |
-
 ---
 
-## 5. Troubleshooting Checklist
+## 6. Docker Image Management
 
-1.  **"Database connection failed"**:
-    - Check if `logistics-postgres` is running: `docker ps`.
-    - Ensure your service points to host `postgres` (not `localhost`) when inside Docker.
-2.  **"Eureka registration taking too long"**:
-    - This is normal on first start. Wait for `logistics-eureka` to show `UP` (healthy).
-3.  **"Out of Memory"**:
-    - Check your Docker Desktop RAM. If it hits 100%, services will crash silently.
-4.  **"Changes not reflected"**:
-    - Did you forget the `--build` flag? Did you run `mvn package` before building the Docker image?
+To keep your development environment clean and efficient, use the following commands.
+
+### 📋 Identify Required Images
+To see only the images currently required and used by the Logistics Platform:
+```bash
+docker ps --format "table {{.Image}}\t{{.Names}}\t{{.Status}}"
+```
+*This identifies exactly which images are powering your running containers.*
+
+### 🗑️ Cleanup Unused Images
+To safely delete all images that are not being used by any container (dangling layers + unused build images):
+```bash
+docker image prune -a
+```
+*This will reclaim significant disk space by removing old build-time images like Maven or base JRE layers.*
+
+### 🛠️ Identifying "Required" vs "Unused"
+*   **Required**: Images like `postgis`, `redis`, `kafka`, and `docker-logistic-app`. These are specified in the `docker-compose.yml`.
+*   **Unused**: Any image with a `<none>` tag or old base images (like `maven` or `eclipse-temurin`) that were only needed during the build process.

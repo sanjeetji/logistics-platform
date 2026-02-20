@@ -14,6 +14,6 @@ docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics
 docker rmi $(docker images "logistics-*" -q) 2>/dev/null || true
 
 # Build and start
-docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_DEV_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d --build
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d --build
 
 echo "✅ Services rebuilt and started."

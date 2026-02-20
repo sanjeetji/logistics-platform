@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -90,13 +91,16 @@
 
     <!-- MODULES -->
     <modules>
-        <!-- INFRASTRUCTURE SERVICES -->
-        <module>infrastructure/config-server</module>
-        <module>infrastructure/service-discovery</module>
-        <module>infrastructure/gateway-service</module>
+        <!-- NEW DOMAIN MODULES -->
+        <module>identity-module</module>
+        <module>fulfillment-module</module>
+        <module>fleet-module</module>
+        <module>b2b-inventory-module</module>
+        <module>finance-module</module>
+        <module>platform-support-module</module>
+        <module>logistic-app</module>
 
-
-        <!-- SHARED LIBRARIES -->
+        <!-- SHARED LIBRARIES (KEPT AS IS) -->
         <module>shared-lib/common-dto</module>
         <module>shared-lib/common-utils</module>
         <module>shared-lib/common-exceptions</module>
@@ -104,70 +108,8 @@
         <module>shared-lib/security-core</module>
         <module>shared-lib/event-contracts</module>
 
-        <!-- PLATFORM CORE -->
-        <module>platform-core/auth-service</module>
-        <module>platform-core/tenant-service</module>
-        <module>platform-core/fleet-service</module>
-        <module>platform-core/order-service</module>
-        <module>platform-core/dispatch-service</module>
-        <module>platform-core/pricing-service</module>
-
-        <module>platform-core/orchestration-service</module>
-        <module>platform-core/wallet-service</module>
-        <module>platform-core/promo-code-service</module>
-        <module>platform-core/loyalty-service</module>
-
-
-        <!-- B2B ENGINE -->
-        <module>b2b-engine/team-service</module>
-        <module>b2b-engine/shipment-service</module>
-        <module>b2b-engine/warehouse-service</module>
-        <module>b2b-engine/inventory-service</module>
-        <module>b2b-engine/compliance-service</module>
-        <module>b2b-engine/b2b-order-service</module>
-
-        <!-- B2C ENGINE -->
-        <module>b2c-engine/parcel-service</module>
-        <module>b2c-engine/marketplace-intelligence-service</module>
-
-
-        <!-- SHARED SERVICES -->
-        <module>shared-services/returns-service</module>
-        <module>shared-services/tracking-service</module>
-        <module>shared-services/payment-service</module>
-        <module>shared-services/notification-service</module>
-        <module>shared-services/billing-service</module>
-        <module>shared-services/document-service</module>
-        <module>shared-services/geo-service</module>
-        <module>shared-services/audit-log-service</module>
-        <module>shared-services/chat-service</module>
-        <module>shared-services/integration-service</module>
-        <module>shared-services/master-data-service</module>
-        <module>shared-services/payout-service</module>
-        <module>shared-services/rating-service</module>
-        <module>shared-services/search-service</module>
-        <module>shared-services/streaming-analytics-service</module>
-        <module>shared-services/user-management-service</module>
-        <module>shared-services/route-optimization-service</module>
-        <module>shared-services/tenant-onboarding-service</module>
-        <module>shared-services/shift-management-service</module>
-        <module>shared-services/edi-service</module>
-
-        <module>shared-services/sla-service</module>
-        <module>shared-services/exception-management-service</module>
-        <module>shared-services/location-hub-service</module>
-        <module>shared-services/control-tower-service</module>
-        <module>shared-services/webhook-worker-service</module>
-
-        <module>b2b-engine/erp-integration-service</module>
-
-
-        <!-- MOBILE BACKENDS -->
-
-
-        <!-- BFF (Backend for Frontend) -->
-        <module>bff/unified-bff-service</module>
-        <module>rules-engine-service</module>
+        <!-- EXTERNAL INTEGRATIONS -->
+        <!-- ml-service is external python -->
     </modules>
 
     <!-- DEPENDENCY MANAGEMENT -->
@@ -409,14 +351,15 @@
 
         <!-- Testing -->
         <dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 <!-- Apache Commons Lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
         </dependency>
 
         <!-- Distributed Tracing -->

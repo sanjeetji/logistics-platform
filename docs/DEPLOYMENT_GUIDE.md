@@ -1,163 +1,59 @@
-# Infrastructure Deployment Guide
+# Deployment Guide (Logistic Platform)
 
-## Quick Start with Docker Compose
+## Strategy
+Deploy the single `logistic_platform-app.jar` artifact. This replaces the complex microservices orchestration.
 
-### Start Infrastructure Only (Recommended for Development)
+### Artifacts to Deploy
+1.  **Application**: `logistic_platform-app/target/logistic_platform-app-1.0.0-SNAPSHOT.jar`
+2.  **Docker Image**: `logistics-logistic_platform:latest`
 
-```bash
-# Start only infrastructure services (PostgreSQL, Kafka, Redis)
-docker-compose up -d postgres zookeeper kafka redis
+## Deployment Options
 
-# Check status
-docker-compose ps
-
-# View logs
-docker-compose logs -f
-```
-
-### Start Full Platform with Docker
+### Option 1: Docker (Recommended)
+Build and run the single container.
 
 ```bash
-# Build and start all services
-docker-compose up --build -d
-
-# Check status
-docker-compose ps
-
-# View logs for specific service
-docker-compose logs -f api-gateway
-
-# Stop all services
-docker-compose down
+docker build -t logistics-logistic_platform -f logistic_platform-app/Dockerfile .
+docker run -p 8080:8080 --env-file .env logistics-logistic_platform
 ```
 
-## Manual Deployment (Without Docker)
+### Option 2: Kubernetes (Simplified)
+You only need **one** Deployment manifest now, instead of 20+.
 
-### Prerequisites
-
-Since Homebrew services aren't installed, you have two options:
-
-**Option 1: Use Docker for Infrastructure** (Recommended)
-```bash
-# Start infrastructure with Docker
-docker-compose up -d postgres zookeeper kafka redis
-
-# Then run application services manually
-cd infrastructure/config-server
-mvn spring-boot:run
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logistics-logistic_platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logistics-logistic_platform
+  template:
+    metadata:
+      labels:
+        app: logistics-logistic_platform
+    spec:
+      containers:
+      - name: logistic_platform
+        image: logistics-logistic_platform:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PROFILES_ACTIVE
+          value: "prod"
 ```
 
-**Option 2: Install Infrastructure Services**
-```bash
-# Install PostgreSQL
-brew install postgresql@16
+## Infrastructure Requirements
+*   **Database**: PostgreSQL 15+
+*   **Redis**: 7+
+*   **Kafka**: 3.5+
+*   **MinIO / S3**: For object storage
 
-# Install Kafka (includes Zookeeper)
-brew install kafka
-
-# Install Redis
-brew install redis
-
-# Start services
-brew services start postgresql@16
-brew services start zookeeper
-brew services start kafka
-brew services start redis
-```
-
-### Start Application Services
-
-#### Step 1: Start Infrastructure Services (Config Server & Eureka)
-
-```bash
-# Terminal 1: Config Server
-cd infrastructure/config-server
-mvn spring-boot:run
-
-# Terminal 2: Service Discovery (wait for config-server)
-cd infrastructure/service-discovery
-mvn spring-boot:run
-
-# Terminal 3: API Gateway (wait for eureka)
-cd infrastructure/api-gateway
-mvn spring-boot:run
-```
-
-#### Step 2: Start Core Services
-
-```bash
-# Terminal 4: Auth Service
-cd platform-core/auth-service
-mvn spring-boot:run
-
-# Terminal 5: Order Service
-cd platform-core/order-service
-mvn spring-boot:run
-
-# Terminal 6: Route Optimization Service
-cd shared-services/route-optimization-service
-mvn spring-boot:run
-
-# ... Continue for other services as needed
-```
-
-## Verification
-
-### Check Infrastructure
-
-```bash
-# Check Docker containers
-docker-compose ps
-
-# Check PostgreSQL
-docker exec -it logistics-postgres psql -U postgres -c "SELECT version();"
-
-# Check Kafka
-docker exec -it logistics-kafka kafka-topics --list --bootstrap-server localhost:9092
-
-# Check Redis
-docker exec -it logistics-redis redis-cli ping
-```
-
-### Check Application Services
-
-```bash
-# Check Eureka Dashboard
-open http://localhost:8761
-
-# Check API Gateway
-curl http://localhost:8080/actuator/health
-
-# Check Config Server
-curl http://localhost:8888/actuator/health
-
-# Check Order Service
-curl http://localhost:8085/actuator/health
-```
-
-## Current Status
-
-✅ PostgreSQL@16 - Running locally  
-✅ Docker - Installed and available  
-✅ Docker Compose - Installed and available  
-⏭️ Kafka - Can start with Docker  
-⏭️ Redis - Can start with Docker  
-⏭️ Application Services - Ready to deploy
-
-## Recommended Approach
-
-**For Development:**
-1. Use Docker Compose for infrastructure (PostgreSQL, Kafka, Redis)
-2. Run application services manually with `mvn spring-boot:run`
-3. This allows easy debugging and hot-reload
-
-**For Testing:**
-1. Use Docker Compose for everything
-2. Build all services with `mvn clean install -DskipTests`
-3. Start with `docker-compose up --build -d`
-
-**For Production:**
-1. Use Kubernetes or Docker Swarm
-2. Separate infrastructure from application services
-3. Use proper secrets management
-4. Enable monitoring and logging
+## CI/CD Pipeline
+1.  **Build**: `mvn clean package -DskipTests`
+2.  **Test**: `mvn test`
+3.  **Docker Build**: `docker build ...`
+4.  **Push**: Push image to registry.
+5.  **Deploy**: Update K8s deployment or restart Docker container.

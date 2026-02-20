@@ -15,5 +15,5 @@ public interface RulesEngineClient {
     RuleFacts.DispatchFact evaluateDispatch(@RequestBody RuleFacts.DispatchFact fact);
 
     @PostMapping("/sla")
-    RuleFacts.SLAFact evaluateSla(@RequestBody RuleFacts.SLAFact fact);
+    RuleFacts.SlaFact evaluateSla(@RequestBody RuleFacts.SlaFact fact);
 }

@@ -1,52 +1,51 @@
 services:
-  # Database Services
+  # ==================== Infrastructure ====================
 
-
-  redis:
-    image: redis:7-alpine
-    container_name: logistics-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - logistics-network
-    command: redis-server --requirepass redispass
-
-  rabbitmq:
-    image: rabbitmq:3.12-management-alpine
-    container_name: logistics-rabbitmq
-    restart: unless-stopped
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: logistics-postgres
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin123
+      POSTGRES_USER: logistics_user
+      POSTGRES_PASSWORD: logistics_pass
+      POSTGRES_DB: logistics_postgres
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5432:5432"
     volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+      - postgres-data:/var/lib/postgresql/data
+      - ../infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U logistics_user -d logistics_postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - logistics-network
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 30s
-      retries: 3
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: logistics-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@logistics.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - logistics-network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: logistics-zookeeper
-    restart: unless-stopped
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "*"
-      KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=*"
     ports:
       - "2181:2181"
     healthcheck:
-      test: [ "CMD-SHELL", "echo ruok | nc 127.0.0.1 2181 | grep imok" ]
+      test: [ "CMD", "nc", "-z", "localhost", "2181" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,20 +55,21 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: logistics-kafka
-    restart: unless-stopped
     depends_on:
       zookeeper:
         condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -81,929 +81,130 @@ services:
     networks:
       - logistics-network
 
-  # Service Discovery
-  service-discovery:
-    build:
-      context: ../infrastructure/service-discovery
-      dockerfile: Dockerfile
-    container_name: logistics-service-discovery
-    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    container_name: logistics-redis
     ports:
-      - "8761:8761"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-    networks:
-      - logistics-network
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Config Server
-  config-server:
-    build:
-      context: ../infrastructure/config-server
-      dockerfile: Dockerfile
-    container_name: logistics-config-server
-    restart: unless-stopped
-    ports:
-      - "8888:8888"
-    environment:
-      SERVER_PORT: 8888
-      SPRING_PROFILES_ACTIVE: native,docker
-      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: file:///configs
-      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: file:///configs
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-    volumes:
-      - ./configs:/configs
-    networks:
-      - logistics-network
-    depends_on:
-      service-discovery:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "-u", "admin:admin_password", "http://localhost:8888/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # CENTRALIZED LOGGING STACK
-  loki:
-    image: grafana/loki:latest
-    container_name: logistics-loki
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - ./monitoring/loki/loki-config.yaml:/etc/loki/local-config.yaml
-    networks:
-      - logistics-network
-
-  promtail:
-    image: grafana/promtail:latest
-    container_name: logistics-promtail
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./monitoring/promtail/promtail-config.yaml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-    networks:
-      - logistics-network
-    depends_on:
-      - loki
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: logistics-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-    networks:
-      - logistics-network
-    depends_on:
-      - loki
-
-  tempo:
-    image: grafana/tempo:latest
-    container_name: logistics-tempo
-    command: [ "-config.file=/etc/tempo.yaml" ]
-    volumes:
-      - ./monitoring/tempo/tempo.yaml:/etc/tempo.yaml
-      - /tmp/tempo:/tmp/tempo
-    ports:
-      - "14268:14268" # jaeger ingest
-      - "3200:3200" # tempo
-      - "9411:9411" # zipkin
-    networks:
-      - logistics-network
-
-  # Centralized Logging Stack (Loki + Promtail + Grafana)...
-  # (Already added in previous step)
-
-
-
-
-
-
-
-
-
-
-
-
-
-  # Centralized Logging Stack (Loki + Promtail + Grafana)...
-  # (Already added in previous step)
-
-  # Infrastructure: Gateway Service
-  gateway-service:
-    build:
-      context: ../infrastructure/gateway-service
-      dockerfile: Dockerfile
-    container_name: logistics-gateway
-    restart: unless-stopped
-    ports:
-      - "80:8080" # Gateway usually exposes 80 or 8080
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      CONFIG_SERVER_URL: http://config-server:8888
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-      LOGGING_PATTERN_LEVEL: "%5p [$${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
-      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-    networks:
-      - logistics-network
-    depends_on:
-      - service-discovery
-      - config-server
-      - redis
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Platform Core Services
-  auth-service:
-    build:
-      context: ../platform-core/auth-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-auth-service
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      CONFIG_SERVER_URL: http://config-server:8888
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/auth_db
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-      LOGGING_PATTERN_LEVEL: "%5p [$${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: DEBUG
-      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_APPLICATION_JSON: '{"spring": {"jpa": {"hibernate": {"ddl-auto": "update"}}}, "eureka": {"client": {"serviceUrl": {"defaultZone": "http://service-discovery:8761/eureka/"}}}}'
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-      config-server:
-        condition: service_healthy
-
-  user-service:
-    build:
-      context: ../platform-core/user-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-user-service
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      CONFIG_SERVER_URL: http://config-server:8888
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/user_db
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_APPLICATION_JSON: '{"spring": {"jpa": {"hibernate": {"ddl-auto": "update"}}}, "eureka": {"client": {"serviceUrl": {"defaultZone": "http://service-discovery:8761/eureka/"}}}}'
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-      config-server:
-        condition: service_healthy
-
-  fleet-service:
-    build:
-      context: ../platform-core/fleet-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-fleet-service
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      CONFIG_SERVER_URL: http://config-server:8888
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/fleet_db
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_APPLICATION_JSON: '{"spring": {"jpa": {"hibernate": {"ddl-auto": "update"}}}, "eureka": {"client": {"serviceUrl": {"defaultZone": "http://service-discovery:8761/eureka/"}}}}'
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-      config-server:
-        condition: service_healthy
-
-  order-service:
-    build:
-      context: ../platform-core/order-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-order-service
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      CONFIG_SERVER_URL: http://config-server:8888
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/order_db
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_APPLICATION_JSON: '{"spring": {"jpa": {"hibernate": {"ddl-auto": "update"}}}, "eureka": {"client": {"serviceUrl": {"defaultZone": "http://service-discovery:8761/eureka/"}}}}'
-    command: [ "java", "-jar", "/app/app.jar", "--debug" ]
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-      config-server:
-        condition: service_healthy
-
-  orchestration-service:
-    build:
-      context: ../platform-core/orchestration-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-orchestration-service
-    restart: unless-stopped
-    ports:
-      - "8104:8104"
-    environment:
-      SERVER_PORT: 8104
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/orchestration_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-      config-server:
-        condition: service_healthy
-
-  dispatch-service:
-    build:
-      context: ../platform-core/dispatch-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-dispatch-service
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      CONFIG_SERVER_URL: http://config-server:8888
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/dispatch_db
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_APPLICATION_JSON: '{"spring": {"jpa": {"hibernate": {"ddl-auto": "update"}}}, "eureka": {"client": {"serviceUrl": {"defaultZone": "http://service-discovery:8761/eureka/"}}}}'
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-      config-server:
-        condition: service_healthy
-
-  # B2B Engine Services
-  # B2B Engine Services
-  # (Moved to Platform Core)
-
-  # B2C Engine Services
-  parcel-service:
-    build:
-      context: ../b2c-engine/parcel-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-parcel-service
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/logistics_b2c_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka
-      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
-      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://tempo:9411/api/v2/spans
-    entrypoint: [ "java", "-jar", "/app/app.jar" ]
-    networks:
-      - logistics-network
-    depends_on:
-      - postgres-db
-      - service-discovery
-      - config-server
-
-  # PostgreSQL Database (with PostGIS)
-  postgres-db:
-    image: postgis/postgis:15-3.3-alpine
-    container_name: logistics-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: logistics_user
-      POSTGRES_PASSWORD: logistics_pass
-      POSTGRES_DB: logistics_postgres
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - logistics-network
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U logistics_user" ]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - logistics-network
 
-  # pgAdmin4 - PostgreSQL Management Tool
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: logistics-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@logistics.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'False'
-      PGADMIN_CONFIG_LOGIN_BANNER: "'Logistics Platform PostgreSQL'"
-      PGADMIN_CONFIG_LOG_FILE: "'/var/lib/pgadmin/pgadmin.log'"
-      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 10
+  minio:
+    image: minio/minio:latest
+    container_name: logistics-minio
     ports:
-      - "5050:80"
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
     volumes:
-      - pgadmin-data:/var/lib/pgadmin
-      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
-      - ./docker/pgadmin/pgpass:/pgpass
-      - ./docker/pgadmin/pgadmin.config.py:/pgadmin4/config_local.py
+      - minio-data:/data
     networks:
       - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
-  # --------------------------------------------------------------------------
-  # Phase 5: Advanced & Shared Services
-  # --------------------------------------------------------------------------
-
-  analytics-service:
-    build:
-      context: ../shared-services/streaming-analytics-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-analytics-service
-    restart: unless-stopped
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: logistics-mailhog
     ports:
-      - "8091:8091"
+      - "1025:1025" # SMTP port
+      - "8025:8025" # UI port
+    networks:
+      - logistics-network
+
+  # ==================== Logistic Application ====================
+  logistic-app:
+    build:
+      context: ..
+      dockerfile: logistic-app/Dockerfile
+    container_name: logistics-app
+    ports:
+      - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/analytics_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  notification-service:
-    build:
-      context: ../shared-services/notification-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-notification-service
-    restart: unless-stopped
-    ports:
-      - "8093:8093"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/notifications_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-placeholder}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-placeholder}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-placeholder}
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  ml-service:
-    build:
-      context: ../ml-service
-      dockerfile: Dockerfile
-    container_name: logistics-ml-service
-    restart: unless-stopped
-    ports:
-      - "8092:8092"
-    environment:
-      DATABASE_URL: postgresql://logistics_user:logistics_pass@postgres-db:5432/ml_db
-      SERVICE_PORT: 8092
-      LOG_LEVEL: INFO
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-
-  geo-service:
-    build:
-      context: ../shared-services/geo-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-geo-service
-    restart: unless-stopped
-    ports:
-      - "8085:8085"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/geo_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-placeholder}
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  pricing-service:
-    build:
-      context: ../platform-core/pricing-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-pricing-service
-    restart: unless-stopped
-    ports:
-      - "8084:8084"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/pricing_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  payment-service:
-    build:
-      context: ../shared-services/payment-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-payment-service
-    restart: unless-stopped
-    ports:
-      - "8094:8094"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/payment_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  intelligent-routing-service:
-    build:
-      context: ../shared-services/route-optimization-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-intelligent-routing-service
-    restart: unless-stopped
-    ports:
-      - "8096:8096"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/logistics_routing
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-      service-discovery:
-        condition: service_started
-
-  billing-service:
-    build:
-      context: ../shared-services/billing-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-billing-service
-    restart: unless-stopped
-    ports:
-      - "8095:8096"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/billing_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  tracking-service:
-    build:
-      context: ../shared-services/tracking-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-tracking-service
-    restart: unless-stopped
-    ports:
-      - "8097:8097"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-    networks:
-      - logistics-network
-    depends_on:
-      redis:
-        condition: service_started
-      service-discovery:
-        condition: service_started
-
-  returns-service:
-    build:
-      context: ../shared-services/returns-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-returns-service
-    restart: unless-stopped
-    ports:
-      - "8098:8098"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/returns_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  payout-service:
-    build:
-      context: ../shared-services/payout-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-payout-service
-    restart: unless-stopped
-    ports:
-      - "8099:8099"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/payouts_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  # --- B2B ENGINE SERVICES (Deployed via Audit) ---
-
-  compliance-service:
-    build:
-      context: ../b2b-engine/compliance-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-compliance-service
-    restart: unless-stopped
-    ports:
-      - "8090:8090"
-    environment:
-      SERVER_PORT: 8090
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/compliance_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  b2b-order-service:
-    build:
-      context: ../b2b-engine/b2b-order-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-b2b-order-service
-    restart: unless-stopped
-    ports:
-      - "8100:8100"
-    environment:
-      SERVER_PORT: 8100
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/b2b_order_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  warehouse-service:
-    build:
-      context: ../b2b-engine/warehouse-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-warehouse-service
-    restart: unless-stopped
-    ports:
-      - "8089:8089"
-    environment:
-      SERVER_PORT: 8089
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/warehouse_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  inventory-service:
-    build:
-      context: ../b2b-engine/inventory-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-inventory-service
-    restart: unless-stopped
-    ports:
-      - "8101:8101"
-    environment:
-      SERVER_PORT: 8101
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/inventory_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  shipment-service:
-    build:
-      context: ../b2b-engine/shipment-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-shipment-service
-    restart: unless-stopped
-    ports:
-      - "8102:8102"
-    environment:
-      SERVER_PORT: 8102
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/shipment_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  # --- B2C APP BACKENDS (Deployed via Audit) ---
-
-  driver-app-service:
-    build:
-      context: ../platform-core/driver-app-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-driver-app-service
-    restart: unless-stopped
-    ports:
-      - "8103:8103"
-    environment:
-      SERVER_PORT: 8103
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/driver_app_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  customer-service:
-    build:
-      context: ../platform-core/customer-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-customer-service
-    restart: unless-stopped
-    ports:
-      - "8104:8104"
-    environment:
-      SERVER_PORT: 8104
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/customer_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  # --- B2C ENGINE SERVICES (Deployed via Audit) ---
-
-
-
-  integration-service:
-    build:
-      context: ../shared-services/integration-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-integration-service
-    restart: unless-stopped
-    ports:
-      - "8107:8107"
-    environment:
-      SERVER_PORT: 8107
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/integration_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  chat-service:
-    build:
-      context: ../shared-services/chat-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-chat-service
-    restart: unless-stopped
-    ports:
-      - "8108:8108"
-    environment:
-      SERVER_PORT: 8108
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/chat_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  audit-log-service:
-    build:
-      context: ../shared-services/audit-log-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-audit-log-service
-    restart: unless-stopped
-    ports:
-      - "8109:8109"
-    environment:
-      SERVER_PORT: 8109
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/audit_log_db
-      SPRING_DATASOURCE_USERNAME: logistics_user
-      SPRING_DATASOURCE_PASSWORD: logistics_pass
-    networks:
-      - logistics-network
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-      service-discovery:
-        condition: service_started
-
-  master-data-service:
-    build:
-      context: ../shared-services/master-data-service
-      dockerfile: ../Dockerfile
-    container_name: logistics-master-data-service
-    restart: unless-stopped
-    ports:
-      - "8110:8110"
-    environment:
-      SERVER_PORT: 8110
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/master_data_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/logistics_postgres
       SPRING_DATASOURCE_USERNAME: logistics_user
       SPRING_DATASOURCE_PASSWORD: logistics_pass
       SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
-    networks:
-      - logistics-network
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SERVER_PORT: 8080
+      notification.email.from-address: noreply@logistics.com
+      notification.email.from-name: "Logistic Platform"
+      notification.sms.from-number: "+1234567890"
+      notification.fcm.server-key: "dummy-fcm-key"
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      application.config.order-service-url: http://localhost:8080
+      application.config.pricing-url: http://localhost:8080
+      application.config.b2b-order-service-url: http://localhost:8080
+      ml.service.url: http://localhost:8080
+      app.payment-service.url: http://localhost:8080
+      app.order-service.url: http://localhost:8080
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
     depends_on:
-      postgres-db:
+      postgres:
         condition: service_healthy
       redis:
-        condition: service_started
-      service-discovery:
-        condition: service_started
-
-  # OBSERVABILITY - PROMETHEUS
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: logistics-prometheus
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
-      - "9090:9090"
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     networks:
       - logistics-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: logistics-elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=logistics-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    networks:
+      - logistics-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  minio-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+  pgadmin-data:
+    driver: local
 
 networks:
   logistics-network:
     driver: bridge
-
-volumes:
-
-  redis-data:
-  rabbitmq-data:
-  postgres-data:
-  pgadmin-data:

@@ -10,13 +10,13 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-BASE_URL="http://localhost:80" # Gateway exposed on port 80
+BASE_URL="http://localhost:8080" # Logistic Platform Port
 
-# Gateway Routing: http://localhost:80/{service-name}/**
-ORDER_SERVICE_URL="$BASE_URL/order-service"
-DISPATCH_SERVICE_URL="$BASE_URL/dispatch-service"
-FLEET_SERVICE_URL="$BASE_URL/fleet-service"
-AUTH_SERVICE_URL="$BASE_URL/auth-service"
+# Logistic Platform Routing: All services are on the same port/host
+ORDER_SERVICE_URL="$BASE_URL"
+DISPATCH_SERVICE_URL="$BASE_URL"
+FLEET_SERVICE_URL="$BASE_URL"
+AUTH_SERVICE_URL="$BASE_URL"
 
 # Ensure dependencies (curl, jq)
 if ! command -v jq &> /dev/null; then
