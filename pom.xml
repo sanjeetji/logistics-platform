@@ -40,7 +40,7 @@
         <!-- Apache Commons -->
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-collections4.version>4.4</commons-collections4.version>
-        <commons-io.version>2.16.1</commons-io.version>
+        <commons-io.version>2.21.0</commons-io.version>
 
         <!-- API Documentation -->
         <springdoc.version>2.5.0</springdoc.version>
