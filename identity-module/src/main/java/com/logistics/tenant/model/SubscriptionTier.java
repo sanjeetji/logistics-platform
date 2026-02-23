@@ -1,7 +1,7 @@
 package com.logistics.tenant.model;
 
 public enum SubscriptionTier {
-    FREE(0, 10, 1, false, false),
+    FREE(5, 10, 1, false, false),
     BRONZE(1000, 100, 5, true, false),
     SILVER(5000, 500, 20, true, true),
     GOLD(20000, -1, -1, true, true); // -1 means unlimited

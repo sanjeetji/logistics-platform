@@ -59,7 +59,7 @@ public class OrderMapper {
             return null;
         }
 
-        Order.OrderBuilder builder = Order.builder();
+        var builder = Order.builder();
 
         // BaseEntity fields like id, createdAt usually not set from DTO on creation,
         // but maybe on update

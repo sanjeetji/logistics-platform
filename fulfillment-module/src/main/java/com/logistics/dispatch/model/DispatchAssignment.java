@@ -2,7 +2,12 @@ package com.logistics.dispatch.model;
 
 import com.logistics.platform.utils.model.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.experimental.SuperBuilder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
@@ -10,7 +15,7 @@ import java.time.LocalDateTime;
 @Table(name = "dispatch_assignments")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

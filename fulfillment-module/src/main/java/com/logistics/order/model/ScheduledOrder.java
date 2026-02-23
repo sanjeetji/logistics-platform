@@ -3,6 +3,7 @@ package com.logistics.order.model;
 import com.logistics.platform.utils.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "scheduled_orders")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE scheduled_orders SET deleted = true WHERE id=?")

@@ -9,11 +9,13 @@ import org.hibernate.type.SqlTypes;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.experimental.SuperBuilder;
+
 @Entity
 @Table(name = "feature_flags")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeatureFlag extends BaseEntity {

@@ -4,6 +4,7 @@ import com.logistics.auth.dto.LoginRequest;
 import com.logistics.auth.model.User;
 import com.logistics.auth.repository.UserRepository;
 import com.logistics.auth.service.AuthService;
+import com.logistics.platform.common.dto.enums.UserType;
 import com.logistics.platform.common.dto.users.UserDto;
 import com.logistics.platform.security.jwt.JwtUtils;
 
@@ -60,6 +61,19 @@ public class AuthServiceImpl implements AuthService {
         public UserDto register(RegisterRequest req) {
                 if (userRepository.existsByEmail(req.getEmail())) {
                         throw new RuntimeException("Email already in use");
+                }
+
+                // RULE 1: SUPER_ADMIN is a platform-level role — must NOT belong to any tenant
+                if (req.getUserType() == UserType.SUPER_ADMIN && req.getOrganizationId() != null) {
+                        throw new IllegalArgumentException(
+                                        "SUPER_ADMIN is a platform-level role and cannot be assigned to a tenant (organizationId must be null).");
+                }
+
+                // RULE 2: All tenant-level roles MUST belong to an organization
+                if (req.getUserType() != UserType.SUPER_ADMIN && req.getOrganizationId() == null) {
+                        throw new IllegalArgumentException(
+                                        "Tenant users (" + req.getUserType()
+                                                        + ") must be associated with an organization (organizationId is required).");
                 }
 
                 User user = User.builder()

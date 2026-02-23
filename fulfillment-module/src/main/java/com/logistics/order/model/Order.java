@@ -3,6 +3,7 @@ package com.logistics.order.model;
 import com.logistics.platform.utils.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -19,7 +20,7 @@ import java.time.LocalDateTime;
 })
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE orders SET deleted = true WHERE id=?")

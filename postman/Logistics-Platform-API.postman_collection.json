@@ -1,474 +1,2152 @@
 {
   "info": {
     "name": "Logistics Platform API",
-    "_postman_id": "logistics-platform-v1",
-    "description": "Complete API collection for Logistics Platform - B2C and B2B flows",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{auth_token}}",
-        "type": "string"
-      }
-    ]
+    "_postman_id": "logistics-platform-complete-v2",
+    "description": "Complete API reference for the Logistics Platform. All request bodies match actual Java DTO/Model classes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
-      "key": "base_url",
+      "key": "baseUrl",
       "value": "http://localhost:8080",
       "type": "string"
     },
     {
-      "key": "auth_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "refresh_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "tenant_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "api_key",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "order_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "tracking_number",
+      "key": "token",
       "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "1. Authentication",
+      "name": "Logistic",
       "item": [
         {
-          "name": "Register Customer",
-          "event": [
+          "name": "Identity",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('user_id', jsonData.userId);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"+1234567890\",\n  \"userType\": \"CUSTOMER\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "register"]
-            }
-          }
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('auth_token', jsonData.accessToken);",
-                  "    pm.environment.set('refresh_token', jsonData.refreshToken);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "login"]
-            }
-          }
-        },
-        {
-          "name": "Refresh Token",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/auth/refresh",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "refresh"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "2. B2C - Customer Journey",
-      "item": [
-        {
-          "name": "Get Price Estimate",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('estimate_id', jsonData.estimateId);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"pickupLocation\": {\n    \"latitude\": 37.7749,\n    \"longitude\": -122.4194,\n    \"address\": \"123 Market St, San Francisco, CA 94103\"\n  },\n  \"dropoffLocation\": {\n    \"latitude\": 37.8044,\n    \"longitude\": -122.2712,\n    \"address\": \"456 Broadway, Oakland, CA 94607\"\n  },\n  \"packageDetails\": {\n    \"weight\": 5.5,\n    \"dimensions\": {\n      \"length\": 30,\n      \"width\": 20,\n      \"height\": 15\n    },\n    \"category\": \"ELECTRONICS\"\n  },\n  \"serviceType\": \"SAME_DAY\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/pricing/estimate",
-              "host": ["{{base_url}}"],
-              "path": ["api", "pricing", "estimate"]
-            }
-          }
-        },
-        {
-          "name": "Create Order",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('order_id', jsonData.orderId);",
-                  "    pm.environment.set('tracking_number', jsonData.trackingNumber);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estimateId\": \"{{estimate_id}}\",\n  \"pickupLocation\": {\n    \"latitude\": 37.7749,\n    \"longitude\": -122.4194,\n    \"address\": \"123 Market St, San Francisco, CA 94103\",\n    \"contactName\": \"John Doe\",\n    \"contactPhone\": \"+1234567890\",\n    \"instructions\": \"Ring doorbell\"\n  },\n  \"dropoffLocation\": {\n    \"latitude\": 37.8044,\n    \"longitude\": -122.2712,\n    \"address\": \"456 Broadway, Oakland, CA 94607\",\n    \"contactName\": \"Jane Smith\",\n    \"contactPhone\": \"+0987654321\",\n    \"instructions\": \"Leave at reception\"\n  },\n  \"packageDetails\": {\n    \"weight\": 5.5,\n    \"dimensions\": {\n      \"length\": 30,\n      \"width\": 20,\n      \"height\": 15\n    },\n    \"category\": \"ELECTRONICS\",\n    \"description\": \"Laptop\",\n    \"value\": 1200.00\n  },\n  \"serviceType\": \"SAME_DAY\",\n  \"paymentMethod\": \"CARD\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/orders",
-              "host": ["{{base_url}}"],
-              "path": ["api", "orders"]
-            }
-          }
-        },
-        {
-          "name": "Track Order",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/tracking/{{tracking_number}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "tracking", "{{tracking_number}}"]
-            }
-          }
-        },
-        {
-          "name": "Get Order Details",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/orders/{{order_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "orders", "{{order_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Confirm Delivery",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"deliveryCode\": \"1234\",\n  \"signature\": \"base64_encoded_signature\",\n  \"photo\": \"base64_encoded_photo\",\n  \"notes\": \"Package delivered successfully\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/orders/{{order_id}}/confirm-delivery",
-              "host": ["{{base_url}}"],
-              "path": ["api", "orders", "{{order_id}}", "confirm-delivery"]
-            }
-          }
-        },
-        {
-          "name": "Submit Rating",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"orderId\": \"{{order_id}}\",\n  \"driverId\": \"drv_456789\",\n  \"rating\": 5,\n  \"review\": \"Excellent service!\",\n  \"categories\": {\n    \"timeliness\": 5,\n    \"communication\": 5,\n    \"packageHandling\": 5\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/ratings",
-              "host": ["{{base_url}}"],
-              "path": ["api", "ratings"]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "3. B2B - Enterprise Journey",
-      "item": [
-        {
-          "name": "Register Enterprise",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.environment.set('tenant_id', jsonData.tenantId);",
-                  "    pm.environment.set('api_key', jsonData.apiKey);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"companyName\": \"Acme Corporation\",\n  \"businessType\": \"E_COMMERCE\",\n  \"contactPerson\": {\n    \"firstName\": \"Sarah\",\n    \"lastName\": \"Williams\",\n    \"email\": \"sarah@acme.com\",\n    \"phone\": \"+1234567890\"\n  },\n  \"businessAddress\": {\n    \"street\": \"789 Enterprise Blvd\",\n    \"city\": \"San Francisco\",\n    \"state\": \"CA\",\n    \"zipCode\": \"94105\",\n    \"country\": \"USA\"\n  },\n  \"taxId\": \"12-3456789\",\n  \"estimatedMonthlyVolume\": 5000\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/tenant/register",
-              "host": ["{{base_url}}"],
-              "path": ["api", "tenant", "register"]
-            }
-          }
-        },
-        {
-          "name": "Create Bulk Shipment",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "X-API-Key",
-                "value": "{{api_key}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"shipmentBatch\": {\n    \"batchId\": \"BATCH-001\",\n    \"warehouseId\": \"wh_sf_001\",\n    \"shipments\": [\n      {\n        \"referenceId\": \"ORDER-001\",\n        \"recipient\": {\n          \"name\": \"Customer A\",\n          \"phone\": \"+1111111111\",\n          \"address\": \"100 Main St, Oakland, CA\"\n        },\n        \"package\": {\n          \"weight\": 2.5,\n          \"value\": 150.00\n        }\n      }\n    ]\n  },\n  \"routeOptimization\": {\n    \"enabled\": true\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/b2b/shipments/bulk",
-              "host": ["{{base_url}}"],
-              "path": ["api", "b2b", "shipments", "bulk"]
-            }
-          }
-        },
-        {
-          "name": "Get Optimized Routes",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/route-optimization/{{optimization_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "route-optimization", "{{optimization_id}}"]
-            }
-          }
-        },
-        {
-          "name": "Track Batch Shipments",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/b2b/shipments/batch/{{batch_id}}/tracking",
-              "host": ["{{base_url}}"],
-              "path": ["api", "b2b", "shipments", "batch", "{{batch_id}}", "tracking"]
-            }
-          }
-        },
-        {
-          "name": "Get Analytics Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/api/analytics/dashboard?tenantId={{tenant_id}}&startDate=2026-02-01&endDate=2026-02-16",
-              "host": ["{{base_url}}"],
-              "path": ["api", "analytics", "dashboard"],
-              "query": [
+              "name": "Auth",
+              "item": [
                 {
-                  "key": "tenantId",
-                  "value": "{{tenant_id}}"
+                  "name": "Register User",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/register",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"firstName\": \"Sanjeet\",\n  \"lastName\": \"Kumar\",\n  \"email\": \"sanjeet@example.com\",\n  \"password\": \"Password123!\",\n  \"phone\": \"+91-9876543210\",\n  \"userType\": \"SUPER_ADMIN\",\n  \"organizationId\": null,\n  \"teamId\": null\n}"
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "200 Success",
+                      "status": "OK",
+                      "code": 200,
+                      "body": "{\n  \"success\": true,\n  \"message\": \"User registered successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"email\": \"sanjeet@example.com\",\n    \"firstName\": \"Sanjeet\",\n    \"lastName\": \"Kumar\",\n    \"userType\": \"SUPER_ADMIN\",\n    \"status\": \"ACTIVE\"\n  }\n}"
+                    }
+                  ]
                 },
                 {
-                  "key": "startDate",
-                  "value": "2026-02-01"
+                  "name": "Login",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var json = pm.response.json();",
+                          "if (json.data) { pm.collectionVariables.set('token', json.data); }"
+                        ]
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/login",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"email\": \"sanjeet@example.com\",\n  \"password\": \"Password123!\"\n}"
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "200 Success",
+                      "status": "OK",
+                      "code": 200,
+                      "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"data\": \"eyJhbGciOiJIUzUxMiJ9...\"\n}"
+                    }
+                  ]
                 },
                 {
-                  "key": "endDate",
-                  "value": "2026-02-16"
+                  "name": "Refresh Token",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/refresh",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"refreshToken\": \"<your-refresh-token>\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Logout",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/logout",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Forgot Password",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/forgot-password",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"email\": \"sanjeet@example.com\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Reset Password",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/reset-password",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"token\": \"<reset-token-from-email>\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Change Password",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/change-password",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"currentPassword\": \"Password123!\",\n  \"newPassword\": \"NewPassword456!\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Switch Tenant",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/auth/switch-tenant",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"targetOrganizationId\": \"<tenant-id>\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Get My Profile",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/auth/me",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Users",
+              "item": [
+                {
+                  "name": "Get User by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/users/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get User by Email",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/users/email/sanjeet@example.com",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "List Users by Tenant",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/users/tenant/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "List Active Users by Tenant",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/users/tenant/1/active",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Count Active Users by Tenant",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/users/tenant/1/count",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create User",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/users",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Verma\",\n  \"email\": \"rahul@example.com\",\n  \"phone\": \"+91-9876543210\",\n  \"userType\": \"ADMIN\",\n  \"organizationId\": 1,\n  \"teamId\": null\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Update User",
+                  "request": {
+                    "method": "PUT",
+                    "url": "{{baseUrl}}/api/v1/users/1",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Verma Updated\",\n  \"phone\": \"+91-9999999999\",\n  \"userType\": \"ADMIN\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Deactivate User",
+                  "request": {
+                    "method": "PUT",
+                    "url": "{{baseUrl}}/api/v1/users/1/deactivate",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Delete User",
+                  "request": {
+                    "method": "DELETE",
+                    "url": "{{baseUrl}}/api/v1/users/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Tenants",
+              "item": [
+                {
+                  "name": "List All Tenants",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/tenants",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Tenant by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/tenants/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Tenant",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/tenants",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Togopool Logistics\",\n  \"domain\": \"togopool.com\",\n  \"industryType\": \"LOGISTICS\",\n  \"active\": true,\n  \"subscriptionPlan\": \"GOLD\",\n  \"businessModel\": \"B2B\",\n  \"config\": {\n    \"billingEmail\": \"billing@togopool.com\",\n    \"timezone\": \"Asia/Kolkata\",\n    \"currency\": \"INR\",\n    \"dedicatedFleet\": true,\n    \"autoDispatch\": true,\n    \"brandName\": \"Togopool\",\n    \"logoUrl\": \"https://togopool.com/logo.png\",\n    \"primaryColor\": \"#FF6B00\",\n    \"secondaryColor\": \"#FFFFFF\",\n    \"websiteUrl\": \"https://togopool.com\",\n    \"supportPhone\": \"+91-9999999999\",\n    \"supportEmail\": \"support@togopool.com\"\n  }\n}"
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "200 Success",
+                      "status": "OK",
+                      "code": 200,
+                      "body": "{\n  \"success\": true,\n  \"message\": \"Tenant created successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Togopool Logistics\",\n    \"domain\": \"togopool.com\",\n    \"businessModel\": \"B2B\",\n    \"active\": true\n  }\n}"
+                    }
+                  ]
+                },
+                {
+                  "name": "Update Tenant",
+                  "request": {
+                    "method": "PUT",
+                    "url": "{{baseUrl}}/api/v1/tenants/1",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Togopool Logistics Updated\",\n  \"domain\": \"togopool.com\",\n  \"industryType\": \"LOGISTICS\",\n  \"active\": true,\n  \"subscriptionPlan\": \"SILVER\",\n  \"businessModel\": \"HYBRID\",\n  \"config\": {\n    \"billingEmail\": \"billing@togopool.com\",\n    \"timezone\": \"Asia/Kolkata\",\n    \"currency\": \"INR\",\n    \"dedicatedFleet\": true,\n    \"autoDispatch\": true,\n    \"brandName\": \"Togopool\",\n    \"logoUrl\": \"https://togopool.com/logo.png\",\n    \"primaryColor\": \"#FF6B00\",\n    \"secondaryColor\": \"#FFFFFF\",\n    \"websiteUrl\": \"https://togopool.com\",\n    \"supportPhone\": \"+91-9999999999\",\n    \"supportEmail\": \"support@togopool.com\"\n  }\n}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Onboarding",
+              "item": [
+                {
+                  "name": "Start Onboarding",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/onboarding/start",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"companyName\": \"XYZ Logistics\",\n  \"adminEmail\": \"admin@xyz.com\",\n  \"businessModel\": \"B2B\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Get Onboarding Status",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/onboarding/<onboarding-id>"
+                  }
+                },
+                {
+                  "name": "Complete Onboarding",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/onboarding/<onboarding-id>/complete"
+                  }
                 }
               ]
             }
-          }
-        }
-      ]
-    },
-    {
-      "name": "4. Route Optimization",
-      "item": [
-        {
-          "name": "Optimize Routes",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"stops\": [\n    {\n      \"latitude\": 37.7749,\n      \"longitude\": -122.4194,\n      \"serviceTime\": 10\n    },\n    {\n      \"latitude\": 37.8044,\n      \"longitude\": -122.2712,\n      \"serviceTime\": 10\n    }\n  ],\n  \"vehicles\": [\n    {\n      \"vehicleId\": \"veh_001\",\n      \"capacity\": 500,\n      \"startLocation\": {\n        \"latitude\": 37.7749,\n        \"longitude\": -122.4194\n      }\n    }\n  ],\n  \"objectives\": [\"MINIMIZE_DISTANCE\", \"MINIMIZE_TIME\"]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/route-optimization/optimize",
-              "host": ["{{base_url}}"],
-              "path": ["api", "route-optimization", "optimize"]
-            }
-          }
+          ]
         },
         {
-          "name": "What-If Analysis",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"baseRouteId\": \"route_001\",\n  \"scenarios\": [\n    {\n      \"name\": \"Add Extra Stop\",\n      \"changes\": {\n        \"additionalStops\": [\n          {\n            \"latitude\": 37.7897,\n            \"longitude\": -122.3972\n          }\n        ]\n      }\n    }\n  ]\n}"
+          "name": "Fulfillment",
+          "item": [
+            {
+              "name": "Orders",
+              "item": [
+                {
+                  "name": "Get All Orders",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/orders",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Order by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/orders/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Order by orderId",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/orders/order/ORD-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Order",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"customerId\": \"user-uuid-here\",\n  \"tenantId\": \"tenant-uuid-here\",\n  \"type\": \"STANDARD\",\n  \"status\": \"PENDING\",\n  \"pickupLocation\": {\n    \"address\": \"Connaught Place, New Delhi\",\n    \"latitude\": 28.6139,\n    \"longitude\": 77.2090,\n    \"contactName\": \"Rahul Sharma\",\n    \"contactPhone\": \"+91-9876543210\",\n    \"instructions\": \"Call before pickup\"\n  },\n  \"dropLocation\": {\n    \"address\": \"Cyber City, Gurgaon\",\n    \"latitude\": 28.4942,\n    \"longitude\": 77.0890,\n    \"contactName\": \"Priya Singh\",\n    \"contactPhone\": \"+91-9876543211\",\n    \"instructions\": \"Leave at reception\"\n  },\n  \"weightKg\": 2.5,\n  \"price\": 150.00,\n  \"scheduledTime\": null,\n  \"timeSlot\": \"09:00 - 12:00\",\n  \"deliveryInstructions\": \"Handle with care\",\n  \"contactlessDelivery\": false,\n  \"safeDropLocation\": null\n}"
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "200 - Created",
+                      "status": "OK",
+                      "code": 200,
+                      "body": "{\n  \"success\": true,\n  \"message\": \"Order created successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"orderId\": \"ORD-001\",\n    \"status\": \"PENDING\"\n  }\n}"
+                    }
+                  ]
+                },
+                {
+                  "name": "Update Order Status",
+                  "request": {
+                    "method": "PATCH",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/orders/1/status?status=IN_TRANSIT",
+                      "query": [
+                        {
+                          "key": "status",
+                          "value": "IN_TRANSIT",
+                          "description": "PENDING | ASSIGNED | PICKED_UP | IN_TRANSIT | DELIVERED | CANCELLED"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Assign Driver to Order",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/orders/ORD-001/assign",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"driverId\": \"driver-uuid-here\",\n  \"vehicleId\": \"vehicle-uuid-here\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Cancel Order",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/orders/ORD-001/cancel",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"reason\": \"Customer requested cancellation\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Mark Picked Up",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/orders/ORD-001/pickup",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Mark In Transit",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/orders/ORD-001/transit",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Mark Delivered",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/orders/ORD-001/deliver",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"photoUrl\": \"https://storage.example.com/pod/ORD-001.jpg\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Update Delivery Preferences",
+                  "request": {
+                    "method": "PATCH",
+                    "url": "{{baseUrl}}/api/v1/orders/ORD-001/preferences",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"deliveryInstructions\": \"Leave at door\",\n  \"contactlessDelivery\": true,\n  \"preferredDeliveryTimeStart\": \"2024-01-15T09:00:00\",\n  \"preferredDeliveryTimeEnd\": \"2024-01-15T12:00:00\",\n  \"safeDropLocation\": \"Front door mat\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Get Order History",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/orders/ORD-001/history",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Completed Orders",
+                  "request": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/orders/completed?start=2024-01-01T00:00:00&end=2024-12-31T23:59:59",
+                      "query": [
+                        {
+                          "key": "start",
+                          "value": "2024-01-01T00:00:00"
+                        },
+                        {
+                          "key": "end",
+                          "value": "2024-12-31T23:59:59"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Demand Count",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/orders/demand",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
             },
-            "url": {
-              "raw": "{{base_url}}/api/route-optimization/what-if",
-              "host": ["{{base_url}}"],
-              "path": ["api", "route-optimization", "what-if"]
+            {
+              "name": "Dispatch",
+              "item": [
+                {
+                  "name": "Find Best Driver",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/dispatch/find-driver",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"pickupLatitude\": 28.6139,\n  \"pickupLongitude\": 77.2090,\n  \"dropLatitude\": 28.4942,\n  \"dropLongitude\": 77.0890,\n  \"weightKg\": 2.5,\n  \"vehicleTypePreference\": \"BIKE\",\n  \"orderType\": \"STANDARD\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Assign Order to Driver",
+                  "request": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/dispatch/assign?orderId=ORD-001&driverId=1&vehicleId=2",
+                      "query": [
+                        {
+                          "key": "orderId",
+                          "value": "ORD-001"
+                        },
+                        {
+                          "key": "driverId",
+                          "value": "1"
+                        },
+                        {
+                          "key": "vehicleId",
+                          "value": "2"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Auto Dispatch",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/dispatch/auto-dispatch",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"pickupLatitude\": 28.6139,\n  \"pickupLongitude\": 77.2090,\n  \"dropLatitude\": 28.4942,\n  \"dropLongitude\": 77.0890,\n  \"weightKg\": 2.5,\n  \"vehicleTypePreference\": null,\n  \"orderType\": \"STANDARD\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Get Assignment by Order",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/dispatch/assignment/ORD-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Cancel Assignment",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/dispatch/cancel/ORD-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Routing",
+              "item": [
+                {
+                  "name": "What-If Analysis",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/routes/advanced/what-if",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"scenarioType\": \"DRIVER_UNAVAILABLE\",\n  \"routeId\": \"ROUTE-001\",\n  \"parameters\": {}\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Simulate Route",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/routes/advanced/simulate",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"routeId\": \"ROUTE-001\",\n  \"simulationParams\": {}\n}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Geo",
+              "item": [
+                {
+                  "name": "Geocode Address",
+                  "request": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/geo/geocode?address=Connaught+Place+Delhi",
+                      "query": [
+                        {
+                          "key": "address",
+                          "value": "Connaught Place Delhi"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Reverse Geocode",
+                  "request": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/geo/reverse?lat=28.6139&lng=77.2090",
+                      "query": [
+                        {
+                          "key": "lat",
+                          "value": "28.6139"
+                        },
+                        {
+                          "key": "lng",
+                          "value": "77.2090"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Returns",
+              "item": [
+                {
+                  "name": "Create Return Request",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/returns",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"reason\": \"Damaged item\",\n  \"items\": []\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Get Return by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/returns/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
             }
-          }
+          ]
         },
         {
-          "name": "Route Simulation",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"routeId\": \"route_001\",\n  \"simulationParams\": {\n    \"averageSpeed\": 40,\n    \"trafficFactor\": 1.2\n  }\n}"
+          "name": "Fleet",
+          "item": [
+            {
+              "name": "Drivers",
+              "item": [
+                {
+                  "name": "Get All Drivers",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/drivers",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Available Drivers",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/drivers/available",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Driver by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/drivers/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Driver",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/drivers",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Rahul Sharma\",\n  \"email\": \"rahul.driver@example.com\",\n  \"phoneNumber\": \"+91-9876543210\",\n  \"licenseNumber\": \"DL-HR-1234567890\",\n  \"status\": \"AVAILABLE\",\n  \"verificationStatus\": \"VERIFIED\",\n  \"currentLatitude\": 28.6139,\n  \"currentLongitude\": 77.2090\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Update Driver",
+                  "request": {
+                    "method": "PUT",
+                    "url": "{{baseUrl}}/api/v1/drivers/1",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Rahul Sharma Updated\",\n  \"phoneNumber\": \"+91-9999999999\",\n  \"licenseNumber\": \"DL-HR-1234567890\",\n  \"status\": \"AVAILABLE\",\n  \"verificationStatus\": \"VERIFIED\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Update Driver Status",
+                  "request": {
+                    "method": "PATCH",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/drivers/1/status?status=AVAILABLE&reason=Shift+started",
+                      "query": [
+                        {
+                          "key": "status",
+                          "value": "AVAILABLE",
+                          "description": "AVAILABLE | BUSY | OFFLINE | ON_BREAK | SUSPENDED"
+                        },
+                        {
+                          "key": "reason",
+                          "value": "Shift started"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Delete Driver",
+                  "request": {
+                    "method": "DELETE",
+                    "url": "{{baseUrl}}/api/v1/drivers/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
             },
-            "url": {
-              "raw": "{{base_url}}/api/route-optimization/simulate",
-              "host": ["{{base_url}}"],
-              "path": ["api", "route-optimization", "simulate"]
+            {
+              "name": "Vehicles",
+              "item": [
+                {
+                  "name": "Get All Vehicles",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/vehicles",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Active Vehicles",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/vehicles/active",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Vehicle by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/vehicles/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Vehicle",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/vehicles",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"licensePlate\": \"DL-01-AB-1234\",\n  \"type\": \"TRUCK\",\n  \"capacityKg\": 1000.0,\n  \"volumeCubicMeter\": 10.0,\n  \"conditions\": \"GOOD\",\n  \"active\": true,\n  \"currentDriverId\": null\n}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Shifts",
+              "item": [
+                {
+                  "name": "Get All Shifts",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/shifts",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Shift by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/shifts/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Shift",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/shifts",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"driverId\": 1,\n  \"startTime\": \"2024-01-15T08:00:00\",\n  \"endTime\": \"2024-01-15T20:00:00\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Delete Shift",
+                  "request": {
+                    "method": "DELETE",
+                    "url": "{{baseUrl}}/api/v1/shifts/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Teams",
+              "item": [
+                {
+                  "name": "Get All Teams",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/teams",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Team by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/teams/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Team",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/teams",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"North Zone Team\",\n  \"managerId\": 1\n}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Ratings",
+              "item": [
+                {
+                  "name": "Get Driver Ratings",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/ratings/driver/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Submit Rating",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/ratings",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"driverId\": 1,\n  \"rating\": 4.5,\n  \"comment\": \"Fast and professional delivery\"\n}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Geofences",
+              "item": [
+                {
+                  "name": "Get All Geofences",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/geofences",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Geofence",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/geofences",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"Warehouse Zone A\",\n  \"centerLat\": 28.6139,\n  \"centerLng\": 77.2090,\n  \"radius\": 500\n}"
+                    }
+                  }
+                }
+              ]
             }
-          }
+          ]
+        },
+        {
+          "name": "Finance",
+          "item": [
+            {
+              "name": "Payments",
+              "item": [
+                {
+                  "name": "Create Payment Wallet",
+                  "request": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/payments/wallet?userId=1",
+                      "query": [
+                        {
+                          "key": "userId",
+                          "value": "1"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Payment Wallet",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/payments/wallet/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Top Up Wallet",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/payments/topup",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userId\": 1,\n  \"amount\": 500.00,\n  \"gatewayType\": \"RAZORPAY\",\n  \"gatewayMetadata\": {}\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Initiate Top-Up (Gateway Redirect)",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/payments/topup/initiate",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userId\": 1,\n  \"amount\": 1000.00,\n  \"gatewayType\": \"RAZORPAY\",\n  \"gatewayMetadata\": {}\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Process Payment",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/payments/process",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userId\": 1,\n  \"amount\": 150.00,\n  \"orderId\": \"ORD-001\",\n  \"description\": \"Payment for order ORD-001\",\n  \"gatewayType\": \"INTERNAL_WALLET\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Get Payment History",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/payments/history/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Process Payout",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/payments/payout",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"accountId\": \"driver-account-id\",\n  \"amount\": 2000.00,\n  \"currency\": \"INR\",\n  \"gatewayType\": \"RAZORPAY\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Reconcile Payments",
+                  "request": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/payments/reconcile?gatewayType=RAZORPAY&from=2024-01-01T00:00:00&to=2024-01-31T23:59:59",
+                      "query": [
+                        {
+                          "key": "gatewayType",
+                          "value": "RAZORPAY",
+                          "description": "STRIPE | RAZORPAY | PAYPAL | INTERNAL_WALLET"
+                        },
+                        {
+                          "key": "from",
+                          "value": "2024-01-01T00:00:00"
+                        },
+                        {
+                          "key": "to",
+                          "value": "2024-01-31T23:59:59"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Wallets",
+              "item": [
+                {
+                  "name": "Create Wallet",
+                  "request": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/wallets?userId=user-uuid",
+                      "query": [
+                        {
+                          "key": "userId",
+                          "value": "user-uuid"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Wallet",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/wallets/user-uuid",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Top Up Wallet",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/wallets/user-uuid/topup",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"amount\": 1000.00,\n  \"referenceId\": \"TXN-REF-123\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Deduct from Wallet",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/wallets/user-uuid/deduct",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"amount\": 150.00,\n  \"referenceId\": \"ORD-001\",\n  \"description\": \"Order payment deduction\"\n}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Pricing",
+              "item": [
+                {
+                  "name": "Calculate Price Estimate",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/pricing/estimate",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"pickupLatitude\": 28.6139,\n  \"pickupLongitude\": 77.2090,\n  \"dropLatitude\": 28.4942,\n  \"dropLongitude\": 77.0890,\n  \"vehicleType\": \"BIKE\",\n  \"serviceLevel\": \"STANDARD\",\n  \"targetCurrency\": \"INR\",\n  \"scheduledTime\": null,\n  \"orderId\": null,\n  \"length\": 30.0,\n  \"width\": 20.0,\n  \"height\": 15.0,\n  \"weight\": 2.5,\n  \"volume\": null,\n  \"deliveryType\": \"STANDARD\"\n}"
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "200 - Success",
+                      "status": "OK",
+                      "code": 200,
+                      "body": "{\n  \"success\": true,\n  \"data\": [\n    { \"serviceLevel\": \"STANDARD\", \"price\": 120.00, \"currency\": \"INR\", \"estimatedMinutes\": 60 },\n    { \"serviceLevel\": \"EXPRESS\",  \"price\": 200.00, \"currency\": \"INR\", \"estimatedMinutes\": 30 }\n  ]\n}"
+                    }
+                  ]
+                },
+                {
+                  "name": "Get Estimate by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/pricing/estimate/EST-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Estimate by Order",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/pricing/estimate/order/ORD-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Invoices",
+              "item": [
+                {
+                  "name": "Generate Invoice",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/invoices",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"clientId\": \"CLIENT-001\",\n  \"orderId\": \"ORD-001\",\n  \"amount\": 500.00,\n  \"dueDate\": \"2024-02-01\"\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Download Invoice PDF",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/invoices/INV-001/pdf",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Pending Invoices",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/invoices/pending/CLIENT-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "B2B & Inventory",
+          "item": [
+            {
+              "name": "B2B Orders",
+              "item": [
+                {
+                  "name": "Create B2B Order",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/b2b/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"clientId\": 1,\n  \"orderType\": \"SINGLE\",\n  \"priority\": \"HIGH\",\n  \"slaDeadline\": \"2024-01-15T18:00:00\",\n  \"scheduledPickupTime\": \"2024-01-15T09:00:00\",\n  \"scheduledDeliveryTime\": \"2024-01-15T17:00:00\",\n  \"stops\": [],\n  \"metadata\": {},\n  \"notes\": \"Handle fragile items with care\"\n}"
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "200 Success",
+                      "status": "OK",
+                      "code": 200,
+                      "body": "{\n  \"success\": true,\n  \"message\": \"Order created successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"orderId\": \"B2B-001\",\n    \"clientId\": 1,\n    \"status\": \"PENDING\",\n    \"slaStatus\": \"ON_TRACK\"\n  }\n}"
+                    }
+                  ]
+                },
+                {
+                  "name": "Sync B2B Order",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/b2b/orders/sync",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": \"EXT-ORD-001\",\n  \"clientId\": 1\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Bulk Upload CSV",
+                  "request": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/b2b/orders/bulk/csv?clientId=1",
+                      "query": [
+                        {
+                          "key": "clientId",
+                          "value": "1"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "formdata",
+                      "formdata": [
+                        {
+                          "key": "file",
+                          "type": "file",
+                          "description": "CSV file — columns: externalOrderId, pickupAddress, deliveryAddress, slaDeadline, priority"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "Bulk Upload Excel",
+                  "request": {
+                    "method": "POST",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/b2b/orders/bulk/excel?clientId=1",
+                      "query": [
+                        {
+                          "key": "clientId",
+                          "value": "1"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "formdata",
+                      "formdata": [
+                        {
+                          "key": "file",
+                          "type": "file",
+                          "description": "Excel .xlsx file"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "Get B2B Order",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/b2b/orders/B2B-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Orders by Client",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/b2b/orders/client/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Orders by SLA Status",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/b2b/orders/sla/AT_RISK",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Update Order Status",
+                  "request": {
+                    "method": "PUT",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/b2b/orders/B2B-001/status?status=DELIVERED",
+                      "query": [
+                        {
+                          "key": "status",
+                          "value": "DELIVERED",
+                          "description": "PENDING | ASSIGNED | IN_TRANSIT | DELIVERED | FAILED | CANCELLED"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Reschedule Order",
+                  "request": {
+                    "method": "PUT",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/b2b/orders/B2B-001/reschedule?newDeadline=2024-01-20T18:00:00",
+                      "query": [
+                        {
+                          "key": "newDeadline",
+                          "value": "2024-01-20T18:00:00"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get SLA Report",
+                  "request": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/b2b/orders/sla-report?clientId=1&startDate=2024-01-01T00:00:00&endDate=2024-01-31T23:59:59",
+                      "query": [
+                        {
+                          "key": "clientId",
+                          "value": "1"
+                        },
+                        {
+                          "key": "startDate",
+                          "value": "2024-01-01T00:00:00"
+                        },
+                        {
+                          "key": "endDate",
+                          "value": "2024-01-31T23:59:59"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Shipments",
+              "item": [
+                {
+                  "name": "Create Shipment",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/shipments",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"orderId\": \"ORD-001\",\n  \"carrier\": \"INTERNAL\",\n  \"legs\": []\n}"
+                    }
+                  }
+                },
+                {
+                  "name": "Track Shipment",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/shipments/track/TRK-123456",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Shipments by Order",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/shipments/order/ORD-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Warehouses",
+              "item": [
+                {
+                  "name": "Get All Warehouses",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/warehouses",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Warehouse by ID",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/warehouses/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Create Warehouse",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/api/v1/warehouses",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"North Delhi Warehouse\",\n  \"address\": \"Sector 62, Noida, UP\",\n  \"capacity\": 10000\n}"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Platform Support",
+          "item": [
+            {
+              "name": "Audit Logs",
+              "item": [
+                {
+                  "name": "Get Logs by Entity",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/audit/entity/ORDER/ORD-001",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Logs by User",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/api/v1/audit/user/1",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "name": "Get Recent Logs",
+                  "request": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/api/v1/audit/recent?limit=50",
+                      "query": [
+                        {
+                          "key": "limit",
+                          "value": "50"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{token}}"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "System Health",
+              "item": [
+                {
+                  "name": "Health Check",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/actuator/health"
+                  },
+                  "response": [
+                    {
+                      "name": "200 UP",
+                      "status": "OK",
+                      "code": 200,
+                      "body": "{\n  \"status\": \"UP\",\n  \"components\": {\n    \"db\": { \"status\": \"UP\" },\n    \"redis\": { \"status\": \"UP\" },\n    \"kafka\": { \"status\": \"UP\" }\n  }\n}"
+                    }
+                  ]
+                },
+                {
+                  "name": "Metrics",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/actuator/metrics"
+                  }
+                },
+                {
+                  "name": "Prometheus",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/actuator/prometheus"
+                  }
+                }
+              ]
+            }
+          ]
         }
       ]
     }

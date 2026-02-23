@@ -2,13 +2,14 @@ package com.logistics.tenant.model;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import lombok.experimental.SuperBuilder;
+
 @Embeddable
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TenantConfig {

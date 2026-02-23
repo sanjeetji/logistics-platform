@@ -1,5 +1,6 @@
 package com.logistics.tenant.service;
 
+import com.logistics.platform.common.dto.enums.BusinessModel;
 import com.logistics.tenant.model.Tenant;
 import com.logistics.tenant.model.TenantConfig;
 import com.logistics.tenant.repository.TenantRepository;
@@ -38,6 +39,11 @@ public class TenantService {
                     .build());
         }
 
+        // Set default business model if missing
+        if (tenant.getBusinessModel() == null) {
+            tenant.setBusinessModel(BusinessModel.B2B);
+        }
+
         return tenantRepository.save(tenant);
     }
 
@@ -48,6 +54,7 @@ public class TenantService {
         tenant.setDomain(details.getDomain());
         tenant.setIndustryType(details.getIndustryType());
         tenant.setSubscriptionTier(details.getSubscriptionTier());
+        tenant.setBusinessModel(details.getBusinessModel());
         tenant.setActive(details.isActive());
 
         if (details.getConfig() != null) {

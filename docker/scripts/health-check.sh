@@ -10,6 +10,7 @@ NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+export PATH=$PATH:/usr/local/bin
 
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}🏥 Logistics Platform Health Status${NC}"

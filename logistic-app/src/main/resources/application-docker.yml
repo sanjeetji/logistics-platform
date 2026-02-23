@@ -1,0 +1,41 @@
+# ============================================================
+# DOCKER PROFILE — Fresh DB on every Docker restart (dev mode)
+# ============================================================
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/logistics_postgres
+    username: logistics_user
+    password: logistics_pass
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # Drops & recreates all tables on every Docker start
+    show-sql: false
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  kafka:
+    bootstrap-servers: kafka:29092
+
+  elasticsearch:
+    uris: http://elasticsearch:9200
+
+  mail:
+    host: mailhog
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+logging:
+  level:
+    root: INFO
+    com.logistics: DEBUG

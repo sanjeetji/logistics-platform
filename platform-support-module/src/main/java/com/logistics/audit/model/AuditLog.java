@@ -16,12 +16,18 @@ import java.time.LocalDateTime;
 public class AuditLog extends BaseEntity {
 
     private String userId;
+    @Column(columnDefinition = "TEXT")
     private String entityId;
+
+    @Column(columnDefinition = "TEXT")
     private String entityType;
+
     private String action;
     private String changedBy;
     private String tenantId;
     private String ipAddress;
+
+    @Column(columnDefinition = "TEXT")
     private String userAgent;
     private String status;
 

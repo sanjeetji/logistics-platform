@@ -6,11 +6,13 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+import lombok.experimental.SuperBuilder;
+
 @Entity
 @Table(name = "tenant_usage")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TenantUsage extends BaseEntity {

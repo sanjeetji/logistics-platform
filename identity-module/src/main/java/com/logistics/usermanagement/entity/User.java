@@ -18,9 +18,9 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "users", indexes = {
-    @Index(name = "idx_email", columnList = "email"),
-    @Index(name = "idx_tenant", columnList = "tenant_id"),
-    @Index(name = "idx_status", columnList = "status")
+        @Index(name = "idx_email", columnList = "email"),
+        @Index(name = "idx_tenant", columnList = "tenant_id"),
+        @Index(name = "idx_status", columnList = "status")
 })
 @Data
 @NoArgsConstructor
@@ -60,11 +60,7 @@ public class User {
     private String profileImageUrl;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
@@ -94,6 +90,13 @@ public class User {
     }
 
     public enum UserType {
-        ADMIN, CUSTOMER, DRIVER, WAREHOUSE_STAFF, SUPPORT_AGENT, SYSTEM
+        SUPER_ADMIN,
+        ADMIN,
+        USER,
+        DRIVER,
+        DISPATCHER,
+        WAREHOUSE_STAFF,
+        SUPPORT_AGENT,
+        SYSTEM
     }
 }

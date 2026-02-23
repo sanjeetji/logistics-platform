@@ -1,19 +1,19 @@
 package com.logistics.tenant.model;
 
+import com.logistics.platform.common.dto.enums.BusinessModel;
 import com.logistics.platform.utils.model.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "tenants")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE tenants SET deleted = true WHERE id=?")
@@ -28,6 +28,11 @@ public class Tenant extends BaseEntity {
 
     @Column(name = "industry_type")
     private String industryType; // RETAIL, PHARMA, FMCG
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "business_model", nullable = false)
+    @Builder.Default
+    private BusinessModel businessModel = BusinessModel.B2B;
 
     @Column(nullable = false)
     @Builder.Default

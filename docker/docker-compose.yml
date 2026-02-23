@@ -55,6 +55,7 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: logistics-kafka
+    restart: on-failure
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -70,14 +71,18 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_HEAP_OPTS: "-Xmx512M -Xms512M"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
     ports:
       - "9092:9092"
       - "29092:29092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
     healthcheck:
       test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
-      interval: 10s
-      timeout: 10s
-      retries: 5
+      interval: 15s
+      timeout: 15s
+      retries: 10
+      start_period: 30s
     networks:
       - logistics-network
 
@@ -203,6 +208,8 @@ volumes:
   elasticsearch-data:
     driver: local
   pgadmin-data:
+    driver: local
+  kafka-data:
     driver: local
 
 networks:
