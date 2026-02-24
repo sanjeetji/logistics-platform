@@ -28,11 +28,14 @@ public class FeatureFlag extends BaseEntity {
 
     private String description;
 
+    @Column(length = 50)
+    private String category; // e.g., "FLEET", "PRICING", "ANALYTICS", "ORDERS", "AI"
+
     @Builder.Default
     @Column(nullable = false)
     private Boolean globallyEnabled = false;
 
-    // Tenant-specific overrides: { "tenant-123": true, "tenant-456": false }
+    // Tenant-specific overrides: { "1": true, "5": false }
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     @Builder.Default

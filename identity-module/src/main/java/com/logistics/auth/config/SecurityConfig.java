@@ -30,10 +30,16 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll() // Allow generic auth endpoints
-                        .requestMatchers("/api/auth/**").permitAll() // Allow specific API auth endpoints
-                        .requestMatchers("/api/v1/auth/**").permitAll() // Allow versioned API auth endpoints
-                        .requestMatchers("/actuator/**").permitAll() // Allow actuator endpoints
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        // Feature Control Panel — SUPER_ADMIN only
+                        .requestMatchers("/api/v1/admin/**").hasRole("SUPER_ADMIN")
+                        // Tenant self-service — any authenticated user
+                        .requestMatchers("/api/v1/features/**").authenticated()
+                        // Tenant management — SUPER_ADMIN only
+                        .requestMatchers("/api/v1/tenants/**").hasRole("SUPER_ADMIN")
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
