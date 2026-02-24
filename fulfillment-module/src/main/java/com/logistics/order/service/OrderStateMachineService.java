@@ -18,20 +18,25 @@ public class OrderStateMachineService {
         VALID_TRANSITIONS.put(OrderStatus.CREATED,
                 Set.of(OrderStatus.ASSIGNED, OrderStatus.CANCELLED));
 
-        // ASSIGNED can transition to PICKED_UP or CANCELLED
+        // ASSIGNED can transition to PICKED_UP, PARTIALLY_PICKED_UP or CANCELLED
         VALID_TRANSITIONS.put(OrderStatus.ASSIGNED,
-                Set.of(OrderStatus.PICKED_UP, OrderStatus.CANCELLED));
+                Set.of(OrderStatus.PICKED_UP, OrderStatus.PARTIALLY_PICKED_UP, OrderStatus.CANCELLED));
+
+        // PARTIALLY_PICKED_UP can transition to IN_TRANSIT or CANCELLED
+        VALID_TRANSITIONS.put(OrderStatus.PARTIALLY_PICKED_UP,
+                Set.of(OrderStatus.IN_TRANSIT, OrderStatus.CANCELLED));
 
         // PICKED_UP can transition to IN_TRANSIT or CANCELLED
         VALID_TRANSITIONS.put(OrderStatus.PICKED_UP,
                 Set.of(OrderStatus.IN_TRANSIT, OrderStatus.CANCELLED));
 
-        // IN_TRANSIT can transition to DELIVERED or CANCELLED
+        // IN_TRANSIT can transition to DELIVERED, PARTIALLY_DELIVERED or CANCELLED
         VALID_TRANSITIONS.put(OrderStatus.IN_TRANSIT,
-                Set.of(OrderStatus.DELIVERED, OrderStatus.CANCELLED));
+                Set.of(OrderStatus.DELIVERED, OrderStatus.PARTIALLY_DELIVERED, OrderStatus.CANCELLED));
 
-        // DELIVERED and CANCELLED are terminal states
+        // DELIVERED, PARTIALLY_DELIVERED and CANCELLED are terminal states
         VALID_TRANSITIONS.put(OrderStatus.DELIVERED, Set.of());
+        VALID_TRANSITIONS.put(OrderStatus.PARTIALLY_DELIVERED, Set.of());
         VALID_TRANSITIONS.put(OrderStatus.CANCELLED, Set.of());
     }
 

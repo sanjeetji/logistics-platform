@@ -19,8 +19,12 @@ public class Document extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String documentId;
 
-    @Column(nullable = false)
-    private String orderId; // Reference to B2B order
+    private String orderId; // Deprecated in favor of entityId/entityType but kept for backward
+                            // compatibility
+
+    private String entityId;
+
+    private String entityType; // DRIVER, ORDER, VEHICLE
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -49,6 +53,8 @@ public class Document extends BaseEntity {
     private String verifiedBy;
 
     private LocalDateTime verifiedAt;
+
+    private LocalDateTime expiryDate;
 
     @Column(columnDefinition = "text")
     private String notes;

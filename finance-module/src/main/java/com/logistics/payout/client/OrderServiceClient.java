@@ -25,6 +25,7 @@ public interface OrderServiceClient {
     class OrderResponse {
         private String orderId;
         private String driverId;
+        private String partnerId;
         private BigDecimal price;
         private LocalDateTime actualDeliveryTime;
     }

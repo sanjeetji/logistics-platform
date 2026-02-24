@@ -51,4 +51,6 @@ public class Vehicle extends BaseEntity {
 
     @Column(columnDefinition = "text")
     private String notes;
+
+    private Long fleetId;
 }

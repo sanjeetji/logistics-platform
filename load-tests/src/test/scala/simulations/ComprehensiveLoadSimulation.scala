@@ -94,6 +94,29 @@ class ComprehensiveLoadSimulation extends Simulation {
     }
     .exec(ws("Close").close)
 
+  val aiForecastingScenario = scenario("Strategic ML Forecasting")
+    .exec(
+      http("Predict Macro Trends")
+        .post("/predict/strategic-forecast")
+        .body(StringBody("""{
+          "target_horizon_days": 30,
+          "region": "APAC",
+          "business_vertical": "B2B"
+        }"""))
+        .check(status.is(200))
+    )
+    .pause(10.seconds)
+    .exec(
+      http("Prescriptive Action Analytics")
+        .post("/decisions/recommendations")
+        .body(StringBody("""{
+          "region": "NORTH_AMERICA",
+          "current_bottleneck": "DRIVER_SHORTAGE",
+          "urgency_level": "CRITICAL"
+        }"""))
+        .check(status.is(200))
+    )
+
   // Setup - run all scenarios concurrently
   setUp(
     orderCreationScenario.inject(
@@ -106,7 +129,11 @@ class ComprehensiveLoadSimulation extends Simulation {
     
     trackingScenario.inject(
       rampUsers(wsConnections).during(30.seconds)
-    ).protocols(wsProtocol)
+    ).protocols(wsProtocol),
+
+    aiForecastingScenario.inject(
+      constantUsersPerSec(10).during(testDuration.seconds)
+    ).protocols(mlProtocol)
   ).assertions(
     global.responseTime.percentile3.lt(3000), // 99th percentile < 3s
     global.responseTime.mean.lt(1000),

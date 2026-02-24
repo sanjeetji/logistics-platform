@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -18,18 +17,18 @@ import java.util.List;
 public class ScoringDispatchStrategy implements DispatchStrategy {
 
     private final DispatchScoringEngine scoringEngine;
+    private final com.logistics.platform.api.fleet.FleetClient fleetClient;
 
     @Override
     public boolean dispatch(TransportOrderDto order, DispatchJob job) {
-        log.info("Executing Standard Scoring Dispatch for Order: {}", order.getOrderId());
+        log.info("Executing Real-time Scoring Dispatch for Order: {}", order.getOrderId());
 
         try {
-            // Mock candidate fetching for now (moved from DispatchService)
             List<DriverLocationDto> candidates = getCandidateDrivers(order);
 
             if (candidates.isEmpty()) {
-                log.warn("No available drivers found for order: {}", order.getOrderId());
-                job.setLastErrorMessage("No candidates found");
+                log.warn("No available drivers found within radius for order: {}", order.getOrderId());
+                job.setLastErrorMessage("No candidates found in proximity");
                 return false;
             }
 
@@ -50,31 +49,33 @@ public class ScoringDispatchStrategy implements DispatchStrategy {
             return true;
 
         } catch (Exception e) {
-            log.error("Error in scoring dispatch", e);
-            job.setLastErrorMessage("Scoring Error: " + e.getMessage());
+            log.error("Error in real-time scoring dispatch", e);
+            job.setLastErrorMessage("Dispatch Error: " + e.getMessage());
             return false;
         }
     }
 
     private List<DriverLocationDto> getCandidateDrivers(TransportOrderDto order) {
-        // This logic was previously in DispatchService.getCandidateDrivers
-        // For now, retaining the mock implementation.
-        List<DriverLocationDto> candidates = new ArrayList<>();
+        log.info("Fetching real-time candidates for order {} near {}, {}", order.getOrderId(), order.getPickupLat(),
+                order.getPickupLng());
 
-        DriverLocationDto driver1 = new DriverLocationDto();
-        driver1.setDriverId("101");
-        driver1.setLat(order.getPickupLat() + 0.01);
-        driver1.setLng(order.getPickupLng() + 0.01);
-        driver1.setVehicleType("VAN");
-        candidates.add(driver1);
+        try {
+            var response = fleetClient.findNearestAvailableDrivers(order.getPickupLat(), order.getPickupLng(), 10000.0);
 
-        DriverLocationDto driver2 = new DriverLocationDto();
-        driver2.setDriverId("102");
-        driver2.setLat(order.getPickupLat() + 0.05);
-        driver2.setLng(order.getPickupLng() + 0.05);
-        driver2.setVehicleType("TRUCK");
-        candidates.add(driver2);
+            if (response != null && response.getData() != null) {
+                return response.getData().stream()
+                        .map(dto -> DriverLocationDto.builder()
+                                .driverId(String.valueOf(dto.getId()))
+                                .lat(dto.getCurrentLatitude())
+                                .lng(dto.getCurrentLongitude())
+                                .vehicleType(dto.getVehicleType())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList());
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch candidates from fleet-service: {}", e.getMessage());
+        }
 
-        return candidates;
+        return java.util.Collections.emptyList();
     }
 }

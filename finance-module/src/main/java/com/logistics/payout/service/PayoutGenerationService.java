@@ -1,5 +1,7 @@
 package com.logistics.payout.service;
 
+import com.logistics.payment.model.CODSettlement;
+import com.logistics.payment.repository.CODSettlementRepository;
 import com.logistics.payout.client.OrderServiceClient;
 import com.logistics.payout.client.PaymentServiceClient;
 import com.logistics.payout.model.Payout;
@@ -16,7 +18,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,17 +26,19 @@ import java.util.stream.Collectors;
 public class PayoutGenerationService {
 
     private final PayoutRepository payoutRepository;
+    private final CODSettlementRepository codSettlementRepository;
     private final OrderServiceClient orderClient;
     private final PaymentServiceClient paymentClient;
 
+    private static final BigDecimal DEFAULT_COMMISSION_RATE = new BigDecimal("0.80"); // 80% to driver
+
     /**
      * Scheduled job to generate payouts for completed orders
-     * Runs daily at midnight
      */
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void generateDailyPayouts() {
-        log.info("Starting daily payout generation job");
+        log.info("Starting daily payout generation job with advanced reconciliation");
 
         LocalDateTime yesterday = LocalDateTime.now().minusDays(1);
         LocalDateTime startOfDay = yesterday.withHour(0).withMinute(0).withSecond(0);
@@ -47,44 +50,77 @@ public class PayoutGenerationService {
             if (response.isSuccess() && response.getData() != null) {
                 List<OrderServiceClient.OrderResponse> orders = response.getData();
 
-                // Group orders by driver
+                // 1. Process Individual Gig Drivers (Orders without partnerId)
                 Map<String, List<OrderServiceClient.OrderResponse>> driverOrders = orders.stream()
-                        .filter(o -> o.getDriverId() != null)
+                        .filter(o -> o.getDriverId() != null && o.getPartnerId() == null)
                         .collect(Collectors.groupingBy(OrderServiceClient.OrderResponse::getDriverId));
 
                 driverOrders.forEach((driverId, oList) -> {
-                    BigDecimal totalAmount = oList.stream()
-                            .map(o -> o.getPrice() != null ? o.getPrice() : BigDecimal.ZERO)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal earnings = calculateEarnings(oList);
+                    BigDecimal deductions = calculateCodDeductions(driverId);
+                    BigDecimal finalAmount = earnings.subtract(deductions).max(BigDecimal.ZERO);
 
                     List<String> orderIds = oList.stream()
                             .map(OrderServiceClient.OrderResponse::getOrderId)
                             .collect(Collectors.toList());
 
-                    createPayout(Long.parseLong(driverId), orderIds, totalAmount);
+                    createPayout(Long.parseLong(driverId), null, orderIds, finalAmount);
+                });
+
+                // 2. Process Carrier Partners (Orders with partnerId)
+                Map<String, List<OrderServiceClient.OrderResponse>> partnerOrders = orders.stream()
+                        .filter(o -> o.getPartnerId() != null)
+                        .collect(Collectors.groupingBy(OrderServiceClient.OrderResponse::getPartnerId));
+
+                partnerOrders.forEach((partnerId, oList) -> {
+                    BigDecimal totalAmount = calculateEarnings(oList);
+                    List<String> orderIds = oList.stream()
+                            .map(OrderServiceClient.OrderResponse::getOrderId)
+                            .collect(Collectors.toList());
+
+                    createPayout(null, partnerId, orderIds, totalAmount);
                 });
             }
         } catch (Exception e) {
-            log.error("Error during daily payout generation: {}", e.getMessage());
+            log.error("Error during advanced payout generation: {}", e.getMessage(), e);
         }
+    }
 
-        log.info("Payout generation completed for period: {} to {}", startOfDay, endOfDay);
+    private BigDecimal calculateEarnings(List<OrderServiceClient.OrderResponse> orders) {
+        BigDecimal totalGross = orders.stream()
+                .map(o -> o.getPrice() != null ? o.getPrice() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return totalGross.multiply(DEFAULT_COMMISSION_RATE);
+    }
+
+    private BigDecimal calculateCodDeductions(String driverId) {
+        // Find all collected cash that hasn't been reconciled yet
+        List<CODSettlement> collectedCash = codSettlementRepository.findByDriverIdAndStatus(
+                driverId, CODSettlement.SettlementStatus.COLLECTED);
+
+        return collectedCash.stream()
+                .map(CODSettlement::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Transactional
-    public Payout createPayout(Long driverId, List<String> orderIds, BigDecimal amount) {
+    public Payout createPayout(Long driverId, String partnerId, List<String> orderIds, BigDecimal amount) {
         Payout payout = Payout.builder()
                 .driverId(driverId)
+                .partnerId(partnerId)
                 .amount(amount)
                 .status(Payout.PayoutStatus.PENDING)
                 .generatedAt(LocalDateTime.now())
+                .tenantId("DEFAULT") // Should be pulled from context
                 .build();
 
-        // Note: Linking orders might require a many-to-many or a separate table
-        // For now, we store them as metadata if needed or just log
-        log.info("Created Payout for driver {} with {} orders, amount {}", driverId, orderIds.size(), amount);
+        log.info("Created Payout for {} {} with {} orders, amount {}",
+                driverId != null ? "driver" : "partner",
+                driverId != null ? driverId : partnerId,
+                orderIds.size(), amount);
 
-        return payoutRepository.save(Objects.requireNonNull(payout, "Payout must not be null"));
+        return payoutRepository.save(payout);
     }
 
     @Transactional

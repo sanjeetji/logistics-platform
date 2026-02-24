@@ -30,6 +30,8 @@ public class DynamicReRoutingService {
     private final VRPSolver vrpSolver;
     private final DriverNotificationService driverNotificationService;
     private final com.logistics.routing.repository.ETAPredictionRepository etaPredictionRepository;
+    private final com.logistics.routing.traffic.TrafficIntegrationService trafficIntegrationService;
+    private final com.logistics.order.repository.OrderRepository orderRepository;
 
     @Value("${routing.optimization.rerouting.enabled:true}")
     private boolean reRoutingEnabled;
@@ -97,31 +99,67 @@ public class DynamicReRoutingService {
     private boolean shouldReRoute(ReRoutingRequest request) {
         switch (request.getTrigger()) {
             case TRAFFIC_INCIDENT:
-                // Re-route if significant traffic delay expected
+                // Check if current delay exceeds threshold
+                if (request.getCurrentLatitude() != null && !request.getRemainingStopIds().isEmpty()) {
+                    try {
+                        // Get next stop ID
+                        String nextStopId = request.getRemainingStopIds().get(0);
+                        // Fetch stop to get location
+                        com.logistics.order.model.OrderStop nextStop = fetchOrderStop(nextStopId);
+                        if (nextStop != null) {
+                            com.logistics.routing.dto.TrafficData traffic = trafficIntegrationService
+                                    .getTrafficAwareDistance(
+                                            request.getCurrentLatitude(), request.getCurrentLongitude(),
+                                            nextStop.getLocation().getLatitude(),
+                                            nextStop.getLocation().getLongitude());
+
+                            if (traffic != null) {
+                                long delayMinutes = (traffic.getDurationInTrafficSeconds()
+                                        - traffic.getDurationSeconds()) / 60;
+                                log.info("Traffic incident delay evaluation: {} minutes. Threshold: {} minutes.",
+                                        delayMinutes, minDelayThresholdMinutes);
+                                return delayMinutes >= minDelayThresholdMinutes;
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to evaluate traffic delay, defaulting to re-route", e);
+                    }
+                }
                 return true;
 
             case DRIVER_DELAY:
-                // Re-route if delay exceeds threshold
                 return true;
 
             case NEW_URGENT_ORDER:
-                // Always re-route for urgent orders
                 return request.getUrgentOrderId() != null;
 
             case DELIVERY_FAILURE:
-                // Re-route to reschedule failed delivery
                 return request.getFailedStopId() != null;
 
             case DRIVER_BREAK:
-                // Re-route to accommodate mandatory break
                 return request.getBreakDurationMinutes() != null && request.getBreakDurationMinutes() > 0;
 
             case WEATHER_ALERT:
-                // Re-route to avoid severe weather
+                return true;
+
+            case INVENTORY_REPLENISHMENT:
                 return true;
 
             default:
                 return false;
+        }
+    }
+
+    private com.logistics.order.model.OrderStop fetchOrderStop(String stopId) {
+        try {
+            Long id = Long.parseLong(stopId);
+            return orderRepository.findAll().stream() // Simplified, should use a proper repository method
+                    .flatMap(o -> o.getStops().stream())
+                    .filter(s -> s.getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -321,6 +359,9 @@ public class DynamicReRoutingService {
 
             case DRIVER_DELAY:
                 return "Route optimized based on current progress.";
+
+            case INVENTORY_REPLENISHMENT:
+                return "Your route has been updated with newly available backordered items.";
 
             default:
                 return "Your route has been updated.";

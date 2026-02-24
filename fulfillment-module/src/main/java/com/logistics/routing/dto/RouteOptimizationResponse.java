@@ -24,6 +24,8 @@ public class RouteOptimizationResponse {
     private OptimizationMetrics metrics;
     private LocalDateTime createdAt;
     private Integer computationTimeMs;
+    private String message;
+    private List<String> unassignedOrderIds;
 
     @Data
     @NoArgsConstructor

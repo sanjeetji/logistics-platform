@@ -23,6 +23,12 @@ public class Tenant extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(name = "parent_id")
+    private Long parentId;
+
+    @Column(name = "data_residency_region")
+    private String dataResidencyRegion; // e.g., us-east-1, eu-central-1
+
     @Column(nullable = false, unique = true)
     private String domain; // e.g., acme.logistics.com
 

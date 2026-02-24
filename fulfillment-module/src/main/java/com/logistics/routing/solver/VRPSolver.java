@@ -43,9 +43,9 @@ public class VRPSolver {
      */
     public RouteOptimizationResponse solve(RouteOptimizationRequest request) {
         long startTime = System.currentTimeMillis();
-        
-        log.info("Starting VRP optimization for tenant: {}, stops: {}, vehicles: {}", 
-            request.getTenantId(), request.getStops().size(), request.getVehicles().size());
+
+        log.info("Starting VRP optimization for tenant: {}, stops: {}, vehicles: {}",
+                request.getTenantId(), request.getStops().size(), request.getVehicles().size());
 
         try {
             // Create routing index manager
@@ -54,10 +54,9 @@ public class VRPSolver {
             int depot = 0;
 
             RoutingIndexManager manager = new RoutingIndexManager(
-                numLocations, 
-                numVehicles, 
-                depot
-            );
+                    numLocations,
+                    numVehicles,
+                    depot);
 
             // Create routing model
             RoutingModel routing = new RoutingModel(manager);
@@ -85,25 +84,24 @@ public class VRPSolver {
 
             // Set search parameters
             RoutingSearchParameters searchParameters = main.defaultRoutingSearchParameters()
-                .toBuilder()
-                .setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
-                .setLocalSearchMetaheuristic(LocalSearchMetaheuristic.Value.GUIDED_LOCAL_SEARCH)
-                .setTimeLimit(com.google.protobuf.Duration.newBuilder().setSeconds(30).build())
-                .build();
+                    .toBuilder()
+                    .setFirstSolutionStrategy(FirstSolutionStrategy.Value.PATH_CHEAPEST_ARC)
+                    .setLocalSearchMetaheuristic(LocalSearchMetaheuristic.Value.GUIDED_LOCAL_SEARCH)
+                    .setTimeLimit(com.google.protobuf.Duration.newBuilder().setSeconds(30).build())
+                    .build();
 
             // Solve
             Assignment solution = routing.solveWithParameters(searchParameters);
 
             if (solution != null) {
                 RouteOptimizationResponse response = buildResponse(
-                    request, routing, manager, solution, startTime
-                );
-                
-                log.info("VRP optimization completed in {}ms, routes: {}, efficiency: {}%", 
-                    response.getComputationTimeMs(), 
-                    response.getRoutes().size(),
-                    response.getMetrics().getRouteEfficiency());
-                
+                        request, routing, manager, solution, startTime);
+
+                log.info("VRP optimization completed in {}ms, routes: {}, efficiency: {}%",
+                        response.getComputationTimeMs(),
+                        response.getRoutes().size(),
+                        response.getMetrics().getRouteEfficiency());
+
                 return response;
             } else {
                 log.warn("No solution found for VRP optimization");
@@ -138,21 +136,20 @@ public class VRPSolver {
                     double lon1 = (i == 0) ? depotLon : request.getStops().get(i - 1).getLongitude();
                     double lat2 = (j == 0) ? depotLat : request.getStops().get(j - 1).getLatitude();
                     double lon2 = (j == 0) ? depotLon : request.getStops().get(j - 1).getLongitude();
-                    
+
                     if (trafficEnabled) {
                         // Use traffic-aware distance from Google Maps
                         try {
                             TrafficData trafficData = trafficIntegrationService.getTrafficAwareDistance(
-                                lat1, lon1, lat2, lon2
-                            );
+                                    lat1, lon1, lat2, lon2);
                             // Use duration in traffic (seconds) as the cost metric
                             matrix[i][j] = trafficData.getDurationInTrafficSeconds();
-                            
+
                             if (trafficData.getTrafficLevel() != TrafficData.TrafficLevel.LIGHT) {
-                                log.debug("Traffic detected [{},{}] -> [{},{}]: {} ({}% delay)", 
-                                    i, j, lat1, lon1, lat2, lon2,
-                                    trafficData.getTrafficLevel(), 
-                                    String.format("%.1f", trafficData.getTrafficDelayPercent()));
+                                log.debug("Traffic detected [{},{}] -> [{},{}]: {} ({}% delay)",
+                                        i, j, lat1, lon1, lat2, lon2,
+                                        trafficData.getTrafficLevel(),
+                                        String.format("%.1f", trafficData.getTrafficDelayPercent()));
                             }
                         } catch (Exception e) {
                             log.warn("Failed to get traffic data, using fallback distance", e);
@@ -172,9 +169,9 @@ public class VRPSolver {
     /**
      * Add capacity constraints to routing model
      */
-    private void addCapacityConstraints(RoutingModel routing, RoutingIndexManager manager, 
-                                       RouteOptimizationRequest request) {
-        
+    private void addCapacityConstraints(RoutingModel routing, RoutingIndexManager manager,
+            RouteOptimizationRequest request) {
+
         // Create demand callback
         final int[] demands = new int[request.getStops().size() + 1];
         demands[0] = 0; // depot has no demand
@@ -189,32 +186,33 @@ public class VRPSolver {
 
         // Add capacity dimension
         long[] vehicleCapacities = request.getVehicles().stream()
-            .mapToLong(v -> v.getCapacityWeight())
-            .toArray();
+                .mapToLong(v -> v.getCapacityWeight())
+                .toArray();
 
         routing.addDimensionWithVehicleCapacity(
-            demandCallbackIndex,
-            0, // null capacity slack
-            vehicleCapacities,
-            true, // start cumul to zero
-            "Capacity"
-        );
+                demandCallbackIndex,
+                0, // null capacity slack
+                vehicleCapacities,
+                true, // start cumul to zero
+                "Capacity");
     }
 
     /**
      * Add time window constraints to routing model
      */
     private void addTimeWindowConstraints(RoutingModel routing, RoutingIndexManager manager,
-                                         RouteOptimizationRequest request, int transitCallbackIndex) {
-        
-        // Add time dimension
+            RouteOptimizationRequest request, int transitCallbackIndex) {
+
+        // Use a base reference time for the day (e.g., midnight or first vehicle start)
+        LocalDateTime baseTime = getBaseTime(request);
+
+        // Add time dimension (unit: seconds)
         routing.addDimension(
-            transitCallbackIndex,
-            30, // allow waiting time
-            3000, // maximum time per vehicle (in minutes)
-            false, // don't force start cumul to zero
-            "Time"
-        );
+                transitCallbackIndex,
+                3600, // allow 1 hour waiting time slack
+                86400, // maximum time per vehicle (24 hours in seconds)
+                false, // don't force start cumul to zero
+                "Time");
 
         RoutingDimension timeDimension = routing.getMutableDimension("Time");
 
@@ -222,30 +220,50 @@ public class VRPSolver {
         for (int i = 0; i < request.getStops().size(); i++) {
             RouteOptimizationRequest.DeliveryStop stop = request.getStops().get(i);
             long index = manager.nodeToIndex(i + 1);
-            
-            // Convert time windows to minutes from start of day
-            long timeWindowStart = 0; // simplified - should convert from LocalDateTime
-            long timeWindowEnd = 1440; // 24 hours in minutes
-            
+
+            long timeWindowStart = convertToRelativeSeconds(stop.getTimeWindowStart(), baseTime, 0L);
+            long timeWindowEnd = convertToRelativeSeconds(stop.getTimeWindowEnd(), baseTime, 86400L);
+
             timeDimension.cumulVar(index).setRange(timeWindowStart, timeWindowEnd);
         }
 
-        // Add time window constraints for vehicles
+        // Add time window constraints for vehicles (shift start/end)
         for (int i = 0; i < request.getVehicles().size(); i++) {
+            RouteOptimizationRequest.Vehicle vehicle = request.getVehicles().get(i);
             long index = routing.start(i);
-            timeDimension.cumulVar(index).setRange(0, 1440);
+
+            long shiftStart = convertToRelativeSeconds(vehicle.getShiftStart(), baseTime, 0L);
+            long shiftEnd = convertToRelativeSeconds(vehicle.getShiftEnd(), baseTime, 86400L);
+
+            timeDimension.cumulVar(index).setRange(shiftStart, shiftEnd);
         }
+    }
+
+    private LocalDateTime getBaseTime(RouteOptimizationRequest request) {
+        // Use the earliest shift start as base, or current date midnight
+        return request.getVehicles().stream()
+                .map(v -> v.getShiftStart())
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0));
+    }
+
+    private long convertToRelativeSeconds(LocalDateTime time, LocalDateTime base, long defaultValue) {
+        if (time == null)
+            return defaultValue;
+        long seconds = java.time.Duration.between(base, time).getSeconds();
+        return Math.max(0, seconds);
     }
 
     /**
      * Build successful response from OR-Tools solution
      */
     private RouteOptimizationResponse buildResponse(RouteOptimizationRequest request,
-                                                    RoutingModel routing,
-                                                    RoutingIndexManager manager,
-                                                    Assignment solution,
-                                                    long startTime) {
-        
+            RoutingModel routing,
+            RoutingIndexManager manager,
+            Assignment solution,
+            long startTime) {
+
         List<RouteOptimizationResponse.OptimizedRoute> routes = new ArrayList<>();
         double totalDistance = 0;
         int totalDuration = 0;
@@ -261,37 +279,37 @@ public class VRPSolver {
             while (!routing.isEnd(index)) {
                 long nextIndex = solution.value(routing.nextVar(index));
                 int node = manager.indexToNode(index);
-                
+
                 if (node > 0) { // Skip depot
                     RouteOptimizationRequest.DeliveryStop stop = request.getStops().get(node - 1);
-                    
+
                     RouteOptimizationResponse.RouteStop routeStop = RouteOptimizationResponse.RouteStop.builder()
-                        .sequence(sequence++)
-                        .stopId(stop.getStopId())
-                        .orderId(stop.getOrderId())
-                        .latitude(stop.getLatitude())
-                        .longitude(stop.getLongitude())
-                        .address(stop.getAddress())
-                        .serviceDurationMinutes(stop.getServiceDurationMinutes())
-                        .build();
-                    
+                            .sequence(sequence++)
+                            .stopId(stop.getStopId())
+                            .orderId(stop.getOrderId())
+                            .latitude(stop.getLatitude())
+                            .longitude(stop.getLongitude())
+                            .address(stop.getAddress())
+                            .serviceDurationMinutes(stop.getServiceDurationMinutes())
+                            .build();
+
                     stops.add(routeStop);
                 }
-                
+
                 index = nextIndex;
             }
 
             if (!stops.isEmpty()) {
                 RouteOptimizationResponse.OptimizedRoute route = RouteOptimizationResponse.OptimizedRoute.builder()
-                    .routeId(UUID.randomUUID().toString())
-                    .vehicleId(request.getVehicles().get(vehicleId).getVehicleId())
-                    .driverId(request.getVehicles().get(vehicleId).getDriverId())
-                    .stops(stops)
-                    .routeMetrics(RouteOptimizationResponse.RouteMetrics.builder()
-                        .numberOfStops(stops.size())
-                        .build())
-                    .build();
-                
+                        .routeId(UUID.randomUUID().toString())
+                        .vehicleId(request.getVehicles().get(vehicleId).getVehicleId())
+                        .driverId(request.getVehicles().get(vehicleId).getDriverId())
+                        .stops(stops)
+                        .routeMetrics(RouteOptimizationResponse.RouteMetrics.builder()
+                                .numberOfStops(stops.size())
+                                .build())
+                        .build();
+
                 routes.add(route);
             }
         }
@@ -299,18 +317,18 @@ public class VRPSolver {
         long computationTime = System.currentTimeMillis() - startTime;
 
         return RouteOptimizationResponse.builder()
-            .optimizationId(UUID.randomUUID().toString())
-            .tenantId(request.getTenantId())
-            .status(RouteOptimizationResponse.OptimizationStatus.COMPLETED)
-            .routes(routes)
-            .metrics(RouteOptimizationResponse.OptimizationMetrics.builder()
-                .vehiclesUsed(routes.size())
-                .totalStops(routes.stream().mapToInt(r -> r.getStops().size()).sum())
-                .routeEfficiency(85.0) // Placeholder
-                .build())
-            .createdAt(LocalDateTime.now())
-            .computationTimeMs((int) computationTime)
-            .build();
+                .optimizationId(UUID.randomUUID().toString())
+                .tenantId(request.getTenantId())
+                .status(RouteOptimizationResponse.OptimizationStatus.COMPLETED)
+                .routes(routes)
+                .metrics(RouteOptimizationResponse.OptimizationMetrics.builder()
+                        .vehiclesUsed(routes.size())
+                        .totalStops(routes.stream().mapToInt(r -> r.getStops().size()).sum())
+                        .routeEfficiency(85.0) // Placeholder
+                        .build())
+                .createdAt(LocalDateTime.now())
+                .computationTimeMs((int) computationTime)
+                .build();
     }
 
     /**
@@ -318,15 +336,15 @@ public class VRPSolver {
      */
     private RouteOptimizationResponse buildFailedResponse(RouteOptimizationRequest request, long startTime) {
         long computationTime = System.currentTimeMillis() - startTime;
-        
+
         return RouteOptimizationResponse.builder()
-            .optimizationId(UUID.randomUUID().toString())
-            .tenantId(request.getTenantId())
-            .status(RouteOptimizationResponse.OptimizationStatus.FAILED)
-            .routes(Collections.emptyList())
-            .createdAt(LocalDateTime.now())
-            .computationTimeMs((int) computationTime)
-            .build();
+                .optimizationId(UUID.randomUUID().toString())
+                .tenantId(request.getTenantId())
+                .status(RouteOptimizationResponse.OptimizationStatus.FAILED)
+                .routes(Collections.emptyList())
+                .createdAt(LocalDateTime.now())
+                .computationTimeMs((int) computationTime)
+                .build();
     }
 
     /**
@@ -339,9 +357,9 @@ public class VRPSolver {
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
+
         return R * c; // Distance in kilometers
     }
 }

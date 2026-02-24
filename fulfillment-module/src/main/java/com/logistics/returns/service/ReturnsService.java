@@ -1,5 +1,6 @@
 package com.logistics.returns.service;
 
+import com.logistics.returns.automation.ReversePickupService;
 import com.logistics.returns.dto.ReturnDTOs;
 import com.logistics.returns.model.ReturnRequest;
 import com.logistics.returns.model.ReturnStatus;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class ReturnsService {
 
     private final ReturnRequestRepository repository;
+    private final ReversePickupService reversePickupService;
 
     @Transactional
     public ReturnRequest requestReturn(ReturnDTOs.ReturnRequestDTO dto) {
@@ -48,6 +50,8 @@ public class ReturnsService {
         if (dto.getReason().name().contains("DAMAGED") && estimatedRefund.compareTo(new BigDecimal("50")) < 0) {
             request.setStatus(ReturnStatus.APPROVED);
             log.info("Auto-approved return: {}", request.getReturnId());
+            // Immediately schedule dispatch
+            reversePickupService.scheduleReverseLogistics(request);
         }
 
         return repository.save(Objects.requireNonNull(request, "Return request must not be null"));
@@ -77,6 +81,7 @@ public class ReturnsService {
         if (newStatus == ReturnStatus.APPROVED) {
             // Trigger Reverse Logistics Order creation here
             log.info("Initiating RTO (Reverse Logistics) for Return {}", returnId);
+            reversePickupService.scheduleReverseLogistics(request);
         }
 
         return repository.save(request);

@@ -50,3 +50,15 @@ oracle:
   sync:
     order-cron: "0 0/15 * * * ?"
     inventory-cron: "0 0/30 * * * ?"
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics

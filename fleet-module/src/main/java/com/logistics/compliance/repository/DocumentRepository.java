@@ -21,4 +21,9 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByStatus(DocumentStatus status);
 
     List<Document> findByOrderIdAndDocumentType(String orderId, DocumentType documentType);
+
+    List<Document> findByEntityIdAndEntityType(String entityId, String entityType);
+
+    List<Document> findByEntityIdAndEntityTypeAndDocumentType(String entityId, String entityType,
+            DocumentType documentType);
 }

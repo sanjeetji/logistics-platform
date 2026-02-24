@@ -9,12 +9,10 @@ import com.logistics.dispatch.model.DispatchStatus;
 import com.logistics.dispatch.repository.DispatchAssignmentRepository;
 import com.logistics.dispatch.repository.DispatchJobRepository;
 import com.logistics.dispatch.engine.DispatchScoringEngine;
-import com.logistics.platform.client.rules.RulesEngineClient;
 import com.logistics.platform.common.dto.rules.RuleFacts;
 import com.logistics.platform.common.dto.order.TransportOrderDto;
 import com.logistics.platform.common.dto.fleet.DriverLocationDto;
 import com.logistics.platform.common.dto.response.ApiResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +27,6 @@ import java.util.Optional;
  * Core dispatch service for order-to-driver assignment
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class DispatchService {
 
@@ -37,8 +34,26 @@ public class DispatchService {
     private final DispatchJobRepository jobRepository;
     private final DispatchScoringEngine scoringEngine;
     private final DispatchJobProcessor jobProcessor;
-    private final RulesEngineClient rulesEngineClient;
+    private final com.logistics.platform.client.rules.RulesEngineClient rulesEngineClient;
     private final com.logistics.platform.client.order.OrderServiceClient orderServiceClient;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public DispatchService(DispatchAssignmentRepository assignmentRepository,
+            DispatchJobRepository jobRepository,
+            DispatchScoringEngine scoringEngine,
+            DispatchJobProcessor jobProcessor,
+            com.logistics.platform.client.rules.RulesEngineClient rulesEngineClient,
+            com.logistics.platform.client.order.OrderServiceClient orderServiceClient,
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+        this.assignmentRepository = assignmentRepository;
+        this.jobRepository = jobRepository;
+        this.scoringEngine = scoringEngine;
+        this.jobProcessor = jobProcessor;
+        this.rulesEngineClient = rulesEngineClient;
+        this.orderServiceClient = orderServiceClient;
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * Find best driver for an order using scoring algorithm
@@ -231,14 +246,30 @@ public class DispatchService {
             // Fetch order details from Order Service
             ApiResponse<Object> response = orderServiceClient.getOrderByOrderId(orderId);
             if (response != null && response.getData() != null) {
-                // In a real scenario, we would map the Object to a concrete DTO
-                // For now, we'll assume we can extract necessary fields or map it
-                // This resolves the TODO: Inject OrderServiceClient and fetch details.
+                // Map the Object data to Order model manually
+                // This avoids circular dependencies while allowing rich entity usage
+                com.logistics.order.model.Order order = objectMapper.convertValue(
+                        response.getData(), com.logistics.order.model.Order.class);
+
                 log.info("Successfully fetched details for order: {}", orderId);
 
-                // For this implementation update, we will log success as we need actual DTOs
-                // to proceed with autoDispatch, and those DTOs might need to be shared.
-                // But the critical part of injecting the client is done.
+                TransportOrderDto orderDto = new TransportOrderDto();
+                orderDto.setOrderId(order.getOrderId());
+
+                if (order.getPickupLocation() != null) {
+                    orderDto.setPickupLat(order.getPickupLocation().getLatitude());
+                    orderDto.setPickupLng(order.getPickupLocation().getLongitude());
+                }
+
+                if (order.getDropLocation() != null) {
+                    orderDto.setDropLat(order.getDropLocation().getLatitude());
+                    orderDto.setDropLng(order.getDropLocation().getLongitude());
+                }
+
+                orderDto.setWeightKg(order.getWeightKg());
+                orderDto.setOrderType(order.getType() != null ? order.getType().name() : "STANDARD");
+
+                initiateDispatch(orderDto);
             } else {
                 log.error("Could not fetch details for order: {}", orderId);
             }

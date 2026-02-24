@@ -20,7 +20,11 @@ public class Payout {
     private Long id;
 
     @Column(nullable = false)
+    private String tenantId;
+
     private Long driverId;
+
+    private String partnerId;
 
     @Column(nullable = false)
     private BigDecimal amount;

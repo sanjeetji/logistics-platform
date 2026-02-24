@@ -19,17 +19,23 @@ public class ETAPredictionResponse {
     private Double confidenceScore; // 0.0 - 1.0
     private String modelVersion;
     private Long timestamp;
-    
+
     // Prediction breakdown
     private Long baselineDurationSeconds;
     private Long trafficAdjustmentSeconds;
     private Long weatherAdjustmentSeconds;
     private Long driverAdjustmentSeconds;
-    
+
     // Uncertainty bounds
     private Long lowerBoundSeconds; // 95% confidence interval
     private Long upperBoundSeconds; // 95% confidence interval
-    
+
     private String status; // SUCCESS, FALLBACK, ERROR
     private String errorMessage;
+
+    // Risk Assessment
+    private Double delayRiskProbability;
+    private String riskLevel;
+    private Integer estimatedDelayMinutes;
+    private java.util.List<String> contributingRiskFactors;
 }

@@ -53,5 +53,15 @@ public class Driver extends BaseEntity {
     @Column(columnDefinition = "text")
     private String notes;
 
+    private Long fleetId;
+    private String externalId; // ID in vendor's system
+    private String vehicleType; // Primary vehicle type (e.g., VAN, TRUCK)
+
+    @Builder.Default
+    private Double performanceScore = 100.0; // 0-100
+
+    private java.time.LocalDateTime shiftStartTime;
+    private Integer totalDrivingMinutes;
+
     // createdAt and updatedAt are handled by BaseEntity
 }

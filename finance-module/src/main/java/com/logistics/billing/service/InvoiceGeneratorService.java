@@ -12,10 +12,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import lombok.RequiredArgsConstructor;
+import com.logistics.tax.service.TaxCalculationService;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class InvoiceGeneratorService {
+
+    private final TaxCalculationService taxCalculationService;
 
     public byte[] generateInvoicePdf(Invoice invoice) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -23,38 +28,75 @@ public class InvoiceGeneratorService {
             PdfDocument pdf = new PdfDocument(writer);
             Document document = new Document(pdf);
 
-            // Header
-            document.add(new Paragraph("INVOICE").setFontSize(20).setBold());
-            document.add(new Paragraph("Invoice Number: " + invoice.getInvoiceNumber()));
-            document.add(new Paragraph("Client ID: " + invoice.getClientId()));
-            document.add(new Paragraph("Date: " + invoice.getCreatedAt().toLocalDate()));
-            document.add(new Paragraph("Due Date: " + invoice.getDueDate()));
-            document.add(new Paragraph("\n"));
+            // Header Styling
+            Paragraph header = new Paragraph("LOGISTIC PLATFORM INVOICE")
+                    .setFontSize(22)
+                    .setBold()
+                    .setMarginBottom(10);
+            document.add(header);
 
-            // Table
-            Table table = new Table(UnitValue.createPercentArray(new float[] { 4, 2, 2, 2 }));
+            document.add(new Paragraph("Invoice Number: " + invoice.getInvoiceNumber()).setBold());
+            document.add(new Paragraph("Client ID: " + invoice.getClientId()));
+            document.add(new Paragraph("Issue Date: " + invoice.getCreatedAt().toLocalDate()));
+            document.add(new Paragraph("Due Date: " + invoice.getDueDate()).setMarginBottom(20));
+
+            // Table Structure
+            Table table = new Table(UnitValue.createPercentArray(new float[] { 5, 1, 2, 2 }));
             table.setWidth(UnitValue.createPercentValue(100));
 
-            table.addHeaderCell("Description");
-            table.addHeaderCell("Quantity");
-            table.addHeaderCell("Unit Price");
-            table.addHeaderCell("Total");
+            table.addHeaderCell(new Paragraph("Description").setBold());
+            table.addHeaderCell(new Paragraph("Qty").setBold());
+            table.addHeaderCell(new Paragraph("Unit Price").setBold());
+            table.addHeaderCell(new Paragraph("Line Total").setBold());
+
+            java.math.BigDecimal subtotal = java.math.BigDecimal.ZERO;
 
             if (invoice.getItems() != null) {
                 for (InvoiceItem item : invoice.getItems()) {
-                    table.addCell(item.getDescription() != null ? item.getDescription() : "Item");
+                    table.addCell(item.getDescription() != null ? item.getDescription() : "Service rendered");
                     table.addCell(String.valueOf(item.getQuantity()));
-                    table.addCell(item.getAmount().toString());
-                    table.addCell(
-                            item.getAmount().multiply(java.math.BigDecimal.valueOf(item.getQuantity())).toString());
+                    table.addCell("$" + item.getAmount().toString());
+
+                    java.math.BigDecimal lineTotal = item.getAmount()
+                            .multiply(java.math.BigDecimal.valueOf(item.getQuantity()));
+                    subtotal = subtotal.add(lineTotal);
+                    table.addCell("$" + lineTotal.toString());
                 }
             }
 
             document.add(table);
 
-            // Total
+            // Fetch client's country code (mocking this for now as US)
+            String countryCode = "US";
+
+            // Dynamic Calculations
+            TaxCalculationService.TaxResult taxResult = taxCalculationService.calculateTax(subtotal, countryCode);
+
+            // Totals Section
             document.add(new Paragraph("\n"));
-            document.add(new Paragraph("Total Amount: $" + invoice.getTotalAmount()).setBold().setFontSize(14));
+            Table totalsTable = new Table(UnitValue.createPercentArray(new float[] { 8, 2 }));
+            totalsTable.setWidth(UnitValue.createPercentValue(100));
+
+            totalsTable.addCell(
+                    new Paragraph("Subtotal:").setTextAlignment(com.itextpdf.layout.properties.TextAlignment.RIGHT));
+            totalsTable.addCell("$" + subtotal.toString());
+
+            totalsTable.addCell(
+                    new Paragraph(taxResult.getTaxName() + ":")
+                            .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.RIGHT));
+            totalsTable.addCell("$" + taxResult.getTaxAmount().toString());
+
+            totalsTable.addCell(new Paragraph("Total Due:").setBold()
+                    .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.RIGHT));
+            totalsTable.addCell(new Paragraph("$" + taxResult.getTotalAmount().toString()).setBold());
+
+            document.add(totalsTable);
+
+            // Footer
+            document.add(new Paragraph("\n"));
+            document.add(new Paragraph("Thank you for your business.")
+                    .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER)
+                    .setItalic());
 
             document.close();
             return out.toByteArray();

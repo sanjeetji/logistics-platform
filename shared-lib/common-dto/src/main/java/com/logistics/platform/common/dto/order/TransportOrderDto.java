@@ -25,6 +25,7 @@ public class TransportOrderDto {
     private Double dropLng;
     private Double weightKg;
     private Double price;
+    private String requiredVehicleType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

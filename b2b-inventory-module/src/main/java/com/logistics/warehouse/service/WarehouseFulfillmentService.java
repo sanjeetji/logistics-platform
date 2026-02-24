@@ -1,5 +1,7 @@
 package com.logistics.warehouse.service;
 
+import com.logistics.platform.dto.warehouse.WarehouseOrderPackedEvent;
+import com.logistics.warehouse.kafka.WarehouseOutboxService;
 import com.logistics.warehouse.model.WarehouseOrder;
 import com.logistics.warehouse.model.WarehouseOrderItem;
 import com.logistics.warehouse.repository.WarehouseOrderItemRepository;
@@ -20,6 +22,7 @@ public class WarehouseFulfillmentService {
     private final WarehouseOrderRepository orderRepository;
     private final WarehouseOrderItemRepository itemRepository;
     private final WarehouseInventoryService inventoryService;
+    private final WarehouseOutboxService outboxService;
 
     /**
      * Start picking for an order
@@ -82,7 +85,16 @@ public class WarehouseFulfillmentService {
 
         order.setStatus(WarehouseOrder.OrderStatus.PACKED);
         order.setPackingCompletedAt(LocalDateTime.now());
-        return orderRepository.save(order);
+        WarehouseOrder savedOrder = orderRepository.save(order);
+
+        // Emit Yard Management Event
+        outboxService.publishOrderPackedEvent(WarehouseOrderPackedEvent.builder()
+                .orderId(savedOrder.getOrderId())
+                .warehouseId(savedOrder.getWarehouseId())
+                .packedAt(savedOrder.getPackingCompletedAt())
+                .build());
+
+        return savedOrder;
     }
 
     /**

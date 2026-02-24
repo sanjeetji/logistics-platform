@@ -17,4 +17,6 @@ public interface PayoutRepository extends JpaRepository<Payout, Long> {
     List<Payout> findByGeneratedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     List<Payout> findByDriverIdAndStatus(Long driverId, Payout.PayoutStatus status);
+
+    List<Payout> findByPartnerIdAndStatus(String partnerId, Payout.PayoutStatus status);
 }

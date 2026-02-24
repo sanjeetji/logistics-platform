@@ -67,9 +67,16 @@ public class Order extends BaseEntity {
 
         private Double weightKg;
         private BigDecimal price;
+        private String currency; // ISO 4217, e.g. "INR", "USD"
+        private String timezone; // IANA Timezone, e.g. "Asia/Kolkata"
+
+        @Builder.Default
+        private Integer priority = 0; // Higher = more urgent
 
         @Column(columnDefinition = "text")
         private String metadata; // JSON for extra properties (SLA, VehicleType, etc.)
+
+        private String requiredVehicleType;
 
         // Assignment fields
         private String driverId; // Assigned driver
@@ -88,6 +95,7 @@ public class Order extends BaseEntity {
 
         // Delivery Preferences
         private String deliveryInstructions;
+        @Builder.Default
         private Boolean contactlessDelivery = false;
         private String safeDropLocation;
         private LocalDateTime preferredDeliveryTimeStart;
@@ -102,7 +110,24 @@ public class Order extends BaseEntity {
         @Builder.Default
         private Boolean deleted = false;
 
+        private String parentOrderId; // Track original order if split
+        private String mergedIntoOrderId; // Track destination order if merged
+
         @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
         @Builder.Default
         private java.util.List<OrderStop> stops = new java.util.ArrayList<>();
+
+        @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+        @Builder.Default
+        private java.util.List<OrderItem> items = new java.util.ArrayList<>();
+
+        @Enumerated(EnumType.STRING)
+        @Builder.Default
+        private FulfillmentStatus fulfillmentStatus = FulfillmentStatus.FULL;
+
+        public enum FulfillmentStatus {
+                FULL,
+                PARTIAL,
+                FAILED
+        }
 }

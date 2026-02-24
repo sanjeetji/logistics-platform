@@ -28,8 +28,8 @@ import org.hibernate.annotations.ParamDef;
 @SQLDelete(sql = "UPDATE shipments SET deleted = true WHERE id=?")
 @SQLRestriction("deleted=false")
 @EntityListeners(com.logistics.platform.utils.tenant.TenantListener.class)
-@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = String.class))
-@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
+@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantIds", type = String.class))
+@Filter(name = "tenantFilter", condition = "tenant_id IN (:tenantIds)")
 public class Shipment extends BaseEntity implements com.logistics.platform.common.dto.TenantAware {
 
     @Column(nullable = false, unique = true, updatable = false)

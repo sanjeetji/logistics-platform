@@ -9,10 +9,12 @@ import java.util.List;
 
 @Repository
 public interface ShiftAssignmentRepository extends JpaRepository<ShiftAssignment, Long> {
-    
+
     List<ShiftAssignment> findByDriverIdAndShiftDateBetween(Long driverId, LocalDate startDate, LocalDate endDate);
-    
+
     boolean existsByDriverIdAndShiftDate(Long driverId, LocalDate shiftDate);
-    
+
     List<ShiftAssignment> findByShiftDateAndStatus(LocalDate date, ShiftAssignment.ShiftStatus status);
+
+    long countByShiftDate(LocalDate shiftDate);
 }
