@@ -113,6 +113,9 @@ management:
       show-details: always
 
 # Domain Specific Configs (Merged from Microservices)
+ml:
+  service:
+    url: ${ML_SERVICE_URL:http://localhost:8092}
 
 # --- Identity / Onboarding Module ---
 stripe:
@@ -150,3 +153,7 @@ logistics:
     s3:
       bucket-name: logistics-docs
       region: us-east-1
+
+google:
+  maps:
+    api-key: ${GOOGLE_MAPS_API_KEY:dummy_key}

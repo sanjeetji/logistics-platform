@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity(name = "IntegrationWebhookLog")
 @Table(name = "webhook_logs")
 @Data
 @Builder

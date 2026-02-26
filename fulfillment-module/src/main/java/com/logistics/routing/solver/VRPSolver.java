@@ -153,11 +153,17 @@ public class VRPSolver {
                             }
                         } catch (Exception e) {
                             log.warn("Failed to get traffic data, using fallback distance", e);
-                            matrix[i][j] = (long) (calculateHaversineDistance(lat1, lon1, lat2, lon2) * 1000);
+                            double distanceKm = calculateHaversineDistance(lat1, lon1, lat2, lon2);
+                            // Convert distance to time based on average speed of 30 km/h (120 seconds per
+                            // km)
+                            matrix[i][j] = (long) (distanceKm * 120);
                         }
                     } else {
                         // Use simple haversine distance in meters
-                        matrix[i][j] = (long) (calculateHaversineDistance(lat1, lon1, lat2, lon2) * 1000);
+                        double distanceKm = calculateHaversineDistance(lat1, lon1, lat2, lon2);
+                        // Convert distance to time based on average speed of 30 km/h (120 seconds per
+                        // km)
+                        matrix[i][j] = (long) (distanceKm * 120);
                     }
                 }
             }
@@ -209,7 +215,7 @@ public class VRPSolver {
         // Add time dimension (unit: seconds)
         routing.addDimension(
                 transitCallbackIndex,
-                3600, // allow 1 hour waiting time slack
+                86400, // allow waiting time slack (up to 24h)
                 86400, // maximum time per vehicle (24 hours in seconds)
                 false, // don't force start cumul to zero
                 "Time");

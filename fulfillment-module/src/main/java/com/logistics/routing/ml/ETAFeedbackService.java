@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ETAFeedbackService {
 
-    private final KafkaTemplate<String, ETAFeedbackEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String FEEDBACK_TOPIC = "eta-feedback";
 
@@ -24,25 +24,25 @@ public class ETAFeedbackService {
      * Send ETA feedback to ML service
      */
     public void sendFeedback(ETAFeedbackEvent feedback) {
-        
+
         // Calculate error metrics
         if (feedback.getPredictedDurationSeconds() != null && feedback.getActualDurationSeconds() != null) {
             long error = feedback.getActualDurationSeconds() - feedback.getPredictedDurationSeconds();
             feedback.setErrorSeconds(error);
-            
+
             double errorPercentage = (Math.abs(error) * 100.0) / feedback.getPredictedDurationSeconds();
             feedback.setErrorPercentage(errorPercentage);
-            
+
             log.info("ETA Feedback: route={}, predicted={}s, actual={}s, error={}s ({}%)",
-                feedback.getRouteId(),
-                feedback.getPredictedDurationSeconds(),
-                feedback.getActualDurationSeconds(),
-                error,
-                String.format("%.1f", errorPercentage));
+                    feedback.getRouteId(),
+                    feedback.getPredictedDurationSeconds(),
+                    feedback.getActualDurationSeconds(),
+                    error,
+                    String.format("%.1f", errorPercentage));
         }
-        
+
         feedback.setTimestamp(System.currentTimeMillis());
-        
+
         try {
             kafkaTemplate.send(FEEDBACK_TOPIC, feedback.getRouteId(), feedback);
             log.debug("ETA feedback sent to Kafka: {}", feedback.getFeedbackId());

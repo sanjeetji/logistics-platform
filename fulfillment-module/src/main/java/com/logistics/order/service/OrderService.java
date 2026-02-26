@@ -36,6 +36,7 @@ public class OrderService {
         private final OrderHistoryService historyService;
         private final OrderEventStore eventStore;
         private final OrderNotificationService notificationService;
+        private final CrossBorderComplianceService complianceService;
         private final VRPSolver vrpSolver;
         private final ObservationRegistry observationRegistry;
 
@@ -77,6 +78,9 @@ public class OrderService {
                                         if (order.getTimezone() == null) {
                                                 order.setTimezone("Asia/Kolkata");
                                         }
+
+                                        // Apply Feature-gated Compliance Checks
+                                        complianceService.processCompliance(order);
 
                                         Order savedOrder = orderRepository.save(order);
 

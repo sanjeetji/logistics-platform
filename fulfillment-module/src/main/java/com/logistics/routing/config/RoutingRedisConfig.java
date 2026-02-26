@@ -14,8 +14,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RoutingRedisConfig {
 
-    @Bean
-    public RedisTemplate<String, TrafficData> redisTemplate(RedisConnectionFactory connectionFactory) {
+    @Bean("trafficRedisTemplate")
+    public RedisTemplate<String, TrafficData> trafficRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, TrafficData> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 

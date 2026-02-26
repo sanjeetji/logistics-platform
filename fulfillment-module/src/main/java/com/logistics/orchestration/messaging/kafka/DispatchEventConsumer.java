@@ -10,7 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Component("orchestrationDispatchEventConsumer")
 @RequiredArgsConstructor
 @Slf4j
 public class DispatchEventConsumer {

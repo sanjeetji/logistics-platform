@@ -7,7 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-@Entity
+@Entity(name = "CoreWebhookLog")
 @Table(name = "webhook_logs")
 @Getter
 @Setter

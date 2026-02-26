@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-@RestController
+@RestController("controlTowerDashboardController")
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
 public class DashboardController {

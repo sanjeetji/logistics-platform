@@ -11,38 +11,43 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class MetricsStorageService {
-    
+
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
-    
+
+    public MetricsStorageService(
+            @org.springframework.beans.factory.annotation.Qualifier("analyticsRedisTemplate") RedisTemplate<String, Object> redisTemplate,
+            ObjectMapper objectMapper) {
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+    }
+
     private static final String ORDER_METRICS_KEY = "metrics:orders:latest";
     private static final String DRIVER_METRICS_KEY = "metrics:drivers:latest";
     private static final String REVENUE_METRICS_KEY = "metrics:revenue:latest";
     private static final String SLA_METRICS_KEY = "metrics:sla:latest";
     private static final String ALERTS_KEY_PREFIX = "alerts:";
-    
+
     private static final long METRICS_TTL_HOURS = 24;
-    
+
     /**
      * Store order metrics in Redis
      */
     public void storeOrderMetrics(OrderMetrics metrics) {
         try {
             redisTemplate.opsForValue().set(
-                ORDER_METRICS_KEY,
-                metrics,
-                METRICS_TTL_HOURS,
-                TimeUnit.HOURS
-            );
+                    ORDER_METRICS_KEY,
+                    metrics,
+                    METRICS_TTL_HOURS,
+                    TimeUnit.HOURS);
             log.debug("Stored order metrics in Redis");
         } catch (Exception e) {
             log.error("Error storing order metrics", e);
         }
     }
-    
+
     /**
      * Get latest order metrics
      */
@@ -57,24 +62,23 @@ public class MetricsStorageService {
         }
         return OrderMetrics.builder().build();
     }
-    
+
     /**
      * Store driver metrics in Redis
      */
     public void storeDriverMetrics(DriverMetrics metrics) {
         try {
             redisTemplate.opsForValue().set(
-                DRIVER_METRICS_KEY,
-                metrics,
-                METRICS_TTL_HOURS,
-                TimeUnit.HOURS
-            );
+                    DRIVER_METRICS_KEY,
+                    metrics,
+                    METRICS_TTL_HOURS,
+                    TimeUnit.HOURS);
             log.debug("Stored driver metrics in Redis");
         } catch (Exception e) {
             log.error("Error storing driver metrics", e);
         }
     }
-    
+
     /**
      * Get latest driver metrics
      */
@@ -89,24 +93,23 @@ public class MetricsStorageService {
         }
         return DriverMetrics.builder().build();
     }
-    
+
     /**
      * Store revenue metrics in Redis
      */
     public void storeRevenueMetrics(RevenueMetrics metrics) {
         try {
             redisTemplate.opsForValue().set(
-                REVENUE_METRICS_KEY,
-                metrics,
-                METRICS_TTL_HOURS,
-                TimeUnit.HOURS
-            );
+                    REVENUE_METRICS_KEY,
+                    metrics,
+                    METRICS_TTL_HOURS,
+                    TimeUnit.HOURS);
             log.debug("Stored revenue metrics in Redis");
         } catch (Exception e) {
             log.error("Error storing revenue metrics", e);
         }
     }
-    
+
     /**
      * Get latest revenue metrics
      */
@@ -121,24 +124,23 @@ public class MetricsStorageService {
         }
         return RevenueMetrics.builder().build();
     }
-    
+
     /**
      * Store SLA metrics in Redis
      */
     public void storeSLAMetrics(SLAMetrics metrics) {
         try {
             redisTemplate.opsForValue().set(
-                SLA_METRICS_KEY,
-                metrics,
-                METRICS_TTL_HOURS,
-                TimeUnit.HOURS
-            );
+                    SLA_METRICS_KEY,
+                    metrics,
+                    METRICS_TTL_HOURS,
+                    TimeUnit.HOURS);
             log.debug("Stored SLA metrics in Redis");
         } catch (Exception e) {
             log.error("Error storing SLA metrics", e);
         }
     }
-    
+
     /**
      * Get latest SLA metrics
      */
@@ -153,7 +155,7 @@ public class MetricsStorageService {
         }
         return SLAMetrics.builder().build();
     }
-    
+
     /**
      * Store anomaly alert
      */
@@ -161,15 +163,14 @@ public class MetricsStorageService {
         try {
             String key = ALERTS_KEY_PREFIX + alert.getAlertId();
             redisTemplate.opsForValue().set(
-                key,
-                alert,
-                METRICS_TTL_HOURS,
-                TimeUnit.HOURS
-            );
-            
+                    key,
+                    alert,
+                    METRICS_TTL_HOURS,
+                    TimeUnit.HOURS);
+
             // Add to alerts set
             redisTemplate.opsForSet().add("alerts:active", alert.getAlertId());
-            
+
             log.info("Stored anomaly alert: {}", alert.getAlertId());
         } catch (Exception e) {
             log.error("Error storing alert", e);

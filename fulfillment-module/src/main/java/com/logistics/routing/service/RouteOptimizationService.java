@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * 
  * Main service for route optimization operations
  */
-@Service
+@Service("routingRouteOptimizationService")
 @RequiredArgsConstructor
 @Slf4j
 public class RouteOptimizationService {
@@ -26,10 +26,10 @@ public class RouteOptimizationService {
      * Optimize routes using VRP solver with multi-objective evaluation
      */
     public RouteOptimizationResponse optimize(RouteOptimizationRequest request) {
-        log.info("Optimizing routes for tenant: {}, stops: {}, vehicles: {}", 
-            request.getTenantId(), 
-            request.getStops() != null ? request.getStops().size() : 0,
-            request.getVehicles() != null ? request.getVehicles().size() : 0);
+        log.info("Optimizing routes for tenant: {}, stops: {}, vehicles: {}",
+                request.getTenantId(),
+                request.getStops() != null ? request.getStops().size() : 0,
+                request.getVehicles() != null ? request.getVehicles().size() : 0);
 
         // Validate request
         validateRequest(request);
@@ -41,20 +41,20 @@ public class RouteOptimizationService {
         if (response.getRoutes() != null && !response.getRoutes().isEmpty()) {
             for (RouteOptimizationResponse.OptimizedRoute route : response.getRoutes()) {
                 RouteScore score = multiObjectiveOptimizer.evaluateRoute(route, request);
-                log.debug("Route {} scored: composite={}, cost={}, speed={}, green={}, driver={}", 
-                    route.getRouteId(),
-                    String.format("%.1f", score.getCompositeScore()),
-                    String.format("%.1f", score.getCostScore()),
-                    String.format("%.1f", score.getSpeedScore()),
-                    String.format("%.1f", score.getGreenScore()),
-                    String.format("%.1f", score.getDriverSatisfactionScore()));
+                log.debug("Route {} scored: composite={}, cost={}, speed={}, green={}, driver={}",
+                        route.getRouteId(),
+                        String.format("%.1f", score.getCompositeScore()),
+                        String.format("%.1f", score.getCostScore()),
+                        String.format("%.1f", score.getSpeedScore()),
+                        String.format("%.1f", score.getGreenScore()),
+                        String.format("%.1f", score.getDriverSatisfactionScore()));
             }
         }
 
         log.info("Route optimization completed: status={}, routes={}, efficiency={}%",
-            response.getStatus(),
-            response.getRoutes().size(),
-            response.getMetrics() != null ? response.getMetrics().getRouteEfficiency() : 0);
+                response.getStatus(),
+                response.getRoutes().size(),
+                response.getMetrics() != null ? response.getMetrics().getRouteEfficiency() : 0);
 
         return response;
     }

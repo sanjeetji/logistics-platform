@@ -19,6 +19,8 @@ public class WebhookEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String eventId;
+
     private String tenantId;
 
     @Enumerated(EnumType.STRING)

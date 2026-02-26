@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-@Repository
+@Repository("coreWebhookLogRepository")
 public interface WebhookLogRepository extends JpaRepository<WebhookLog, Long> {
     Optional<WebhookLog> findByEventId(String eventId);
 }

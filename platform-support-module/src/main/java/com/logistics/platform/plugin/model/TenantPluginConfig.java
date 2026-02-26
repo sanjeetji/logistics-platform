@@ -1,6 +1,6 @@
 package com.logistics.platform.plugin.model;
 
-import com.logistics.platform.common.entity.BaseEntity;
+import com.logistics.platform.utils.model.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;

@@ -30,6 +30,8 @@ public class Order extends BaseEntity {
         @Column(nullable = false, unique = true, updatable = false)
         private String orderId; // Public UUID
 
+        private String externalOrderId; // ID from external systems
+
         @Column(nullable = false)
         private String customerId; // Linked to User Service
 
@@ -112,6 +114,9 @@ public class Order extends BaseEntity {
 
         private String parentOrderId; // Track original order if split
         private String mergedIntoOrderId; // Track destination order if merged
+
+        @Builder.Default
+        private Boolean requiresCustomsDeclaration = false;
 
         @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
         @Builder.Default

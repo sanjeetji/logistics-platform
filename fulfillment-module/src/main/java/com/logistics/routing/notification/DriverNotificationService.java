@@ -18,7 +18,7 @@ import java.util.UUID;
 @Slf4j
 public class DriverNotificationService {
 
-    private final KafkaTemplate<String, DriverNotificationEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String NOTIFICATION_TOPIC = "driver-notifications";
 
@@ -26,23 +26,23 @@ public class DriverNotificationService {
      * Notify driver of route change
      */
     public void notifyDriver(String driverId, String message, ReRoutingResponse reRoutingResponse) {
-        
+
         DriverNotificationEvent notification = DriverNotificationEvent.builder()
-            .notificationId(UUID.randomUUID().toString())
-            .driverId(driverId)
-            .routeId(reRoutingResponse.getRouteId())
-            .reRoutingId(reRoutingResponse.getReRoutingId())
-            .type(DriverNotificationEvent.NotificationType.ROUTE_UPDATED)
-            .message(message)
-            .priority(determinePriority(reRoutingResponse))
-            .requiresAcknowledgment(true)
-            .timestamp(System.currentTimeMillis())
-            .build();
-        
+                .notificationId(UUID.randomUUID().toString())
+                .driverId(driverId)
+                .routeId(reRoutingResponse.getRouteId())
+                .reRoutingId(reRoutingResponse.getReRoutingId())
+                .type(DriverNotificationEvent.NotificationType.ROUTE_UPDATED)
+                .message(message)
+                .priority(determinePriority(reRoutingResponse))
+                .requiresAcknowledgment(true)
+                .timestamp(System.currentTimeMillis())
+                .build();
+
         try {
             kafkaTemplate.send(NOTIFICATION_TOPIC, driverId, notification);
-            log.info("Driver notification sent: driver={}, route={}, message={}", 
-                driverId, reRoutingResponse.getRouteId(), message);
+            log.info("Driver notification sent: driver={}, route={}, message={}",
+                    driverId, reRoutingResponse.getRouteId(), message);
         } catch (Exception e) {
             log.error("Failed to send driver notification", e);
             throw e;

@@ -10,4 +10,6 @@ import java.util.Optional;
 @Repository
 public interface WebhookConfigRepository extends JpaRepository<WebhookConfig, Long> {
     Optional<WebhookConfig> findByTenantIdAndPlatform(String tenantId, EcommercePlatform platform);
+
+    java.util.List<WebhookConfig> findByTenantId(String tenantId);
 }

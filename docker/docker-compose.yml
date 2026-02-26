@@ -142,20 +142,20 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       SERVER_PORT: 8080
-      notification.email.from-address: noreply@logistics.com
-      notification.email.from-name: "Logistic Platform"
-      notification.sms.from-number: "+1234567890"
-      notification.fcm.server-key: "dummy-fcm-key"
+      NOTIFICATION_EMAIL_FROM_ADDRESS: noreply@logistics.com
+      NOTIFICATION_EMAIL_FROM_NAME: "Logistic Platform"
+      NOTIFICATION_SMS_FROM_NUMBER: "+1234567890"
+      NOTIFICATION_FCM_SERVER_KEY: "dummy-fcm-key"
       AWS_REGION: us-east-1
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
-      application.config.order-service-url: http://localhost:8080
-      application.config.pricing-url: http://localhost:8080
-      application.config.b2b-order-service-url: http://localhost:8080
-      ml.service.url: http://localhost:8080
-      app.payment-service.url: http://localhost:8080
-      app.order-service.url: http://localhost:8080
+      APPLICATION_CONFIG_ORDER_SERVICE_URL: http://localhost:8080
+      APPLICATION_CONFIG_PRICING_URL: http://localhost:8080
+      APPLICATION_CONFIG_B2B_ORDER_SERVICE_URL: http://localhost:8080
+      ML_SERVICE_URL: http://localhost:8080
+      APP_PAYMENT_SERVICE_URL: http://localhost:8080
+      APP_ORDER_SERVICE_URL: http://localhost:8080
       MAIL_HOST: mailhog
       MAIL_PORT: 1025
       MAIL_USERNAME: ""

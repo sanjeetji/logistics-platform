@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * User entity - consolidated from user-service
  */
-@Entity
+@Entity(name = "UserManagementUser")
 @Table(name = "users", indexes = {
         @Index(name = "idx_email", columnList = "email"),
         @Index(name = "idx_tenant", columnList = "tenant_id"),
