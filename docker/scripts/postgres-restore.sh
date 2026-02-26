@@ -27,15 +27,15 @@ fi
 echo "Restoring from $BACKUP_FILE..."
 
 # Stop all services to ensure no active connections
-docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform down
+docker compose -f "$COMPOSE_FILE" down
 
 # Start only PostgreSQL
-docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d postgres-db
+docker compose -f "$COMPOSE_FILE" up -d postgres
 echo "Waiting for database to be ready..."
 sleep 10
 
 # Restore the database
-gunzip -c "$BACKUP_FILE" | docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec -T postgres-db psql -U logistics_user
+gunzip -c "$BACKUP_FILE" | docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U logistics_user
 
 echo "✅ Database restored successfully!"
 echo "🚀 You can now start the platform: ./docker/scripts/run-platform.sh start"

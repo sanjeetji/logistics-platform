@@ -21,6 +21,8 @@ build, run, monitor, clean, and troubleshoot everything in one place.
 12. [Development Mode (Hybrid)](#12-development-mode-hybrid)
 13. [Useful One-Liners](#13-useful-one-liners)
 14. [Port Reference](#14-port-reference)
+15. [GitHub Actions CI/CD](#15-github-actions-cicd-build-in-cloud--no-docker-desktop-required)
+16. [**Production Deployment (deploy-prod.yml)**](#16-production-deployment-deploy-prodyml-)
 
 ---
 
@@ -562,7 +564,450 @@ docker rm $(docker ps -aq)
 | `8025` | MailHog UI    | http://localhost:8025                |
 | `8092` | ML Service    | http://localhost:8092/health         |
 
+### Actuator Health API (`/actuator/health`)
+
+The Spring Boot application exposes a detailed Actuator health check endpoint at `http://localhost:8080/actuator/health`. This API provides a comprehensive overview of the application's internal state, including database connectivity, Kafka stream threads, Elasticsearch cluster status, Redis, disk space, and more. 
+
+Here is an example response from a fully healthy application:
+
+```json
+{
+  "status": "UP",
+  "components": {
+    "binders": {
+      "status": "UP",
+      "components": {
+        "kafka": {
+          "status": "UP"
+        },
+        "kstream": {
+          "status": "UP"
+        }
+      }
+    },
+    "clientConfigServer": {
+      "status": "UNKNOWN",
+      "details": {
+        "error": "no property: spring.cloud.config.uri"
+      }
+    },
+    "db": {
+      "status": "UP",
+      "details": {
+        "database": "PostgreSQL",
+        "validationQuery": "isValid()"
+      }
+    },
+    "discoveryComposite": {
+      "status": "UP",
+      "components": {
+        "discoveryClient": {
+          "status": "UP",
+          "details": {
+            "services": []
+          }
+        },
+        "eureka": {
+          "description": "Eureka discovery client has not yet successfully connected to a Eureka server",
+          "status": "UP",
+          "details": {
+            "applications": {}
+          }
+        }
+      }
+    },
+    "diskSpace": {
+      "status": "UP",
+      "details": {
+        "total": 105087164416,
+        "free": 90409787392,
+        "threshold": 10485760,
+        "path": "/.",
+        "exists": true
+      }
+    },
+    "elasticsearch": {
+      "status": "UP",
+      "details": {
+        "cluster_name": "logistics-cluster",
+        "status": "yellow",
+        "timed_out": false,
+        "number_of_nodes": 1,
+        "number_of_data_nodes": 1,
+        "active_primary_shards": 1,
+        "active_shards": 1,
+        "relocating_shards": 0,
+        "initializing_shards": 0,
+        "unassigned_shards": 1,
+        "delayed_unassigned_shards": 0,
+        "number_of_pending_tasks": 0,
+        "number_of_in_flight_fetch": 0,
+        "task_max_waiting_in_queue_millis": 0,
+        "active_shards_percent_as_number": 50.0
+      }
+    },
+    "mail": {
+      "status": "UP",
+      "details": {
+        "location": "mailhog:1025"
+      }
+    },
+    "ping": {
+      "status": "UP"
+    },
+    "reactiveDiscoveryClients": {
+      "status": "UP",
+      "components": {
+        "Simple Reactive Discovery Client": {
+          "status": "UP",
+          "details": {
+            "services": []
+          }
+        },
+        "Spring Cloud Eureka Reactive Discovery Client": {
+          "status": "UP",
+          "details": {
+            "services": []
+          }
+        }
+      }
+    },
+    "redis": {
+      "status": "UP",
+      "details": {
+        "version": "7.4.8"
+      }
+    },
+    "refreshScope": {
+      "status": "UP"
+    }
+  }
+}
+```
+
+---
+
+---
+
+## 15. GitHub Actions CI/CD (Build in Cloud — No Docker Desktop Required)
+
+The project uses **GitHub Actions** to automatically build and push Docker images to
+**GitHub Container Registry (GHCR)** on every push to `main`.
+
+This means you can pull a pre-built image from GHCR **without ever running Docker Desktop locally**.
+
+---
+
+### CI/CD Workflow Overview
+
+| Workflow File | Trigger | What It Does |
+|---|---|---|
+| `ci.yml` | Push to any branch / PR | Builds Maven project, runs tests, uploads reports |
+| `docker-build.yml` | Push to `main` / git tags | Builds Docker image, pushes to GHCR, runs Trivy scan |
+| `deploy-dev.yml` | Push to `develop` / manual | SSH-deploys to dev server (skips if no server configured) |
+| `deploy-prod.yml` | Push of `v*.*.*` tag / manual | **Production deploy** with approval gate, health check, auto-rollback |
+
+---
+
+### GHCR Image — Pull Without Building Locally
+
+After CI runs, the image is available at:
+
+```bash
+ghcr.io/sanjeetji/logistics-platform/logistic-app:latest
+```
+
+Pull it directly:
+
+```bash
+docker pull ghcr.io/sanjeetji/logistics-platform/logistic-app:latest
+```
+
+If the package is private, authenticate first with your GitHub Personal Access Token (PAT):
+
+```bash
+echo "YOUR_GITHUB_PAT" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+docker pull ghcr.io/sanjeetji/logistics-platform/logistic-app:latest
+```
+
+> Generate a PAT at: **GitHub → Settings → Developer settings → Personal access tokens**
+> with scope: `read:packages`
+
+---
+
+### Run Locally with GHCR Image (No Build Needed)
+
+Instead of building locally, override the `logistic-app` image in docker-compose:
+
+```bash
+# Set the GHCR image as the app image
+export LOGISTIC_APP_IMAGE=ghcr.io/sanjeetji/logistics-platform/logistic-app:latest
+
+# Start infra + use the pre-built GHCR image
+cd docker
+docker compose up -d
+```
+
+Or add this override inline:
+
+```bash
+docker compose -f docker/docker-compose.yml \
+  run -e SPRING_PROFILES_ACTIVE=docker \
+  --image ghcr.io/sanjeetji/logistics-platform/logistic-app:latest \
+  logistic-app
+```
+
+---
+
+### Use Docker WITHOUT Docker Desktop — Install Colima (macOS)
+
+**Colima** is a free, lightweight Docker runtime for macOS that completely replaces Docker Desktop. It is highly recommended for single developers because it saves disk space and allows you to easily reclaim CPU/RAM when you aren't actively developing.
+
+#### 1. Full Installation Setup
+
+```bash
+# Install Colima + Docker CLI tools (one time)
+brew install colima docker docker-compose
+
+# Add Homebrew to your PATH (if not already there)
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+source ~/.zprofile
+```
+
+#### 2. Daily Workflow & Commands
+
+```bash
+# Start the Docker VM (allocates 8GB RAM, 4 CPUs)
+colima start --memory 8 --cpu 4
+
+# Verify it is running
+docker ps
+
+# Start the Logistics Platform
+./docker/scripts/run-platform.sh start
+```
+
+#### 3. Resource Management (CPU, RAM, and Disk Space)
+
+Colima gives you total control over how resources are used:
+
+| State | Action / Command | Resource Impact |
+| --- | --- | --- |
+| **Working** | `colima start -m 8 -c 4`<br>`./docker/scripts/run-platform.sh start` | **CPU/RAM:** actively used by Postgres, Kafka, etc.<br>**Disk:** Space used to store databases/images. |
+| **After Work** | `./docker/scripts/run-platform.sh stop`<br>`colima stop` | **CPU/RAM:** 100% Freed. The background VM safely shuts down.<br>**Disk:** Data is PRESERVED. You won't lose your local databases. |
+| **Full Wipe** | `./docker/scripts/run-platform.sh stop`<br>`colima delete` | **CPU/RAM:** 100% Freed.<br>**Disk:** 100% Freed. The VM and all your databases are destroyed. You will start completely fresh next time you run `colima start`. |
+
+After `colima start`, all standard `docker` and `docker compose` commands work exactly the same as they would with Docker Desktop.
+
+---
+
+### GitHub Actions Secrets Setup
+
+Go to: **GitHub → Your Repo → Settings → Secrets and variables → Actions**
+
+| Secret Name | Required For | Value |
+|---|---|---|
+| `NVD_API_KEY` | OWASP dependency scan in CI | Get free key at nvd.nist.gov/developers |
+| `DEV_SERVER_HOST` | Auto-deploy to dev server | Your server IP or hostname |
+| `DEV_SERVER_USER` | Auto-deploy to dev server | SSH user (e.g. `ubuntu`) |
+| `DEV_SSH_PRIVATE_KEY` | Auto-deploy to dev server | Contents of your `~/.ssh/id_rsa` |
+| `PROD_SERVER_HOST` | Production deployment | Your prod server IP or hostname |
+| `PROD_SERVER_USER` | Production deployment | SSH user (e.g. `ubuntu`) |
+| `PROD_SSH_PRIVATE_KEY` | Production deployment | Contents of your prod server's private key |
+
+> `GITHUB_TOKEN` is **automatically provided** by GitHub — no setup needed for GHCR push.
+
+---
+
+### View CI Results
+
+- **Actions tab**: `https://github.com/sanjeetji/logistics-platform/actions`
+- **GHCR packages**: `https://github.com/sanjeetji/logistics-platform/pkgs/container/logistics-platform%2Flogistic-app`
+
 ---
 
 > 💡 **Tip**: Run `docker system df` regularly to monitor disk usage.
 > The build cache grows fast — prune it with `docker builder prune -f` when not needed.
+
+---
+
+## 16. Production Deployment (`deploy-prod.yml`) 🚀
+
+The `deploy-prod.yml` workflow is the **only path to production**.
+It is triggered by a versioned git tag and enforces a **manual approval gate** before any
+container is touched on the production server.
+
+---
+
+### Deployment Flow
+
+```
+git tag v1.2.0 && git push --tags
+        │
+        ▼
+[Preflight] → Verify image exists in GHCR
+        │
+        ▼
+[Approval Gate] → Reviewer clicks "Approve" in GitHub Actions UI
+        │
+        ▼
+[SSH to Prod Server]
+  1. Sync docker-compose files
+  2. Save current image tag (for rollback)
+  3. Pull new image from GHCR
+  4. docker compose up -d --no-deps logistic-app
+        │
+        ▼
+[Health Check] → GET /actuator/health → { "status": "UP" }
+        │
+     ┌──┴──┐
+   Pass   Fail
+     │      │
+     ▼      ▼
+  ✅ Done  ♻️ Auto-Rollback to previous image
+```
+
+---
+
+### Step 1 — Set Up GitHub Environment (one time)
+
+1. Go to **GitHub → Repository → Settings → Environments**
+2. Click **New environment** → name it `production`
+3. Enable **Required reviewers** → add yourself (or your team)
+4. **Restrict to**: `main` branch only
+5. Add these secrets inside the `production` environment:
+
+| Secret | Value |
+|---|---|
+| `PROD_SERVER_HOST` | Your prod server IP |
+| `PROD_SERVER_USER` | SSH user (e.g. `ubuntu`) |
+| `PROD_SSH_PRIVATE_KEY` | Private SSH key `~/.ssh/id_rsa` |
+
+> ⚠️ Production secrets live under **Environments → production**, NOT under the general Actions secrets.
+
+---
+
+### Step 2 — Set Up the Production Server (one time)
+
+SSH into your production server and run:
+
+```bash
+# Create the deploy directory
+sudo mkdir -p /opt/logistics-platform
+sudo chown $USER:$USER /opt/logistics-platform
+cd /opt/logistics-platform
+
+# Create your production .env file with real credentials
+cat > .env << 'EOF'
+PROD_DB_URL=jdbc:postgresql://postgres:5432/logistics_postgres
+PROD_DB_USER=logistics_user
+PROD_DB_PASSWORD=CHANGE_ME_STRONG_PASSWORD
+PROD_REDIS_HOST=redis
+PROD_REDIS_PASSWORD=CHANGE_ME_REDIS_PASSWORD
+PROD_KAFKA_BROKERS=kafka:29092
+PROD_JWT_SECRET=CHANGE_ME_64_CHAR_RANDOM_STRING
+PROD_MAIL_HOST=smtp.yourprovider.com
+PROD_MAIL_PORT=587
+PROD_MAIL_USERNAME=noreply@yourdomain.com
+PROD_MAIL_PASSWORD=CHANGE_ME_MAIL_PASSWORD
+PROD_AWS_REGION=ap-south-1
+PROD_AWS_ACCESS_KEY_ID=YOUR_AWS_KEY
+PROD_AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET
+EOF
+chmod 600 .env
+
+# Start infrastructure services (first time only)
+docker compose \
+  -f docker/docker-compose.yml \
+  -f docker/docker-compose.prod.yml \
+  --env-file .env \
+  up -d postgres redis kafka zookeeper elasticsearch
+```
+
+---
+
+### Step 3 — Release a New Version
+
+```bash
+# On your local machine — after merging to main
+git checkout main
+git pull
+
+# Create a semantic version tag
+git tag v1.2.0 -m "Release v1.2.0 — description of changes"
+git push origin v1.2.0
+```
+
+This will:
+1. Trigger `deploy-prod.yml` in GitHub Actions
+2. Run a preflight check (verify image exists in GHCR)
+3. **Pause for manual approval** — go to Actions → the running workflow → click **Review deployments** → **Approve**
+4. SSH into prod, pull the new image, restart the container
+5. Run health checks and auto-rollback if they fail
+
+---
+
+### Step 4 — Monitor the Deployment
+
+```bash
+# Watch actions in real-time
+https://github.com/sanjeetji/logistics-platform/actions
+
+# On prod server — follow app logs during deploy
+ssh ubuntu@YOUR_PROD_IP
+docker logs -f logistics-app
+
+# Check health manually
+curl http://YOUR_PROD_IP:8080/actuator/health
+```
+
+---
+
+### Manual Emergency Deploy (any tag)
+
+Go to **Actions → Deploy to Production → Run workflow** and enter any image tag (e.g. `v1.1.0` for a rollback to a known-good version).
+
+```bash
+# Or trigger via GitHub CLI
+gh workflow run deploy-prod.yml --field image_tag=v1.1.0
+```
+
+---
+
+### Production Rollback
+
+The workflow **auto-rolls back** if the health check fails. For a manual rollback:
+
+```bash
+# Option 1 — Tag an older commit and push
+git tag v1.1.1 <commit-sha>
+git push origin v1.1.1
+# Then approve the deployment in GitHub Actions
+
+# Option 2 — Manual rollback on server
+ssh ubuntu@YOUR_PROD_IP
+cd /opt/logistics-platform
+export LOGISTIC_APP_IMAGE=ghcr.io/sanjeetji/logistics-platform/logistic-app:v1.1.0
+docker compose \
+  -f docker/docker-compose.yml \
+  -f docker/docker-compose.prod.yml \
+  up -d --no-deps --pull never logistic-app
+```
+
+---
+
+### Production Secrets Checklist
+
+Before your first production release, confirm ALL of these are set:
+
+- [ ] `PROD_SERVER_HOST` — in GitHub Environment `production` secrets
+- [ ] `PROD_SERVER_USER` — in GitHub Environment `production` secrets
+- [ ] `PROD_SSH_PRIVATE_KEY` — in GitHub Environment `production` secrets
+- [ ] `.env` file on server with all `PROD_*` variables
+- [ ] SSL certificates in `docker/nginx/ssl/` on prod server
+- [ ] GitHub Environment `production` has required reviewers set
+- [ ] At least one Docker image tagged `v*.*.*` exists in GHCR
+
+---
+
+> 💡 **Tip**: Use `gh workflow run deploy-prod.yml` (GitHub CLI) to trigger deployments from your terminal without opening a browser.

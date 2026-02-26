@@ -1,0 +1,278 @@
+name: Deploy to Production 🚀
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Triggers:
+#   1. Push of a versioned git tag (v1.2.3)  → fully automated after approval
+#   2. Manual dispatch from the Actions UI   → pick any tag to deploy
+#
+# Required GitHub Secrets (Settings → Environments → production → Secrets):
+#   PROD_SERVER_HOST      — server IP or hostname
+#   PROD_SERVER_USER      — SSH user (e.g. ubuntu)
+#   PROD_SSH_PRIVATE_KEY  — private SSH key for the deploy user
+#
+# Required GitHub Environment:
+#   Name:  production
+#   Rules: Required reviewers  ← manually approve before prod deploy happens
+# ──────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'        # trigger on semantic version tags: v1.0.0, v2.3.1, etc.
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (e.g. v1.2.0 or latest)'
+        required: true
+        default: 'latest'
+        type: string
+      skip_health_check:
+        description: 'Skip post-deploy health check (emergency use only)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/logistic-app
+  DEPLOY_DIR: /opt/logistics-platform
+  APP_PORT: 8080
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1: Validate that the image actually exists in GHCR before we deploy
+  # ─────────────────────────────────────────────────────────────────────────────
+  preflight:
+    name: ✅ Pre-flight Check
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.resolve.outputs.tag }}
+      image_ref: ${{ steps.resolve.outputs.image_ref }}
+
+    steps:
+      - name: Resolve image tag
+        id: resolve
+        run: |
+          # On tag push: use the git tag (strip leading 'v' for docker)
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="${{ github.event.inputs.image_tag }}"
+          fi
+          IMAGE_REF="ghcr.io/${{ env.IMAGE_NAME }}:${TAG}"
+          echo "tag=${TAG}"             >> $GITHUB_OUTPUT
+          echo "image_ref=${IMAGE_REF}" >> $GITHUB_OUTPUT
+          echo "📦 Target image: ${IMAGE_REF}"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify image exists in registry
+        run: |
+          echo "🔍 Checking ${{ steps.resolve.outputs.image_ref }} ..."
+          docker manifest inspect ${{ steps.resolve.outputs.image_ref }} > /dev/null
+          echo "✅ Image found in GHCR — safe to proceed."
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Deploy to Production Server
+  #   • Requires "production" GitHub Environment (manual approval gate)
+  #   • Blue-green style: pulls new image first, then switches traffic
+  #   • Auto-rollback if health check fails
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: preflight
+
+    # ⚠️ This environment MUST be configured with required reviewers in GitHub:
+    # Settings → Environments → production → Required reviewers
+    environment: production
+
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false    # Never cancel a running production deploy
+
+    env:
+      IMAGE_TAG:  ${{ needs.preflight.outputs.image_tag }}
+      IMAGE_REF:  ${{ needs.preflight.outputs.image_ref }}
+
+    steps:
+      # ── Check secrets ────────────────────────────────────────────────────────
+      - name: Validate deployment secrets
+        id: check-secrets
+        run: |
+          MISSING=""
+          [ -z "${{ secrets.PROD_SERVER_HOST }}" ]     && MISSING="${MISSING} PROD_SERVER_HOST"
+          [ -z "${{ secrets.PROD_SERVER_USER }}" ]     && MISSING="${MISSING} PROD_SERVER_USER"
+          [ -z "${{ secrets.PROD_SSH_PRIVATE_KEY }}" ] && MISSING="${MISSING} PROD_SSH_PRIVATE_KEY"
+          if [ -n "${MISSING}" ]; then
+            echo "❌ Missing required secrets:${MISSING}"
+            echo "   Add them in: Settings → Environments → production → Secrets"
+            exit 1
+          fi
+          echo "✅ All required secrets are configured."
+
+      # ── SSH Setup ────────────────────────────────────────────────────────────
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PROD_SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          echo "✅ Added ${{ secrets.PROD_SERVER_HOST }} to known_hosts"
+
+      # ── Checkout (for docker-compose files) ─────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── Copy latest docker-compose to server ─────────────────────────────────
+      - name: Sync docker-compose files to server
+        run: |
+          scp -r docker/ \
+            ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }}:${{ env.DEPLOY_DIR }}/
+          echo "✅ docker-compose files synced."
+
+      # ── Record current image tag for rollback ────────────────────────────────
+      - name: Save previous image tag for rollback
+        id: previous
+        run: |
+          PREV=$(ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }} \
+            "docker inspect --format='{{index .Config.Image}}' logistics-app 2>/dev/null || echo 'none'")
+          echo "tag=${PREV}" >> $GITHUB_OUTPUT
+          echo "⏪ Previous image: ${PREV}"
+
+      # ── Pull new image (before touching running containers) ──────────────────
+      - name: Pull new image
+        run: |
+          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }} << 'EOF'
+            set -e
+            echo "🔐 Logging into GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | \
+              docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "📥 Pulling image: ${{ env.IMAGE_REF }}"
+            docker pull ${{ env.IMAGE_REF }}
+            echo "✅ Image pulled successfully."
+          EOF
+
+      # ── Zero-downtime switch ─────────────────────────────────────────────────
+      - name: Deploy new version (zero-downtime)
+        id: deploy_step
+        run: |
+          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }} << EOF
+            set -e
+            cd ${{ env.DEPLOY_DIR }}
+
+            echo "🔄 Switching logistic-app to ${{ env.IMAGE_REF }} ..."
+
+            # Override the image for logistic-app to use the pulled tag
+            export LOGISTIC_APP_IMAGE="${{ env.IMAGE_REF }}"
+
+            # Bring up the new container alongside the old one briefly
+            # --no-deps: do not restart postgres/redis/kafka etc. 
+            docker compose \
+              -f docker/docker-compose.yml \
+              -f docker/docker-compose.prod.yml \
+              up -d --no-deps --pull never \
+              logistic-app
+
+            echo "✅ New container started."
+            docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.yml ps
+          EOF
+
+      # ── Health Check ─────────────────────────────────────────────────────────
+      - name: Wait for application health
+        id: health_check
+        if: github.event.inputs.skip_health_check != 'true'
+        run: |
+          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }} << 'EOF'
+            echo "⏳ Giving the app 45s to start up..."
+            sleep 45
+
+            MAX_RETRIES=12
+            COUNT=0
+            until curl -sf http://localhost:${{ env.APP_PORT }}/actuator/health \
+                  | grep -q '"status":"UP"'; do
+              COUNT=$((COUNT + 1))
+              if [ $COUNT -ge $MAX_RETRIES ]; then
+                echo "❌ Health check failed after ${MAX_RETRIES} attempts!"
+                docker logs --tail=100 logistics-app
+                exit 1
+              fi
+              echo "  Attempt ${COUNT}/${MAX_RETRIES} — retrying in 10s..."
+              sleep 10
+            done
+            echo "✅ Application is healthy and serving traffic!"
+          EOF
+
+      # ── Auto-Rollback on failure ─────────────────────────────────────────────
+      - name: 🔴 AUTO-ROLLBACK — health check failed
+        if: failure() && steps.deploy_step.outcome == 'success' && steps.health_check.outcome == 'failure'
+        run: |
+          PREV="${{ steps.previous.outputs.tag }}"
+          echo "⚠️  Rolling back to: ${PREV}"
+
+          if [ "${PREV}" == "none" ]; then
+            echo "⚠️  No previous image recorded — cannot auto-rollback. Manual intervention required."
+            exit 1
+          fi
+
+          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }} << EOF
+            set -e
+            cd ${{ env.DEPLOY_DIR }}
+            export LOGISTIC_APP_IMAGE="${PREV}"
+            echo "♻️  Restoring ${PREV}..."
+            docker compose \
+              -f docker/docker-compose.yml \
+              -f docker/docker-compose.prod.yml \
+              up -d --no-deps --pull never \
+              logistic-app
+            echo "✅ Rollback complete. Logs:"
+            docker logs --tail=50 logistics-app
+          EOF
+
+          echo "::error::Production health check failed. Rolled back to ${PREV}."
+          exit 1
+
+      # ── Post-deploy cleanup: remove dangling images ──────────────────────────
+      - name: Prune old Docker images
+        if: success()
+        run: |
+          ssh ${{ secrets.PROD_SERVER_USER }}@${{ secrets.PROD_SERVER_HOST }} \
+            "docker image prune -f --filter 'until=24h'" || true
+          echo "🧹 Pruned old images."
+
+      # ── Summary ──────────────────────────────────────────────────────────────
+      - name: Deployment Summary
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          TAG="${{ env.IMAGE_TAG }}"
+          HOST="${{ secrets.PROD_SERVER_HOST }}"
+
+          echo "## 🚀 Production Deployment Summary"          >> $GITHUB_STEP_SUMMARY
+          echo ""                                              >> $GITHUB_STEP_SUMMARY
+          echo "| Field       | Value |"                      >> $GITHUB_STEP_SUMMARY
+          echo "|-------------|-------|"                      >> $GITHUB_STEP_SUMMARY
+          echo "| **Status**  | ${STATUS} |"                  >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | \`${TAG}\` |"                 >> $GITHUB_STEP_SUMMARY
+          echo "| **Image**   | \`${{ env.IMAGE_REF }}\` |"  >> $GITHUB_STEP_SUMMARY
+          echo "| **Server**  | \`${HOST}\` |"                >> $GITHUB_STEP_SUMMARY
+          echo "| **Time**    | $(date -u '+%Y-%m-%d %H:%M UTC') |" >> $GITHUB_STEP_SUMMARY
+          echo ""                                             >> $GITHUB_STEP_SUMMARY
+          if [ "${STATUS}" == "success" ]; then
+            echo "✅ **Application URL**: http://\`${HOST}\`:${{ env.APP_PORT }}" >> $GITHUB_STEP_SUMMARY
+            echo "📊 **Health Endpoint**: http://\`${HOST}\`:${{ env.APP_PORT }}/actuator/health" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Deployment failed** — see job logs above."    >> $GITHUB_STEP_SUMMARY
+            echo "⏪ **Rolled back to**: \`${{ steps.previous.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -19,7 +19,9 @@ public class SapOrderSyncService {
     private final ErpConnector erpConnector;
     private final B2BOrderClient b2bOrderClient;
 
-    public SapOrderSyncService(ErpConnector erpConnector, B2BOrderClient b2bOrderClient) {
+    public SapOrderSyncService(
+            @org.springframework.beans.factory.annotation.Qualifier("sapConnector") ErpConnector erpConnector,
+            B2BOrderClient b2bOrderClient) {
         this.erpConnector = erpConnector;
         this.b2bOrderClient = b2bOrderClient;
     }

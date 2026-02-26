@@ -1,61 +1,129 @@
 name: Deploy to Development
 
+# Triggers: push to develop branch OR manual run
+# Requires secrets: DEV_SSH_PRIVATE_KEY, DEV_SERVER_HOST, DEV_SERVER_USER
+# If you don't have a dev server yet, trigger manually and it's a no-op
 on:
   push:
     branches: [ develop ]
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (default: latest)'
+        required: false
+        default: 'latest'
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/logistic-app
 
 jobs:
   deploy:
-    name: Deploy to Dev Environment
+    name: 🚀 Deploy to Dev Server
     runs-on: ubuntu-latest
     environment: development
-    
+
+    # Skip gracefully if SSH secrets are not configured
+    # (useful during initial setup when no server exists yet)
     steps:
+      - name: Check if deployment secrets are configured
+        id: check-secrets
+        run: |
+          if [ -z "${{ secrets.DEV_SERVER_HOST }}" ]; then
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "⚠️  DEV_SERVER_HOST secret not set — skipping deployment."
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
+        if: steps.check-secrets.outputs.configured == 'true'
         uses: actions/checkout@v4
-      
+
+      - name: Set image tag
+        id: tag
+        run: |
+          TAG="${{ github.event.inputs.image_tag || 'latest' }}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "🏷️  Deploying image tag: ${TAG}"
+
+      # ── SSH Setup ─────────────────────────────────────────────
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.0
+        if: steps.check-secrets.outputs.configured == 'true'
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-      
+
       - name: Add server to known hosts
+        if: steps.check-secrets.outputs.configured == 'true'
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.DEV_SERVER_HOST }} >> ~/.ssh/known_hosts
-      
-      - name: Deploy to development server
+
+      # ── Deploy ────────────────────────────────────────────────
+      - name: Pull latest image and restart services
+        if: steps.check-secrets.outputs.configured == 'true'
         run: |
           ssh ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }} << 'EOF'
+            set -e
             cd /opt/logistics-platform
-            git pull origin develop
-            docker compose -f docker/docker-compose.yml pull
-            docker compose -f docker/docker-compose.yml up -d
+
+            echo "📥 Logging into GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "📥 Pulling image: ghcr.io/${{ github.repository }}/logistic-app:${{ steps.tag.outputs.tag }}"
+            docker pull ghcr.io/${{ github.repository }}/logistic-app:${{ steps.tag.outputs.tag }}
+
+            echo "🔄 Restarting logistic-app container..."
+            docker compose -f docker/docker-compose.yml up -d --no-deps logistic-app
+
+            echo "📋 Container status:"
             docker compose -f docker/docker-compose.yml ps
           EOF
-      
-      - name: Wait for services to be healthy
+
+      # ── Health Check ──────────────────────────────────────────
+      - name: Wait for application to be healthy
+        if: steps.check-secrets.outputs.configured == 'true'
         run: |
           ssh ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }} << 'EOF'
-            echo "Waiting for services to be healthy..."
+            echo "⏳ Waiting 30s for app to start..."
             sleep 30
-            docker compose -f /opt/logistics-platform/docker/docker-compose.yml ps
+
+            MAX_RETRIES=10
+            COUNT=0
+            until curl -sf http://localhost:8080/actuator/health | grep -q '"status":"UP"'; do
+              COUNT=$((COUNT + 1))
+              if [ $COUNT -ge $MAX_RETRIES ]; then
+                echo "❌ Health check failed after ${MAX_RETRIES} attempts"
+                docker compose -f /opt/logistics-platform/docker/docker-compose.yml logs --tail=50 logistic-app
+                exit 1
+              fi
+              echo "Attempt ${COUNT}/${MAX_RETRIES} — waiting 10s..."
+              sleep 10
+            done
+            echo "✅ Application is healthy!"
           EOF
-      
-      - name: Run smoke tests
-        run: |
-          ssh ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }} << 'EOF'
-            cd /opt/logistics-platform
-            curl -f http://localhost/actuator/health || exit 1
-            echo "Smoke tests passed!"
-          EOF
-      
-      - name: Notify deployment status
+
+      # ── Summary ───────────────────────────────────────────────
+      - name: Deployment summary
         if: always()
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Deployment to development successful"
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check-secrets.outputs.configured }}" == "true" ]; then
+            if [ "${{ job.status }}" == "success" ]; then
+              echo "✅ **Status**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+              echo "🏷️  **Tag**: \`${{ steps.tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+              echo "🌐 **App URL**: http://\`${{ secrets.DEV_SERVER_HOST }}\`:8080" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Status**: Deployment failed — check logs above" >> $GITHUB_STEP_SUMMARY
+            fi
           else
-            echo "❌ Deployment to development failed"
+            echo "⏭️  **Status**: Skipped (DEV_SERVER_HOST secret not configured)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To enable deployment, add these secrets in **Settings → Secrets → Actions**:" >> $GITHUB_STEP_SUMMARY
+            echo "- \`DEV_SERVER_HOST\` — your server IP / hostname" >> $GITHUB_STEP_SUMMARY
+            echo "- \`DEV_SERVER_USER\` — SSH user (e.g. \`ubuntu\`)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`DEV_SSH_PRIVATE_KEY\` — your private SSH key" >> $GITHUB_STEP_SUMMARY
           fi

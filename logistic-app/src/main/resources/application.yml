@@ -74,6 +74,19 @@ spring:
         streams:
           binder:
             application-id: logistics-platform-streams
+            functions:
+              processOrderMetrics:
+                application-id: order-metrics-app
+              processSLAMetrics:
+                application-id: sla-metrics-app
+              processDriverMetrics:
+                application-id: driver-metrics-app
+              processRevenueMetrics:
+                application-id: revenue-metrics-app
+              processDriverLocations:
+                application-id: driver-locations-app
+              processHeatmap:
+                application-id: heatmap-data-app
             configuration:
               default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
@@ -157,3 +170,19 @@ logistics:
 google:
   maps:
     api-key: ${GOOGLE_MAPS_API_KEY:dummy_key}
+
+sap:
+  baseUrl: ${SAP_BASE_URL:https://mock-sap-instance.com/odata/v2}
+  username: ${SAP_USERNAME:sap_user}
+  password: ${SAP_PASSWORD:sap_pass}
+  sync:
+    order-cron: "0 0/15 * * * ?"
+    inventory-cron: "0 0/30 * * * ?"
+
+oracle:
+  baseUrl: ${ORACLE_BASE_URL:https://mock-oracle-ebs.com/rest}
+  username: ${ORACLE_USERNAME:oracle_user}
+  password: ${ORACLE_PASSWORD:oracle_pass}
+  sync:
+    order-cron: "0 0/15 * * * ?"
+    inventory-cron: "0 0/30 * * * ?"
