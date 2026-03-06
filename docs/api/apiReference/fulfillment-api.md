@@ -119,25 +119,26 @@ All endpoints for Order management, Dispatch, Routing, Geo, Parcels, Returns, an
 
 ---
 
-## 3. Routing — Advanced Features (`/api/v1/routes/advanced`)
-*Route planning, simulation, and what-if analysis.*
+## 3. Routing Controller (`/api/v1/routing`)
+*Route optimization and batch processing using VRP Solver.*
 
-### What-If Analysis
-* **Endpoint**: `POST /api/v1/routes/advanced/what-if`
+### Optimize Route
+* **Endpoint**: `POST /api/v1/routing/optimize`
 * **Request Body**:
     ```json
     {
-      "scenarioType": "DRIVER_UNAVAILABLE",
-      "routeId": "ROUTE-001",
-      "parameters": {}
+      "tenantId": "tenant-1",
+      "depot": {"id": "depot-1", "latitude": 28.6139, "longitude": 77.2090},
+      "orders": [],
+      "vehicles": []
     }
     ```
-* **Response**: `200 OK` with impact analysis result.
+* **Response**: `200 OK` with optimized route result.
 
-### Simulate Route
-* **Endpoint**: `POST /api/v1/routes/advanced/simulate`
-* **Request Body**: `{"routeId": "ROUTE-001", "simulationParams": {}}`
-* **Response**: `200 OK` with `RouteSimulationResponse`.
+### Batch Optimize
+* **Endpoint**: `POST /api/v1/routing/batch-optimize`
+* **Query Params**: `tenantId`, `lat`, `lon`, `radius`
+* **Response**: `200 OK` — Batch optimization job started.
 
 ---
 

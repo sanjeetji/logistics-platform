@@ -23,6 +23,7 @@ build, run, monitor, clean, and troubleshoot everything in one place.
 14. [Port Reference](#14-port-reference)
 15. [GitHub Actions CI/CD](#15-github-actions-cicd-build-in-cloud--no-docker-desktop-required)
 16. [**Production Deployment (deploy-prod.yml)**](#16-production-deployment-deploy-prodyml-)
+17. [**Automation Script (`run-platform.sh`)**](#17-automation-script-run-platformsh-)
 
 ---
 
@@ -44,7 +45,7 @@ build, run, monitor, clean, and troubleshoot everything in one place.
 
 | Service             | Image                                               | Port(s)           | Purpose                        |
 |---------------------|-----------------------------------------------------|-------------------|--------------------------------|
-| `postgres`          | `postgis/postgis:15-3.3-alpine`                     | `5432`            | Primary database (with PostGIS)|
+| `postgres`          | `postgis/postgis:15-3.4-alpine`                     | `5432`            | Primary database (with PostGIS)|
 | `pgadmin`           | `dpage/pgadmin4:latest`                             | `5050`            | DB admin UI                    |
 | `zookeeper`         | `confluentinc/cp-zookeeper:7.5.0`                   | `2181`            | Kafka coordinator              |
 | `kafka`             | `confluentinc/cp-kafka:7.5.0`                       | `9092`, `29092`   | Event streaming                |
@@ -413,7 +414,7 @@ docker rmi -f <IMAGE_ID>
 docker rmi -f $(docker images -q)
 
 # Pull a specific project-related image
-docker pull postgis/postgis:15-3.3-alpine
+docker pull postgis/postgis:15-3.4-alpine
 docker pull confluentinc/cp-kafka:7.5.0
 docker pull redis:7-alpine
 docker pull minio/minio:latest
@@ -568,123 +569,6 @@ docker rm $(docker ps -aq)
 
 The Spring Boot application exposes a detailed Actuator health check endpoint at `http://localhost:8080/actuator/health`. This API provides a comprehensive overview of the application's internal state, including database connectivity, Kafka stream threads, Elasticsearch cluster status, Redis, disk space, and more. 
 
-Here is an example response from a fully healthy application:
-
-```json
-{
-  "status": "UP",
-  "components": {
-    "binders": {
-      "status": "UP",
-      "components": {
-        "kafka": {
-          "status": "UP"
-        },
-        "kstream": {
-          "status": "UP"
-        }
-      }
-    },
-    "clientConfigServer": {
-      "status": "UNKNOWN",
-      "details": {
-        "error": "no property: spring.cloud.config.uri"
-      }
-    },
-    "db": {
-      "status": "UP",
-      "details": {
-        "database": "PostgreSQL",
-        "validationQuery": "isValid()"
-      }
-    },
-    "discoveryComposite": {
-      "status": "UP",
-      "components": {
-        "discoveryClient": {
-          "status": "UP",
-          "details": {
-            "services": []
-          }
-        },
-        "eureka": {
-          "description": "Eureka discovery client has not yet successfully connected to a Eureka server",
-          "status": "UP",
-          "details": {
-            "applications": {}
-          }
-        }
-      }
-    },
-    "diskSpace": {
-      "status": "UP",
-      "details": {
-        "total": 105087164416,
-        "free": 90409787392,
-        "threshold": 10485760,
-        "path": "/.",
-        "exists": true
-      }
-    },
-    "elasticsearch": {
-      "status": "UP",
-      "details": {
-        "cluster_name": "logistics-cluster",
-        "status": "yellow",
-        "timed_out": false,
-        "number_of_nodes": 1,
-        "number_of_data_nodes": 1,
-        "active_primary_shards": 1,
-        "active_shards": 1,
-        "relocating_shards": 0,
-        "initializing_shards": 0,
-        "unassigned_shards": 1,
-        "delayed_unassigned_shards": 0,
-        "number_of_pending_tasks": 0,
-        "number_of_in_flight_fetch": 0,
-        "task_max_waiting_in_queue_millis": 0,
-        "active_shards_percent_as_number": 50.0
-      }
-    },
-    "mail": {
-      "status": "UP",
-      "details": {
-        "location": "mailhog:1025"
-      }
-    },
-    "ping": {
-      "status": "UP"
-    },
-    "reactiveDiscoveryClients": {
-      "status": "UP",
-      "components": {
-        "Simple Reactive Discovery Client": {
-          "status": "UP",
-          "details": {
-            "services": []
-          }
-        },
-        "Spring Cloud Eureka Reactive Discovery Client": {
-          "status": "UP",
-          "details": {
-            "services": []
-          }
-        }
-      }
-    },
-    "redis": {
-      "status": "UP",
-      "details": {
-        "version": "7.4.8"
-      }
-    },
-    "refreshScope": {
-      "status": "UP"
-    }
-  }
-}
-```
-
 ---
 
 ---
@@ -823,11 +707,6 @@ Go to: **GitHub → Your Repo → Settings → Secrets and variables → Actions
 
 - **Actions tab**: `https://github.com/sanjeetji/logistics-platform/actions`
 - **GHCR packages**: `https://github.com/sanjeetji/logistics-platform/pkgs/container/logistics-platform%2Flogistic-app`
-
----
-
-> 💡 **Tip**: Run `docker system df` regularly to monitor disk usage.
-> The build cache grows fast — prune it with `docker builder prune -f` when not needed.
 
 ---
 
@@ -1007,6 +886,41 @@ Before your first production release, confirm ALL of these are set:
 - [ ] SSL certificates in `docker/nginx/ssl/` on prod server
 - [ ] GitHub Environment `production` has required reviewers set
 - [ ] At least one Docker image tagged `v*.*.*` exists in GHCR
+
+---
+
+## 17. Automation Script (`run-platform.sh`) 🛠️
+
+The platform includes a powerful automation script located at `./docker/scripts/run-platform.sh` to simplify your daily workflow and handle common environment issues automatically.
+
+### Commands Reference
+
+| Command | Usage | Description |
+|---|---|---|
+| `start` | `./docker/scripts/run-platform.sh start` | Quick start. Keeps data, performs pre-flight checks, and **self-heals** Kafka. |
+| `fresh` | `./docker/scripts/run-platform.sh fresh` | Full reset. Wipes all data, rebuilds app image, and starts everything. |
+| `stop` | `./docker/scripts/run-platform.sh stop` | Gracefully stops all platform containers. |
+| `restart`| `./docker/scripts/run-platform.sh restart`| Performs a `stop` followed by a `start`. |
+| `doctor` | `./docker/scripts/run-platform.sh doctor` | **Diagnostics**. Checks resources, port conflicts, and service health. |
+| `logs` | `./docker/scripts/run-platform.sh logs` | Tails logs from all platform containers. |
+| `build` | `./docker/scripts/run-platform.sh build` | Maven build + Docker image rebuild (no start). |
+
+### 🛠️ Self-Healing Automation
+The `start` command is now "intelligent." It recognizes common failures:
+- **Kafka Cluster ID Mismatch**: If detected, the script automatically clears stale volumes and resets Kafka/Zookeeper for you.
+- **Resource Validation**: Warns you if Colima is running with insufficient CPU or RAM.
+
+### 🏥 Platform Doctor
+If things feel "stuck," run the doctor:
+```bash
+./docker/scripts/run-platform.sh doctor
+```
+It will provide a clear report on Docker status, port usage, and infrastructure health, suggesting specific fixes for any issues found.
+
+---
+
+> 💡 **Tip**: Run `docker system df` regularly to monitor disk usage.
+> The build cache grows fast — prune it with `docker builder prune -f` when not needed.
 
 ---
 

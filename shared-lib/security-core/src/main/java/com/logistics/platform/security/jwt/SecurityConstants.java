@@ -8,6 +8,7 @@ public class SecurityConstants {
 
     // JWT Claims
     public static final String CLAIM_ROLES = "roles";
+    public static final String CLAIM_PERMISSIONS = "permissions";
     public static final String CLAIM_ORG_ID = "orgId";
     public static final String CLAIM_USER_TYPE = "userType";
 

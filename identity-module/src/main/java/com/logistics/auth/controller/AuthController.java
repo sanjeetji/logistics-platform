@@ -1,5 +1,6 @@
 package com.logistics.auth.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import com.logistics.auth.dto.LoginRequest;
 import com.logistics.auth.dto.RegisterRequest;
 import com.logistics.auth.dto.TokenRefreshRequest;
@@ -7,6 +8,10 @@ import com.logistics.auth.dto.TokenRefreshResponse;
 import com.logistics.auth.service.AuthService;
 import com.logistics.platform.common.dto.response.ApiResponse;
 import com.logistics.platform.common.dto.users.UserDto;
+import com.logistics.auth.dto.SendOtpRequest;
+import com.logistics.auth.dto.VerifyOtpRequest;
+import com.logistics.auth.dto.OtpVerificationResponse;
+import com.logistics.auth.service.PhoneVerificationService;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -16,18 +21,41 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
+    private final PhoneVerificationService phoneVerificationService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, PhoneVerificationService phoneVerificationService) {
         this.authService = authService;
+        this.phoneVerificationService = phoneVerificationService;
+    }
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<ApiResponse<OtpVerificationResponse>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
+        OtpVerificationResponse response = phoneVerificationService.sendOtp(request.getPhone());
+        return ResponseEntity.ok(ApiResponse.success(response, "OTP request processed"));
+    }
+
+    @PostMapping("/verify-phone")
+    public ResponseEntity<ApiResponse<OtpVerificationResponse>> verifyPhone(
+            @Valid @RequestBody VerifyOtpRequest request) {
+        OtpVerificationResponse response = phoneVerificationService.verifyOtp(request.getPhone(), request.getOtp());
+        return ResponseEntity.ok(ApiResponse.success(response, "OTP verification processed"));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterRequest request) {
-        UserDto user = authService.register(request);
-        return ResponseEntity.ok(ApiResponse.success(user, "User registered successfully"));
+    public ResponseEntity<ApiResponse<UserDto>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        log.info("DEBUG: AuthController.register called for email: {}", registerRequest.getEmail());
+        try {
+            UserDto user = authService.register(registerRequest);
+            log.info("DEBUG: AuthController.register success for email: {}", registerRequest.getEmail());
+            return ResponseEntity.ok(ApiResponse.success(user, "User registered successfully"));
+        } catch (Exception e) {
+            log.error("DEBUG: AuthController.register FAILED for email: {}", registerRequest.getEmail(), e);
+            throw e;
+        }
     }
 
     @PostMapping("/login")

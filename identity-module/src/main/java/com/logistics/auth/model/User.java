@@ -18,7 +18,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
 
 @Entity(name = "AuthUser")
 @Table(name = "users")
@@ -44,16 +43,69 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String lastName;
 
+    @Column(name = "phone_number", unique = true)
+    private String phone;
+
+    @Column(name = "last_login_at")
+    private java.time.LocalDateTime lastLogin;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserType userType;
 
     @Builder.Default
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean phoneVerified = false;
+
+    @Builder.Default
+    @Column(nullable = false, updatable = false)
+    private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
+
+    @Builder.Default
+    @Column(nullable = false)
+    private java.time.LocalDateTime updatedAt = java.time.LocalDateTime.now();
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable = false)
+    private com.logistics.platform.common.dto.enums.UserStatus status = com.logistics.platform.common.dto.enums.UserStatus.ACTIVE;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private String tenantId = "SYSTEM";
+
+    @Builder.Default
     private boolean active = true;
+
+    @jakarta.persistence.ManyToMany(fetch = jakarta.persistence.FetchType.EAGER)
+    @jakarta.persistence.JoinTable(name = "user_roles", joinColumns = @jakarta.persistence.JoinColumn(name = "user_id"), inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "role_id"))
+    @Builder.Default
+    private java.util.Set<com.logistics.usermanagement.entity.Role> roles = new java.util.HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + userType.name()));
+        java.util.Set<GrantedAuthority> authorities = new java.util.HashSet<>();
+
+        // Add the base userType as a role (legacy support & system defaults)
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + userType.name()));
+
+        // Extract roles and permissions from DB
+        if (roles != null) {
+            for (com.logistics.usermanagement.entity.Role role : roles) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()));
+                if (role.getPermissions() != null) {
+                    for (com.logistics.usermanagement.entity.Permission permission : role.getPermissions()) {
+                        authorities.add(new SimpleGrantedAuthority(permission.getName()));
+                    }
+                }
+            }
+        }
+
+        return authorities;
     }
 
     @Override

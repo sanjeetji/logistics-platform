@@ -19,16 +19,18 @@ import java.util.function.Function;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${logistics.auth.jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
     private String secret;
 
-    @Value("${jwt.expiration:86400000}")
+    @Value("${logistics.auth.jwt.expiration:86400000}")
     private long jwtExpiration;
 
-    // Generate Token for User with Roles and Organization ID
-    public String generateToken(String username, List<String> roles, Long organizationId, UserType userType) {
+    // Generate Token for User with Roles, Permissions, and Organization ID
+    public String generateToken(String username, List<String> roles, List<String> permissions, Long organizationId,
+            UserType userType) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(SecurityConstants.CLAIM_ROLES, roles);
+        claims.put(SecurityConstants.CLAIM_PERMISSIONS, permissions);
         claims.put(SecurityConstants.CLAIM_USER_TYPE, userType.name());
 
         // Add Organization ID if present (for B2B tenants)

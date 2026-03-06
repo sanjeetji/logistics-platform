@@ -11,9 +11,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.cache.annotation.EnableCaching;
 
 @SpringBootApplication
-@ComponentScan(basePackages = "com.logistics")
-@EntityScan(basePackages = "com.logistics")
-@EnableJpaRepositories(basePackages = "com.logistics")
+@ComponentScan(basePackages = { "com.logistics", "com.logistics.platform" })
+@EntityScan(basePackages = { "com.logistics", "com.logistics.platform" })
+@EnableJpaRepositories(basePackages = { "com.logistics", "com.logistics.platform" })
 @EnableElasticsearchRepositories(basePackages = {
                 "com.logistics.search"
 })

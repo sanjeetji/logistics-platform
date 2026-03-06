@@ -43,6 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
+        System.out.println("DEBUG: JwtAuthenticationFilter processing request: " + request.getRequestURI());
+
         if (authHeader == null || !authHeader.startsWith(SecurityConstants.TOKEN_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
@@ -58,13 +60,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         userEmail = jwtUtils.extractUsername(jwt);
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            if (jwtUtils.validateToken(jwt, userEmail)) {
 
-            if (jwtUtils.validateToken(jwt, userDetails.getUsername())) {
+                // Extract roles and permissions from token
+                @SuppressWarnings("unchecked")
+                java.util.List<String> roles = (java.util.List<String>) jwtUtils.extractClaim(jwt,
+                        claims -> claims.get(SecurityConstants.CLAIM_ROLES, java.util.List.class));
+                @SuppressWarnings("unchecked")
+                java.util.List<String> permissions = (java.util.List<String>) jwtUtils.extractClaim(jwt,
+                        claims -> claims.get(SecurityConstants.CLAIM_PERMISSIONS, java.util.List.class));
+
+                java.util.Set<org.springframework.security.core.GrantedAuthority> authorities = new java.util.HashSet<>();
+
+                if (roles != null) {
+                    for (String role : roles) {
+                        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(role));
+                    }
+                }
+                if (permissions != null) {
+                    for (String permission : permissions) {
+                        authorities.add(
+                                new org.springframework.security.core.authority.SimpleGrantedAuthority(permission));
+                    }
+                }
+
+                // Try to load UserDetails for principal, but fallback to just email if we want
+                // to avoid DB hit.
+                // Keeping DB hit for now to ensure user hasn't been deleted or suspended since
+                // token was issued.
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
-                        userDetails.getAuthorities());
+                        authorities); // Use authorities from token instead of DB to allow custom roles
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }

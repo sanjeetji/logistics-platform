@@ -12,8 +12,8 @@ The Unified BFF (Backend-for-Frontend) is the single entry point for all client 
 ### Mobile Channel
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/bff/mobile/orders/active` | Optimized active orders list for drivers |
-| GET | `/api/bff/mobile/profile` | Aggregated driver profile + stats |
+| GET | `/api/v1/auth/me` | Aggregated driver profile + stats |
+| GET | `/api/v1/orders/order/{orderId}` | Order details for mobile |
 
 ### B2C Channel
 | Method | Endpoint | Description |
@@ -21,12 +21,11 @@ The Unified BFF (Backend-for-Frontend) is the single entry point for all client 
 | POST | `/api/bff/b2c/orders` | Create order through Parcel adapter |
 | GET | `/api/bff/b2c/tracking/{id}` | Public tracking with Geo data |
 
-### B2B Channel
+### Dashboard (Aggregated)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/bff/b2b/dashboard` | Aggregated stats for enterprise dashboard |
-| POST | `/api/bff/b2b/shipments/bulk` | Bulk creation via B2B Order adapter |
+| GET | `/api/dashboard/snapshot` | Aggregated stats for enterprise dashboard |
 
 ## Postman Collection
 Refer to the global collection: `docs/postman/Logistics-Platform-API.postman_collection.json`
-Folder: `Unified BFF`
+Folder: `Platform Support`

@@ -2,7 +2,8 @@ services:
   # ==================== Infrastructure ====================
 
   postgres:
-    image: postgis/postgis:15-3.3-alpine
+    image: postgis/postgis:15-3.4-alpine
+    platform: linux/amd64
     container_name: logistics-postgres
     environment:
       POSTGRES_USER: logistics_user
@@ -49,6 +50,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
     networks:
       - logistics-network
 
@@ -82,7 +86,7 @@ services:
       interval: 15s
       timeout: 15s
       retries: 10
-      start_period: 30s
+      start_period: 60s
     networks:
       - logistics-network
 
@@ -119,6 +123,7 @@ services:
 
   mailhog:
     image: mailhog/mailhog:latest
+    platform: linux/amd64
     container_name: logistics-mailhog
     ports:
       - "1025:1025" # SMTP port
@@ -210,6 +215,10 @@ volumes:
   pgadmin-data:
     driver: local
   kafka-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  zookeeper-log:
     driver: local
 
 networks:

@@ -53,6 +53,11 @@
             <artifactId>common-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>common-exceptions</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
 
         <!-- SPRING BOOT STARTERS -->

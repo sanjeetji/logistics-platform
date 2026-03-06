@@ -1,5 +1,5 @@
 # ============================================================
-# PROD PROFILE — Safe DB migration (never drops tables)
+# PROD PROFILE — Safe DB migration & External Services Setup
 # ============================================================
 spring:
   datasource:
@@ -15,12 +15,68 @@ spring:
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST}
-      port: 6379
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
 
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 logging:
   level:
     root: WARN
     com.logistics: INFO
+
+# --- Identity / Onboarding Module ---
+stripe:
+  api-key: ${STRIPE_API_KEY_PROD}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET_PROD}
+
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID_PROD}
+  auth-token: ${TWILIO_AUTH_TOKEN_PROD}
+  verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID_PROD}
+
+# --- Fleet / Core Integrations ---
+google:
+  maps:
+    api-key: ${GOOGLE_MAPS_API_KEY_PROD}
+
+logistics:
+  file-storage:
+    provider: ${STORAGE_PROVIDER:s3}
+    s3:
+      bucket-name: ${AWS_S3_BUCKET_NAME}
+      region: ${AWS_REGION}
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
+      endpoint: ${AWS_S3_ENDPOINT:} # Used if MinIO is deployed instead of AWS
+
+# --- External ERP Systems (Optional) ---
+sap:
+  baseUrl: ${SAP_BASE_URL_PROD:}
+  username: ${SAP_USERNAME_PROD:}
+  password: ${SAP_PASSWORD_PROD:}
+
+oracle:
+  baseUrl: ${ORACLE_BASE_URL_PROD:}
+  username: ${ORACLE_USERNAME_PROD:}
+  password: ${ORACLE_PASSWORD_PROD:}
+
+

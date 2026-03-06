@@ -170,16 +170,16 @@ All endpoints for Driver management, Vehicles, Shifts, Teams, Compliance, Rating
 
 ---
 
-## 7. Geofence Controller (`/api/v1/geofences`)
+## 7. Geofence Controller (`/api/geofences`)
 *Location-based zone management.*
 
 ### Create Geofence
-* **Endpoint**: `POST /api/v1/geofences`
-* **Request Body**: `{"name": "Warehouse Zone", "centerLat": 28.6, "centerLng": 77.2, "radius": 500}`
-* **Response**: `201 Created`.
+* **Endpoint**: `POST /api/geofences`
+* **Request Body**: `{"name": "Warehouse Zone", "type": "CIRCLE", "latitude": 28.6, "longitude": 77.2, "radiusInMeters": 500}`
+* **Response**: `200 OK` with created geofence.
 
 ### Get All Geofences
-* **Endpoint**: `GET /api/v1/geofences`
+* **Endpoint**: `GET /api/geofences`
 * **Response**: List of geofences.
 
 ### Check if Point is Inside Geofence
@@ -202,7 +202,16 @@ All endpoints for Driver management, Vehicles, Shifts, Teams, Compliance, Rating
 
 ---
 
-## 9. Fleet Search (`/api/v1/fleet/search`)
+## 9. Digital Twin Controller (`/api/v1/fleet/digital-twin`)
+*Real-time exact 3D coordinates for Digital Twin consumers.*
+
+### Get 3D Network Snapshot
+* **Endpoint**: `GET /api/v1/fleet/digital-twin/snapshot`
+* **Response**: `200 OK` with real-time 3D coordinate snapshot.
+
+---
+
+## 10. Fleet Search (`/api/v1/fleet/search`)
 *Full-text and filter-based fleet search.*
 
 ### Search Drivers

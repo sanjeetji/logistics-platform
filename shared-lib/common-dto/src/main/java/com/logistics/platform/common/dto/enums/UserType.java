@@ -12,8 +12,11 @@ public enum UserType {
     /** Administrator for a specific Logistics Company (Tenant). */
     ADMIN,
 
-    /** Generic user acting for the tenant (B2B Employee or B2C Customer). */
+    /** Generic user acting for the tenant (B2B Employee). */
     USER,
+
+    /** B2C Customer. */
+    CUSTOMER,
 
     /** Fulfillment agent (B2B Trucker or B2C Rider). */
     DRIVER,

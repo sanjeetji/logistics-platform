@@ -42,7 +42,7 @@ public class User {
     @Column(nullable = false, length = 100)
     private String lastName;
 
-    @Column(length = 20)
+    @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
     @Column(nullable = false)
@@ -75,6 +75,7 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
     @Column(nullable = false)

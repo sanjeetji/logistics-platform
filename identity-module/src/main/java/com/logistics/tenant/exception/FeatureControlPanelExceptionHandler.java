@@ -3,7 +3,6 @@ package com.logistics.tenant.exception;
 import com.logistics.platform.common.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -45,41 +44,6 @@ public class FeatureControlPanelExceptionHandler {
                                 .build();
 
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
-
-        /**
-         * HTTP 403 — Access denied (e.g., non-SUPER_ADMIN calling admin-only
-         * endpoints).
-         */
-        @ExceptionHandler(AccessDeniedException.class)
-        public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                                ApiResponse.error(
-                                                "Access denied: you do not have permission to perform this action.",
-                                                "ACCESS_DENIED"));
-        }
-
-        /**
-         * HTTP 404 — Feature key not found in master list.
-         */
-        @ExceptionHandler(RuntimeException.class)
-        public ResponseEntity<ApiResponse<Void>> handleRuntime(RuntimeException ex) {
-                String msg = ex.getMessage();
-                if (msg != null && msg.startsWith("Feature not found:")) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                                        ApiResponse.error(msg, "FEATURE_NOT_FOUND"));
-                }
-                if (msg != null && msg.startsWith("Tenant not found:")) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                                        ApiResponse.error(msg, "TENANT_NOT_FOUND"));
-                }
-                if (msg != null && msg.startsWith("Feature key already exists:")) {
-                        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                                        ApiResponse.error(msg, "FEATURE_ALREADY_EXISTS"));
-                }
-                // Re-throw all other RuntimeExceptions to be handled by Spring's default
-                // handler
-                throw ex;
         }
 
         /**

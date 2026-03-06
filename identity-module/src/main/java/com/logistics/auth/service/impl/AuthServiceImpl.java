@@ -20,19 +20,22 @@ import com.logistics.auth.model.RefreshToken;
 import com.logistics.auth.model.PasswordResetToken;
 import com.logistics.auth.service.RefreshTokenService;
 import com.logistics.auth.service.TokenBlacklistService;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.UUID;
 
 import com.logistics.auth.dto.RegisterRequest;
 
+import com.logistics.auth.service.PhoneVerificationService;
+
 @Service
 public class AuthServiceImpl implements AuthService {
 
+        private final PhoneVerificationService phoneVerificationService;
         private final RefreshTokenService refreshTokenService;
         private final TokenBlacklistService tokenBlacklistService;
         private final com.logistics.auth.repository.PasswordResetTokenRepository passwordResetTokenRepository;
         private final com.logistics.auth.repository.UserTenantRepository userTenantRepository;
+        private final com.logistics.usermanagement.repository.RoleRepository roleRepository;
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
         private final JwtUtils jwtUtils;
@@ -43,24 +46,28 @@ public class AuthServiceImpl implements AuthService {
                         com.logistics.auth.repository.PasswordResetTokenRepository passwordResetTokenRepository,
                         com.logistics.auth.repository.UserTenantRepository userTenantRepository,
                         UserRepository userRepository,
+                        com.logistics.usermanagement.repository.RoleRepository roleRepository,
                         PasswordEncoder passwordEncoder,
                         JwtUtils jwtUtils,
-                        AuthenticationManager authenticationManager) {
+                        AuthenticationManager authenticationManager,
+                        PhoneVerificationService phoneVerificationService) {
                 this.refreshTokenService = refreshTokenService;
                 this.tokenBlacklistService = tokenBlacklistService;
                 this.passwordResetTokenRepository = passwordResetTokenRepository;
                 this.userTenantRepository = userTenantRepository;
                 this.userRepository = userRepository;
+                this.roleRepository = roleRepository;
                 this.passwordEncoder = passwordEncoder;
                 this.jwtUtils = jwtUtils;
                 this.authenticationManager = authenticationManager;
+                this.phoneVerificationService = phoneVerificationService;
         }
 
         @Override
         @SuppressWarnings("null")
         public UserDto register(RegisterRequest req) {
                 if (userRepository.existsByEmail(req.getEmail())) {
-                        throw new RuntimeException("Email already in use");
+                        throw new IllegalArgumentException("Email already in use");
                 }
 
                 // RULE 1: SUPER_ADMIN is a platform-level role — must NOT belong to any tenant
@@ -70,21 +77,52 @@ public class AuthServiceImpl implements AuthService {
                 }
 
                 // RULE 2: All tenant-level roles MUST belong to an organization
-                if (req.getUserType() != UserType.SUPER_ADMIN && req.getOrganizationId() == null) {
+                if (req.getUserType() != UserType.SUPER_ADMIN
+                                && req.getUserType() != UserType.USER
+                                && req.getUserType() != UserType.DRIVER
+                                && req.getOrganizationId() == null) {
                         throw new IllegalArgumentException(
                                         "Tenant users (" + req.getUserType()
                                                         + ") must be associated with an organization (organizationId is required).");
+                }
+
+                // RULE 3: Enforce Phone Verification for Customers and Drivers
+                if (req.getUserType() == UserType.CUSTOMER || req.getUserType() == UserType.DRIVER) {
+                        if (req.getPhone() == null || req.getPhone().isEmpty()) {
+                                throw new IllegalArgumentException(
+                                                "Phone number is required for " + req.getUserType() + " registration.");
+                        }
+                        if (!phoneVerificationService.isPhoneVerified(req.getPhone())) {
+                                throw new IllegalArgumentException("Phone number " + req.getPhone()
+                                                + " has not been verified. Please verify OTP first.");
+                        }
                 }
 
                 User user = User.builder()
                                 .firstName(req.getFirstName())
                                 .lastName(req.getLastName())
                                 .email(req.getEmail())
+                                .phone(req.getPhone())
                                 .password(passwordEncoder.encode(req.getPassword()))
                                 .userType(req.getUserType())
-                                // .organizationId(req.getOrganizationId()) // Removed
+                                .tenantId(req.getOrganizationId() != null ? String.valueOf(req.getOrganizationId())
+                                                : "SYSTEM")
+                                .status(com.logistics.platform.common.dto.enums.UserStatus.ACTIVE)
                                 .active(true)
                                 .build();
+
+                // Assign default System Role based on UserType
+                com.logistics.usermanagement.entity.Role systemRole = roleRepository
+                                .findByNameAndTenantId(req.getUserType().name(), "SYSTEM")
+                                .orElseGet(() -> roleRepository
+                                                .findByNameAndTenantId("ROLE_" + req.getUserType().name(), "SYSTEM")
+                                                .orElse(null));
+
+                if (systemRole != null) {
+                        java.util.Set<com.logistics.usermanagement.entity.Role> roles = new java.util.HashSet<>();
+                        roles.add(systemRole);
+                        user.setRoles(roles);
+                }
 
                 User savedUser = Objects.requireNonNull(userRepository.save(user));
 
@@ -98,11 +136,17 @@ public class AuthServiceImpl implements AuthService {
                         userTenantRepository.save(userTenant);
                 }
 
+                // Clear verification status after successful registration
+                if (req.getUserType() == UserType.CUSTOMER || req.getUserType() == UserType.DRIVER) {
+                        phoneVerificationService.clearVerification(req.getPhone());
+                }
+
                 return UserDto.builder()
                                 .id(savedUser.getId())
                                 .firstName(savedUser.getFirstName())
                                 .lastName(savedUser.getLastName())
                                 .email(savedUser.getEmail())
+                                .phone(savedUser.getPhone())
                                 .userType(savedUser.getUserType())
                                 .organizationId(req.getOrganizationId()) // Return what was requested
                                 .status(savedUser.isActive() ? com.logistics.platform.common.dto.enums.UserStatus.ACTIVE
@@ -118,14 +162,33 @@ public class AuthServiceImpl implements AuthService {
 
                 User user = (User) authentication.getPrincipal();
 
+                user.setLastLogin(java.time.LocalDateTime.now());
+                userRepository.save(user);
+
                 // MVP: Fetch first tenant or use null
                 Long orgId = userTenantRepository.findByUserId(user.getId()).stream()
                                 .findFirst()
                                 .map(com.logistics.auth.model.UserTenant::getOrganizationId)
                                 .orElse(null);
 
+                java.util.List<String> roles = new java.util.ArrayList<>();
+                java.util.List<String> permissions = new java.util.ArrayList<>();
+
+                roles.add("ROLE_" + user.getUserType().name());
+                if (user.getRoles() != null) {
+                        for (com.logistics.usermanagement.entity.Role r : user.getRoles()) {
+                                roles.add("ROLE_" + r.getName().toUpperCase());
+                                if (r.getPermissions() != null) {
+                                        for (com.logistics.usermanagement.entity.Permission p : r.getPermissions()) {
+                                                permissions.add(p.getName());
+                                        }
+                                }
+                        }
+                }
+
                 return jwtUtils.generateToken(user.getEmail(),
-                                Collections.singletonList("ROLE_" + user.getUserType().name()),
+                                roles,
+                                permissions,
                                 orgId, user.getUserType());
         }
 
@@ -143,8 +206,25 @@ public class AuthServiceImpl implements AuthService {
                                                         .map(com.logistics.auth.model.UserTenant::getOrganizationId)
                                                         .orElse(null);
 
+                                        java.util.List<String> roles = new java.util.ArrayList<>();
+                                        java.util.List<String> permissions = new java.util.ArrayList<>();
+
+                                        roles.add("ROLE_" + user.getUserType().name());
+                                        if (user.getRoles() != null) {
+                                                for (com.logistics.usermanagement.entity.Role r : user.getRoles()) {
+                                                        roles.add("ROLE_" + r.getName().toUpperCase());
+                                                        if (r.getPermissions() != null) {
+                                                                for (com.logistics.usermanagement.entity.Permission p : r
+                                                                                .getPermissions()) {
+                                                                        permissions.add(p.getName());
+                                                                }
+                                                        }
+                                                }
+                                        }
+
                                         String token = jwtUtils.generateToken(user.getEmail(),
-                                                        Collections.singletonList("ROLE_" + user.getUserType().name()),
+                                                        roles,
+                                                        permissions,
                                                         orgId, user.getUserType());
                                         return new TokenRefreshResponse(token, requestRefreshToken);
                                 })
@@ -177,8 +257,10 @@ public class AuthServiceImpl implements AuthService {
                                 .firstName(user.getFirstName())
                                 .lastName(user.getLastName())
                                 .email(user.getEmail())
+                                .phone(user.getPhone())
                                 .userType(user.getUserType())
                                 .organizationId(orgId)
+                                .lastLogin(user.getLastLogin())
                                 .status(user.isActive() ? com.logistics.platform.common.dto.enums.UserStatus.ACTIVE
                                                 : com.logistics.platform.common.dto.enums.UserStatus.INACTIVE)
                                 .build();
@@ -237,9 +319,25 @@ public class AuthServiceImpl implements AuthService {
                                                 "User does not belong to organization: "
                                                                 + request.getTargetOrganizationId()));
 
+                java.util.List<String> roles = new java.util.ArrayList<>();
+                java.util.List<String> permissions = new java.util.ArrayList<>();
+
+                roles.add("ROLE_" + userTenant.getRole().name());
+                if (user.getRoles() != null) {
+                        for (com.logistics.usermanagement.entity.Role r : user.getRoles()) {
+                                roles.add("ROLE_" + r.getName().toUpperCase());
+                                if (r.getPermissions() != null) {
+                                        for (com.logistics.usermanagement.entity.Permission p : r.getPermissions()) {
+                                                permissions.add(p.getName());
+                                        }
+                                }
+                        }
+                }
+
                 // Generate new token with tenant context
                 return jwtUtils.generateToken(user.getEmail(),
-                                Collections.singletonList("ROLE_" + userTenant.getRole().name()),
+                                roles,
+                                permissions,
                                 userTenant.getOrganizationId(),
                                 userTenant.getRole());
         }
