@@ -1,0 +1,195 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: logistics-platform-main
+  profiles:
+    active: dev
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+  liquibase:
+    enabled: false
+    
+  datasource:
+    url: jdbc:postgresql://localhost:5432/logistics_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: logistics-app-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    notification:
+      email:
+        from-address: ${NOTIFICATION_FROM_ADDRESS:noreply@logistics.com}
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  cloud:
+    function:
+      definition: processOrderMetrics;processSLAMetrics;processDriverMetrics;processRevenueMetrics;processDriverLocations;processHeatmap;driverLocationConsumer
+    stream:
+      kafka:
+        streams:
+          binder:
+            application-id: logistics-platform-streams
+            functions:
+              processOrderMetrics:
+                application-id: order-metrics-app
+              processSLAMetrics:
+                application-id: sla-metrics-app
+              processDriverMetrics:
+                application-id: driver-metrics-app
+              processRevenueMetrics:
+                application-id: revenue-metrics-app
+              processDriverLocations:
+                application-id: driver-locations-app
+              processHeatmap:
+                application-id: heatmap-data-app
+            configuration:
+              default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+              default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
+              spring.json.trusted.packages: "*"
+      bindings:
+        processOrderMetrics-in-0:
+          destination: order-status-events
+        processSLAMetrics-in-0:
+          destination: sla-breach-events
+        processDriverMetrics-in-0:
+          destination: driver-status-events
+        processRevenueMetrics-in-0:
+          destination: payment-events
+        processDriverLocations-in-0:
+          destination: driver-locations
+        processDriverLocations-out-0:
+          destination: tracking-events
+        processHeatmap-in-0:
+          destination: tracking-events
+        processHeatmap-out-0:
+          destination: heatmap-data
+        driverLocationConsumer-in-0:
+          destination: driver-locations
+
+logging:
+  level:
+    root: INFO
+    com.logistics: DEBUG
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Domain Specific Configs (Merged from Microservices)
+ml:
+  service:
+    url: ${ML_SERVICE_URL:http://localhost:8092}
+
+# --- Identity / Onboarding Module ---
+stripe:
+  api-key: ${STRIPE_API_KEY:sk_test_your_key_here}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_your_secret_here}
+
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:dummy_account_sid_for_local_dev}
+  auth-token: ${TWILIO_AUTH_TOKEN:dummy_auth_token_for_local_dev}
+  verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:dummy_verify_service_sid_for_local_dev}
+
+trial:
+  duration-days: 14
+  auto-convert-to-paid: false
+  
+onboarding:
+  email:
+    welcome-enabled: true
+    setup-guide-enabled: true
+    check-in-days: 3,7,14
+  webhook:
+    callback-url: ${WEBHOOK_CALLBACK_URL:http://localhost:8080/api/onboarding/stripe/webhook}
+
+
+
+# --- Fleet / Compliance Module ---
+document:
+  storage:
+    path: /var/logistics/documents
+    url: http://localhost:8080/api/v1/documents/files
+
+logistics:
+  auth:
+    jwt:
+      secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970" # Must be valid base64
+      expiration: 86400000 # 24 hours
+  
+  file-storage:
+    provider: s3
+    s3:
+      bucket-name: logistics-docs
+      region: us-east-1
+
+google:
+  maps:
+    api-key: ${GOOGLE_MAPS_API_KEY:dummy_key}
+
+sap:
+  baseUrl: ${SAP_BASE_URL:https://mock-sap-instance.com/odata/v2}
+  username: ${SAP_USERNAME:sap_user}
+  password: ${SAP_PASSWORD:sap_pass}
+  sync:
+    order-cron: "0 0/15 * * * ?"
+    inventory-cron: "0 0/30 * * * ?"
+
+oracle:
+  baseUrl: ${ORACLE_BASE_URL:https://mock-oracle-ebs.com/rest}
+  username: ${ORACLE_USERNAME:oracle_user}
+  password: ${ORACLE_PASSWORD:oracle_pass}
+  sync:
+    order-cron: "0 0/15 * * * ?"
+    inventory-cron: "0 0/30 * * * ?"
+
+

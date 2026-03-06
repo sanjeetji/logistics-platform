@@ -5,18 +5,17 @@ The Geo Service provides routing, distance calculation, and geocoding capabiliti
 
 ## Access Details
 - **Base URL**: `http://localhost:8105` (Check discovery for exact port)
-- **Gateway URL**: `http://localhost:8080/api/geo`
+- **Gateway URL**: `http://localhost:8080/api/v1/geo`
 - **Swagger UI**: [http://localhost:8105/swagger-ui/index.html](http://localhost:8105/swagger-ui/index.html)
 
 ## Key Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/geo/distance` | Calculate OSRM distance between coordinates |
-| POST | `/api/geo/geocode` | Convert address to GPS coordinates |
-| POST | `/api/geo/reverse-geocode` | Convert coordinates to address |
-| GET | `/api/geo/route` | Get full polyline for a route |
+| GET | `/api/v1/geo/distance` | Calculate distance between coordinates |
+| GET | `/api/v1/geo/geocode` | Convert address to GPS coordinates |
+| GET | `/api/v1/geo/reverse` | Convert coordinates to address |
 
 ## Postman Collection
 Refer to the global collection: `docs/postman/Logistics-Platform-API.postman_collection.json`
-Folder: `Shared - Geo Service`
+Folder: `Fulfillment/Geo`

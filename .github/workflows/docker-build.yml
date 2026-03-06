@@ -1,92 +1,143 @@
-name: Docker Build and Push
+name: Docker Build & Push to GHCR
 
+# Triggers:
+#   1. Push to main (auto-build after CI passes)
+#   2. Git tags like v1.0.0 (versioned releases)
+#   3. Manual run from GitHub Actions UI (workflow_dispatch)
 on:
   push:
     branches: [ main ]
-    tags:
-      - 'v*.*.*'
+    tags: [ 'v*.*.*' ]
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/logistics
+  # Image name: ghcr.io/sanjeetji/logistics-platform/logistic-app
+  IMAGE_NAME: ${{ github.repository }}/logistic-app
 
 jobs:
-  build-images:
-    name: Build and Push Docker Images
+  build-and-push:
+    name: 🐳 Build & Push Docker Image
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
-      packages: write
-    
-    strategy:
-      matrix:
-        service:
-          - gateway-service
-          - auth-service
-          - user-service
-          - order-service
-          - dispatch-service
-          - fleet-service
-          - parcel-service
-    
+      packages: write  # Required to push to GHCR
+
     steps:
+      # ── 1. Checkout ──────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      # ── 2. Build Spring Boot JAR ──────────────────────────────
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-      
-      - name: Build JAR for ${{ matrix.service }}
-        run: |
-          if [[ "${{ matrix.service }}" == "gateway-service" ]]; then
-            mvn clean package -DskipTests -pl infrastructure/${{ matrix.service }} -am
-          elif [[ "${{ matrix.service }}" == "parcel-service" ]]; then
-            mvn clean package -DskipTests -pl b2c-engine/${{ matrix.service }} -am
-          else
-            mvn clean package -DskipTests -pl platform-core/${{ matrix.service }} -am
-          fi
-      
+
+      - name: Build Spring Boot JAR
+        run: mvn clean package -DskipTests -B
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+      # ── 3. Docker Setup ───────────────────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
+      # ── 4. Authenticate to GHCR ───────────────────────────────
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Extract metadata
+
+      # ── 5. Generate image tags ────────────────────────────────
+      # Tags produced:
+      #   latest            → on push to main
+      #   main-abc1234      → branch + short SHA
+      #   v1.2.3            → on git tag v1.2.3
+      #   1.2               → on git tag v1.2.x
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-,format=short
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-      
+            type=ref,event=pr
+
+      # ── 6. Build & Push ───────────────────────────────────────
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: |
-            ${{ matrix.service == 'gateway-service' && 'infrastructure/gateway-service' || 
-                matrix.service == 'parcel-service' && 'b2c-engine/parcel-service' || 
-                format('platform-core/{0}', matrix.service) }}
-          dockerfile: |
-            ${{ matrix.service == 'gateway-service' && 'infrastructure/gateway-service/Dockerfile' || 
-                matrix.service == 'parcel-service' && 'b2c-engine/Dockerfile' || 
-                'platform-core/Dockerfile' }}
+          context: .
+          dockerfile: logistic-app/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Use GitHub Actions cache to skip unchanged layers (huge speedup)
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Build args
+          build-args: |
+            JAR_FILE=logistic-app/target/*.jar
+
+      # ── 7. Summary ────────────────────────────────────────────
+      - name: Print image summary
+        run: |
+          echo "## 🐳 Docker Image Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry**: ghcr.io" >> $GITHUB_STEP_SUMMARY
+          echo "**Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Tags" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ─────────────────────────────────────────────────────────────
+  # Scan the pushed image for vulnerabilities
+  # ─────────────────────────────────────────────────────────────
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    permissions:
+      contents: read
+      packages: read
+      security-events: write  # For uploading SARIF results
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scan on Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'           # Don't fail build on findings (warn only)
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

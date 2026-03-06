@@ -23,6 +23,7 @@ public class UserDto {
     private String lastName;
     private UserType userType;
     private UserStatus status;
+    private java.time.LocalDateTime lastLogin;
     private Long organizationId;
     private Long teamId;
 }

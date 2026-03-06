@@ -2,7 +2,7 @@ package com.logistics.platform.utils.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NonNull;
+
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -10,18 +10,23 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import lombok.experimental.SuperBuilder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @NonNull
     private Long id;
 
     @CreatedDate

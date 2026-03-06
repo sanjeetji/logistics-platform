@@ -35,7 +35,7 @@ echo "[START] Running clean install (skipping tests)..."
 echo "This may take a few minutes..."
 echo ""
 
-$MAVEN_CMD clean install -DskipTests
+$MAVEN_CMD clean install -pl logistic-app -am -DskipTests
 
 if [ $? -eq 0 ]; then
   echo ""

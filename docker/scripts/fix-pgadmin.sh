@@ -10,22 +10,22 @@ echo "1. Stopping pgAdmin..."
 docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform stop pgadmin
 
 echo "2. Checking PostgreSQL connection..."
-if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec postgres-db pg_isready -U logistics_user; then
+if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec postgres pg_isready -U logistics_user; then
     echo "✅ PostgreSQL is accessible"
 else
     echo "❌ Cannot connect to PostgreSQL"
     echo "   Starting PostgreSQL..."
-    docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d postgres-db
+    docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d postgres
     sleep 5
 fi
 
 echo "3. Checking network connectivity..."
-docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec pgadmin ping -c 2 postgres-db
+docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec pgadmin ping -c 2 postgres
 
 echo "4. Creating new pgpass file..."
 cat > "$PROJECT_ROOT/docker/pgadmin/pgpass" << EOF
-postgres-db:5432:*:logistics_user:logistics_pass
-localhost:5432:*:postgres:logistics_pass
+postgres:5432:*:logistics_user:logistics_pass
+localhost:5432:*:logistics_user:logistics_pass
 172.17.0.1:5432:*:logistics_user:logistics_pass
 host.docker.internal:5432:*:logistics_user:logistics_pass
 EOF
@@ -42,7 +42,7 @@ echo "From pgAdmin container:"
 echo "  docker compose exec pgadmin ping postgres-db"
 echo ""
 echo "From PostgreSQL container:"
-echo "  docker compose exec postgres-db psql -U logistics_user -d logistics_postgres"
+echo "  docker compose exec postgres psql -U logistics_user -d logistics_postgres"
 echo ""
 echo "Direct connection test:"
 echo "  PGPASSWORD=logistics_pass psql -h localhost -p 5432 -U logistics_user -d logistics_postgres"
@@ -52,7 +52,7 @@ echo "📧 Email: admin@logistics.com"
 echo "🔑 Password: admin123"
 echo ""
 echo "Try these hostnames in pgAdmin:"
-echo "1. postgres-db (Recommended)"
+echo "1. postgres (Recommended — Docker service name)"
 echo "2. host.docker.internal"
 echo "3. 172.17.0.1"
 echo "4. localhost"

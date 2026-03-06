@@ -1,68 +1,68 @@
-### **8. `scripts/README.md`**
-```markdown
-# Scripts Directory
+# 🛠️ Scripts Reference — Logistics Platform
 
-Utility scripts for building, deploying, and managing the Logistics Platform.
+Utility scripts for managing the Logistics Platform locally.
+All scripts auto-detect the project root — run them from **anywhere**.
 
-## 🎯 Purpose
-Contains all utility scripts for development, testing, deployment, and maintenance of the Logistics Platform.
+---
 
-## 📁 Directory Structure
-scripts/
-├── build/ # Build scripts
-│ ├── build-all.sh
-│ ├── build-service.sh
-│ └── package.sh
-├── deploy/ # Deployment scripts
-│ ├── deploy-dev.sh
-│ ├── deploy-prod.sh
-│ └── rollback.sh
-├── database/ # Database scripts
-│ ├── migrate.sh
-│ ├── backup.sh
-│ └── restore.sh
-├── monitoring/ # Monitoring scripts
-│ ├── health-check.sh
-│ ├── log-analyzer.sh
-│ └── metrics-collector.sh
-├── security/ # Security scripts
-│ ├── generate-keys.sh
-│ ├── ssl-renew.sh
-│ └── security-scan.sh
-├── cleanup/ # Cleanup scripts
-│ ├── clean-docker.sh
-│ ├── clean-maven.sh
-│ └── clean-logs.sh
-└── utils/ # Utility scripts
-├── env-setup.sh
-├── service-check.sh
-└── version-check.sh
+## 📁 Script Inventory
 
-text
+| Script | Purpose | Usage |
+|---|---|---|
+| `run-platform.sh` | **Master control script** — start/stop/build/fresh/logs | `./docker/scripts/run-platform.sh <command>` |
+| `health-check.sh` | Check health of all services (app + infra) | `./docker/scripts/health-check.sh` |
+| `clean.sh` | Nuclear Docker cleanup — removes containers, images, volumes | `./docker/scripts/clean.sh` |
+| `postgres-backup.sh` | Backup all DBs to `backups/postgres/*.sql.gz` | `./docker/scripts/postgres-backup.sh` |
+| `postgres-restore.sh` | Restore DB from a backup file | `./docker/scripts/postgres-restore.sh <file.sql.gz>` |
+| `postgres-connect.sh` | Open psql shell in the running postgres container | `./docker/scripts/postgres-connect.sh [db_name]` |
+| `postgres-start.sh` | Start only PostgreSQL + pgAdmin (no full infra) | `./docker/scripts/postgres-start.sh` |
+| `fix-pgadmin.sh` | Fix pgAdmin connection issues (recreates pgpass, restarts pgadmin) | `./docker/scripts/fix-pgadmin.sh` |
+| `fix_ide_errors.sh` | Maven clean install to fix IDE import errors (Lombok/MapStruct) | `./docker/scripts/fix_ide_errors.sh` |
+| `create_test_dbs.sh` | Create all local test databases (runs inside Docker, no host psql needed) | `./docker/scripts/create_test_dbs.sh` |
+| `run-integration-test.sh` | End-to-end API integration test (auth → order → dispatch) | `./docker/scripts/run-integration-test.sh` |
+| `run-load-tests.sh` | Gatling load tests | `./docker/scripts/run-load-tests.sh [quick\|orders\|ws\|full]` |
 
-## 🔧 Build Scripts
+---
 
-### Build All Services
+## ▶️ Most Common Commands
+
 ```bash
-#!/bin/bash
-# scripts/build/build-all.sh
+# Daily startup (keeps data, no rebuild)
+./docker/scripts/run-platform.sh start
 
-echo "Building Logistics Platform..."
+# Full reset (wipes DB, rebuilds image — use after schema changes)
+./docker/scripts/run-platform.sh fresh
 
-# Build parent project
-echo "Building parent project..."
-mvn clean install -DskipTests
+# Stop everything
+./docker/scripts/run-platform.sh stop
 
-# Build shared libraries
-echo "Building shared libraries..."
-mvn clean install -pl shared-lib/common-dto -am
-mvn clean install -pl shared-lib/common-utils -am
-mvn clean install -pl shared-lib/common-exceptions -am
+# Tail all logs
+./docker/scripts/run-platform.sh logs
 
-# Build platform core
-echo "Building platform core..."
-mvn clean install -pl platform-core/auth-service -am
-mvn clean install -pl platform-core/tenant-service -am
-# ... continue for all services
+# Check all service health
+./docker/scripts/health-check.sh
 
-echo "Build completed successfully!"
+# Take a DB backup
+./docker/scripts/postgres-backup.sh
+
+# Restore a backup
+./docker/scripts/postgres-restore.sh backups/postgres/logistics_backup_20260226_120000.sql.gz
+
+# Open a psql shell
+./docker/scripts/postgres-connect.sh
+
+# Nuclear cleanup (use when Docker is broken)
+./docker/scripts/clean.sh
+```
+
+---
+
+## 💡 Notes
+
+- All scripts use `docker-compose.yml` from `docker/` directory — no need to `cd` first.
+- Backups are saved to `<project_root>/backups/postgres/` which is git-ignored.
+- `run-integration-test.sh` requires the platform to be running and `jq` installed (`brew install jq`).
+- `create_test_dbs.sh` runs inside the Docker container — no host PostgreSQL tools required.
+- `run-load-tests.sh` requires the `load-tests/` Gatling Maven module to be set up.
+
+> 📘 For the full automation guide (local + CI/CD + production), see: [`docs/AUTOMATION_GUIDE.md`](../../docs/AUTOMATION_GUIDE.md)

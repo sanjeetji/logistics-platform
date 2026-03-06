@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "pricing-service", url = "${application.config.pricing-url}")
+@FeignClient(name = "pricing-service", url = "${application.config.pricing-url:http://localhost:8080}")
 public interface PricingServiceClient {
 
     @PostMapping("/api/v1/pricing/estimate")

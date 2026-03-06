@@ -9,7 +9,9 @@ from app.api.schemas import (
     TrainingRequest, TrainingResponse,
     DriverMatchingRequest, DriverMatchingResponse,
     RouteOptimizationRequest, RouteOptimizationResponse,
-    OptimizedRoute
+    OptimizedRoute,
+    StrategicForecastingRequest, StrategicForecastingResponse,
+    DecisionRecommendationRequest, DecisionRecommendationResponse
 )
 from app.models.demand_prediction import DemandPredictor
 from app.models.delivery_time import DeliveryTimePredictor
@@ -17,6 +19,8 @@ from app.models.driver_matching import DriverMatchingModel
 from app.models.dynamic_pricing import DynamicPricingModel
 from app.models.eta_prediction import ETAPredictionModel
 from app.models.route_optimization import RouteOptimizationModel
+from app.models.ai_forecasting import StrategicForecaster
+from app.models.decision_platform import DecisionEngine
 import logging
 
 logger = logging.getLogger(__name__)
@@ -30,6 +34,8 @@ route_model = RouteOptimizationModel()
 pricing_model = DynamicPricingModel()
 matching_model = DriverMatchingModel()
 eta_model = ETAPredictionModel()
+strategic_forecaster = StrategicForecaster()
+decision_engine = DecisionEngine()
 
 @router.post("/predict/demand", response_model=DemandPredictionResponse)
 async def predict_demand(request: DemandPredictionRequest):
@@ -259,3 +265,47 @@ async def get_models_status():
         "models": models,
         "service_status": "operational"
     }
+
+@router.post("/predict/strategic-forecast", response_model=StrategicForecastingResponse)
+async def predict_strategic_forecast(request: StrategicForecastingRequest):
+    """
+    Predict macro-level supply chain trends and volumes
+    """
+    try:
+        logger.info(f"Strategic forecast request for region: {request.region}, horizon: {request.target_horizon_days}")
+        
+        result = strategic_forecaster.predict_macro_trends(
+            region=request.region,
+            horizon_days=request.target_horizon_days,
+            business_vertical=request.business_vertical
+        )
+        
+        return StrategicForecastingResponse(**result)
+    except Exception as e:
+        logger.error(f"Error in strategic forecasting: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Strategic forecasting failed: {str(e)}"
+        )
+
+@router.post("/decisions/recommendations", response_model=DecisionRecommendationResponse)
+async def get_decision_recommendations(request: DecisionRecommendationRequest):
+    """
+    Generate prescriptive analytics and operational recommendations
+    """
+    try:
+        logger.info(f"Decision recommendation request for bottleneck: {request.current_bottleneck} in {request.region}")
+        
+        result = decision_engine.generate_recommendations(
+            region=request.region,
+            bottleneck=request.current_bottleneck,
+            urgency=request.urgency_level
+        )
+        
+        return DecisionRecommendationResponse(**result)
+    except Exception as e:
+        logger.error(f"Error generating decision recommendations: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Decision recommendation failed: {str(e)}"
+        )

@@ -127,3 +127,26 @@ class TrainingResponse(BaseModel):
     accuracy_score: float
     training_samples: int
     message: str
+
+# Strategic Forecasting
+class StrategicForecastingRequest(BaseModel):
+    target_horizon_days: int = Field(default=30, ge=1, le=365)
+    region: str = Field(..., description="Target overarching region (e.g. NORTH_AMERICA, EMEA, APAC)")
+    business_vertical: Optional[str] = Field(default="B2B", description="Business context (B2B, B2C)")
+
+class StrategicForecastingResponse(BaseModel):
+    predicted_volume: int
+    trend_direction: str = Field(..., description="UP, DOWN, or STABLE")
+    anomaly_flags: List[str] = Field(default_factory=list)
+    confidence: float
+
+# Decision Platform
+class DecisionRecommendationRequest(BaseModel):
+    region: str
+    current_bottleneck: str = Field(..., description="e.g. DRIVER_SHORTAGE, EXTREME_WEATHER, WAREHOUSE_CAPACITY")
+    urgency_level: str = Field(default="MEDIUM", description="LOW, MEDIUM, HIGH, CRITICAL")
+
+class DecisionRecommendationResponse(BaseModel):
+    bottleneck_analyzed: str
+    actions: List[str]
+    expected_impact: str

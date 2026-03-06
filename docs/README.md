@@ -8,8 +8,7 @@ Comprehensive documentation for the Logistics Platform.
 
 ### Architecture
 - [System Overview](./architecture/system-overview.md)
-- [Monolith vs Microservices Analysis](./ARCHITECTURE_ANALYSIS.md) - **(New) Decision Report**
-- [Microservices Architecture](./architecture/microservices.md)
+- [Logistic Platform Architecture](./ARCHITECTURE_ANALYSIS.md) - **(Current) Unified Platform**
 - [Database Design](./architecture/database-design.md)
 - [API Design Guidelines](./architecture/api-design.md)
 - [Security Architecture](./architecture/security.md)
@@ -30,6 +29,7 @@ Comprehensive documentation for the Logistics Platform.
 - [Webhook Documentation](./api/webhooks.md)
 
 ### Deployment & Setup
+- [Infrastructure Knowledge Base](./infrastructure/README.md) - **Start here for service details.**
 - [Local Setup Guide (No Docker)](./LOCAL_SETUP_GUIDE.md) - **Read this if running without Docker.**
 - [Docker Operations Guide](./DOCKER_GUIDE.md) - **Read this for Docker-based setup.**
 - [Database Setup](./DATABASE_SETUP_GUIDE.md)

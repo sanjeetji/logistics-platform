@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "b2b-order-service", url = "${application.config.b2b-order-service-url}")
+@FeignClient(name = "b2b-order-service", url = "${application.config.b2b-order-service-url:http://localhost:8080}")
 public interface B2BOrderServiceClient {
 
     @PostMapping("/api/v1/b2b/orders")

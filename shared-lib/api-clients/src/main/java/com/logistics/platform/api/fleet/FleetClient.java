@@ -25,4 +25,10 @@ public interface FleetClient {
 
     @GetMapping("/vehicles/active")
     List<VehicleDto> getActiveVehicles();
+
+    @GetMapping("/fleet/search/nearest-available")
+    com.logistics.platform.common.dto.response.ApiResponse<List<com.logistics.platform.common.dto.fleet.DriverDto>> findNearestAvailableDrivers(
+            @org.springframework.web.bind.annotation.RequestParam("lat") Double lat,
+            @org.springframework.web.bind.annotation.RequestParam("lon") Double lon,
+            @org.springframework.web.bind.annotation.RequestParam(value = "radius", defaultValue = "10000") Double radius);
 }

@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: webhook-worker-service
+  datasource:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/webhook_db?createDatabaseIfNotExist=true
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost}:9092
+    consumer:
+      group-id: webhook-worker-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    listener:
+      observation-enabled: true
+    template:
+      observation-enabled: true
+
+resilience4j:
+  retry:
+    instances:
+      webhookRetry:
+        max-attempts: 5
+        wait-duration: 2s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - java.io.IOException
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+server:
+  port: 8092
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics

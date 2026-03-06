@@ -21,6 +21,7 @@ public class RuleFacts {
 
         // Output fields
         private BigDecimal calculatedRate;
+        @Builder.Default
         private Double surgeMultiplier = 1.0;
         private String pricingModel;
     }
@@ -36,6 +37,7 @@ public class RuleFacts {
 
         // Output fields
         private String strategyName;
+        @Builder.Default
         private Integer priority = 1;
     }
 
@@ -43,13 +45,14 @@ public class RuleFacts {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SLAFact {
+    public static class SlaFact {
         private String orderType;
         private String priority;
-        private String clientTier; // SILVER, GOLD, PLATINUM
+        private String customerTier; // SILVER, GOLD, PLATINUM
 
         // Output fields
-        private Integer targetDurationMinutes = 0;
+        @Builder.Default
+        private Integer deadlineMinutes = 0;
         private String escalationPolicy;
     }
 }

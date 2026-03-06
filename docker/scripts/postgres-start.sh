@@ -7,7 +7,7 @@ COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
 PROJECT_ROOT="$SCRIPT_DIR/../.."
 
 # Start only PostgreSQL and pgAdmin services
-docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform up -d postgres-db pgadmin
+docker compose -f "$COMPOSE_FILE" up -d postgres pgadmin
 
 echo ""
 echo "✅ PostgreSQL & pgAdmin started successfully!"
@@ -26,6 +26,6 @@ echo "Email:    admin@logistics.com"
 echo "Password: admin123"
 echo ""
 echo "💡 Quick Commands:"
-echo "Connect via psql: docker compose exec postgres-db psql -U logistics_user -d logistics_postgres"
-echo "View logs:        docker compose logs -f postgres-db"
+echo "Connect via psql: docker compose exec postgres psql -U logistics_user -d logistics_postgres"
+echo "View logs:        docker compose logs -f postgres"
 echo "Backup:           ./docker/scripts/postgres-backup.sh"

@@ -20,6 +20,10 @@ public class DriverDto {
     private String verificationStatus;
     private Double currentLatitude;
     private Double currentLongitude;
+    private String vehicleType;
+    private Double performanceScore;
+    private LocalDateTime shiftStartTime;
+    private Integer totalDrivingMinutes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

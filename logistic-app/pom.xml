@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.logistics.platform</groupId>
+        <artifactId>logistics-platform</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>logistic-app</artifactId>
+    <packaging>jar</packaging>
+    <name>Logistic App</name>
+    <description>Single deployment unit for the Logistics Platform</description>
+
+    <dependencies>
+        <!-- DOMAIN MODULES -->
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>identity-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>platform-support-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>fulfillment-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>fleet-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>b2b-inventory-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>finance-module</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- SHARED CONFIGS -->
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>common-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.logistics.platform</groupId>
+            <artifactId>common-exceptions</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+
+        <!-- SPRING BOOT STARTERS -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        
+        <!-- OBSERVABILITY & METRICS -->
+        <dependency>
+             <groupId>io.micrometer</groupId>
+             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- DATABASE -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- TEST -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.logistics.platform.LogisticApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

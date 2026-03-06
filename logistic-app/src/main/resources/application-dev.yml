@@ -1,0 +1,26 @@
+# ============================================================
+# DEV PROFILE — Fresh DB on every restart (local Maven run)
+# ============================================================
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/logistics_postgres
+    username: logistics_user
+    password: logistics_pass
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # Drops & recreates all tables on every start
+    show-sql: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+logging:
+  level:
+    root: INFO
+    com.logistics: DEBUG

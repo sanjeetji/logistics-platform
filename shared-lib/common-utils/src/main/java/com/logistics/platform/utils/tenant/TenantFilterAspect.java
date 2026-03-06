@@ -19,9 +19,9 @@ public class TenantFilterAspect {
     @Before("@within(org.springframework.transaction.annotation.Transactional) || @annotation(org.springframework.transaction.annotation.Transactional) || @within(jakarta.transaction.Transactional) || @annotation(jakarta.transaction.Transactional)")
     public void enableTenantFilter() {
         Session session = entityManager.unwrap(Session.class);
-        String tenantId = TenantContextUtils.getTenantId();
-        if (tenantId != null) {
-            session.enableFilter("tenantFilter").setParameter("tenantId", tenantId);
+        java.util.List<String> authorizedTenantIds = TenantContextUtils.getAuthorizedTenantIds();
+        if (authorizedTenantIds != null && !authorizedTenantIds.isEmpty()) {
+            session.enableFilter("tenantFilter").setParameterList("tenantIds", authorizedTenantIds);
         }
     }
 }

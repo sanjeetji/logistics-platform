@@ -13,8 +13,8 @@ NC='\033[0m' # No Color
 
 # Default values
 BASE_URL="${BASE_URL:-http://localhost:8080}"
-FLEET_URL="${FLEET_URL:-http://localhost:8083}"
-WS_URL="${WS_URL:-ws://localhost:8085}"
+FLEET_URL="${FLEET_URL:-http://localhost:8080}" # Logistic Platform handles fleet too
+WS_URL="${WS_URL:-ws://localhost:8080}"        # Logistic Platform handles WS too
 TEST_TYPE="${1:-quick}"
 
 echo -e "${GREEN}==============================================\033[0m"

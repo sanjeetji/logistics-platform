@@ -2,17 +2,16 @@
 echo "💾 Creating PostgreSQL backup..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCKER_DIR="$SCRIPT_DIR/.."
 COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
 PROJECT_ROOT="$SCRIPT_DIR/../.."
 
 BACKUP_DIR="$PROJECT_ROOT/backups/postgres"
 BACKUP_FILE="logistics_backup_$(date +%Y%m%d_%H%M%S).sql"
 
-mkdir -p $BACKUP_DIR
+mkdir -p "$BACKUP_DIR"
 
-# Backup all databases
-docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec -T postgres-db pg_dumpall -U logistics_user > "$BACKUP_DIR/$BACKUP_FILE"
+# Backup all databases using correct container name (postgres, not postgres-db)
+docker compose -f "$COMPOSE_FILE" exec -T postgres pg_dumpall -U logistics_user > "$BACKUP_DIR/$BACKUP_FILE"
 
 # Compress the backup
 gzip "$BACKUP_DIR/$BACKUP_FILE"

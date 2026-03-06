@@ -1,52 +1,92 @@
 #!/bin/bash
-echo "🏥 Health Check for Logistics Platform..."
-echo "========================================"
+
+# Logistics Platform - Unified Health & Status Check Tool
+# Combined functionality of health-check.sh and check-status.sh
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCKER_DIR="$SCRIPT_DIR/.."
 COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+export PATH=$PATH:/usr/local/bin
 
-# Define core services to check
-services=(
-    "Service Discovery:8761"
-    "Config Server:8888"
-    "Gateway Service:8080"
-    "Auth Service:8081"
-    "User Service:8082"
-)
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}🏥 Logistics Platform Health Status${NC}"
+echo -e "${GREEN}========================================${NC}"
+echo ""
 
-for service in "${services[@]}"; do
-    name=$(echo $service | cut -d':' -f1)
-    port=$(echo $service | cut -d':' -f2)
-
-    echo -n "Checking $name ($port)... "
-    if curl -s -f "http://localhost:$port/actuator/health" > /dev/null; then
-        echo "✅ UP"
+# Helper to log status with symbols and colors
+log_status() {
+    local name=$1
+    local status=$2
+    local details=$3
+    if [ "$status" == "UP" ]; then
+        echo -e "${GREEN}✓${NC} $name - ${GREEN}UP${NC} $details"
     else
-        echo "❌ DOWN"
+        echo -e "${RED}✗${NC} $name - ${RED}DOWN${NC} $details"
     fi
-done
+}
 
-echo ""
-echo "📊 Database Status:"
-if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec postgres-db pg_isready -U logistics_user > /dev/null 2>&1; then
-    echo "✅ PostgreSQL is UP"
+echo -e "${YELLOW}Application Services:${NC}"
+
+# Check Logistic App via Actuator
+if curl -s -f "http://localhost:8080/actuator/health" > /dev/null 2>&1; then
+    log_status "Logistic App (8080)   " "UP"
 else
-    echo "❌ PostgreSQL is DOWN"
+    # Fallback to port check if actuator is not ready yet
+    if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+        log_status "Logistic App (8080)   " "UP" "(Port open, but Actuator not ready)"
+    else
+        log_status "Logistic App (8080)   " "DOWN"
+    fi
+fi
+
+# Check MinIO Console
+if curl -s -f "http://localhost:9001" > /dev/null 2>&1; then
+    log_status "MinIO Console (9001)  " "UP"
+else
+    log_status "MinIO Console (9001)  " "DOWN"
+fi
+
+# Check pgAdmin
+if curl -s -f "http://localhost:5050" > /dev/null 2>&1; then
+    log_status "pgAdmin (5050)        " "UP"
+else
+    log_status "pgAdmin (5050)        " "DOWN"
 fi
 
 echo ""
-echo "📈 Infrastructure Status:"
-if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec kafka kafka-topics --list --bootstrap-server localhost:9092 > /dev/null 2>&1; then
-    echo "✅ Kafka is UP"
+echo -e "${YELLOW}Infrastructure Status:${NC}"
+
+# Check PostgreSQL
+if docker compose -f "$COMPOSE_FILE" exec postgres pg_isready -U logistics_user > /dev/null 2>&1; then
+    log_status "PostgreSQL (5432)     " "UP"
 else
-    echo "❌ Kafka is DOWN"
+    log_status "PostgreSQL (5432)     " "DOWN"
+fi
+
+# Check Kafka
+if docker compose -f "$COMPOSE_FILE" exec kafka kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1; then
+    log_status "Kafka (9092)          " "UP"
+else
+    log_status "Kafka (9092)          " "DOWN"
+fi
+
+# Check Redis
+if docker compose -f "$COMPOSE_FILE" exec redis redis-cli ping 2>/dev/null | grep -q PONG; then
+    log_status "Redis (6379)          " "UP"
+else
+    log_status "Redis (6379)          " "DOWN"
+fi
+
+# Check Elasticsearch
+if curl -s -f "http://localhost:9200" > /dev/null 2>&1; then
+    log_status "Elasticsearch (9200)  " "UP"
+else
+    log_status "Elasticsearch (9200)  " "DOWN"
 fi
 
 echo ""
-echo "Redis Status:"
-if docker compose -f "$COMPOSE_FILE" --project-directory "$DOCKER_DIR" -p logistics-platform exec redis redis-cli ping > /dev/null 2>&1; then
-    echo "✅ Redis is UP"
-else
-    echo "❌ Redis is DOWN"
-fi
+echo -e "${GREEN}========================================${NC}"
